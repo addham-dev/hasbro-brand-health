@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hasbro EU Brand Health</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
       --blue:#009CDE; --blue-dark:#0077A8; --blue-light:#E5F6FF;
@@ -15,16 +13,12 @@
       --green:#00B388; --green-bg:#E5FFF6;
       --red:#E8423F; --red-bg:#FFF0F0;
       --amber:#F5A623; --amber-bg:#FFF8EC;
-      --happy:#00B388; --happy-bg:#E5FFF6; --happy-border:#00B388;
-      --sad:#F5A623; --sad-bg:#FFF8EC; --sad-border:#F5A623;
-      --cry:#E8423F; --cry-bg:#FFF0F0; --cry-border:#E8423F;
       --shadow:0 2px 16px rgba(0,156,222,0.08);
       --shadow-lg:0 8px 32px rgba(0,156,222,0.15);
     }
     *{margin:0;padding:0;box-sizing:border-box;}
     body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
 
-    /* HEADER */
     header{background:var(--blue);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:68px;box-shadow:0 4px 20px rgba(0,156,222,0.25);}
     .logo{display:flex;align-items:center;gap:14px;}
     .logo-mark{width:40px;height:40px;background:white;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--blue);}
@@ -36,78 +30,43 @@
     .currency-btn{padding:6px 12px;border:none;background:transparent;color:rgba(255,255,255,0.7);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;}
     .currency-btn.active{background:white;color:var(--blue);}
 
-    /* UPLOAD */
-    #upload-section{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 68px);padding:40px;}
-    .upload-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:var(--text);margin-bottom:8px;text-align:center;}
-    .upload-subtitle{font-size:14px;color:var(--text2);margin-bottom:40px;text-align:center;}
-    .upload-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;width:100%;max-width:860px;margin-bottom:28px;}
-    .upload-card{background:white;border:2px dashed var(--border);border-radius:16px;padding:32px 24px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;}
-    .upload-card:hover{border-color:var(--blue);background:var(--blue-light);}
-    .upload-card.loaded{border-color:var(--green);border-style:solid;background:var(--green-bg);}
-    .upload-icon{font-size:36px;margin-bottom:12px;}
-    .upload-card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;}
-    .upload-card-sub{font-size:11px;color:var(--text2);line-height:1.5;}
-    .upload-card.loaded .upload-card-sub{color:var(--green);font-weight:600;}
-    .upload-checkmark{position:absolute;top:12px;right:12px;font-size:18px;display:none;}
-    .upload-card.loaded .upload-checkmark{display:block;}
-    input[type="file"]{display:none;}
-    .upload-btn{background:var(--blue);color:white;border:none;border-radius:10px;padding:14px 40px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(0,156,222,0.3);}
-    .upload-btn:hover{background:var(--blue-dark);transform:translateY(-1px);}
-    .upload-btn:disabled{background:var(--text3);cursor:not-allowed;transform:none;box-shadow:none;}
-    .upload-note{margin-top:20px;font-size:12px;color:var(--text3);text-align:center;max-width:580px;line-height:1.6;}
-
-    /* FILTER BAR */
     .filter-bar{background:white;padding:10px 40px;display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--border);box-shadow:var(--shadow);flex-wrap:wrap;}
     .filter-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
     .market-tabs{display:flex;gap:4px;}
     .market-tab{padding:6px 14px;border-radius:6px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;}
     .market-tab.active{background:var(--blue);color:white;border-color:var(--blue);}
     .divider{width:1px;height:24px;background:var(--border);}
-    .reload-btn{margin-left:auto;background:transparent;border:2px solid var(--border);color:var(--text2);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;cursor:pointer;transition:all 0.2s;}
-    .reload-btn:hover{border-color:var(--blue);color:var(--blue);}
+    .week-select{padding:6px 12px;border-radius:6px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;outline:none;}
     .week-info{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);}
 
-    /* DASHBOARD */
-    #dashboard-section{display:none;}
     main{padding:24px 40px;max-width:1600px;margin:0 auto;display:grid;gap:28px;}
 
     .section-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
     .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
 
-    /* SENTIMENT SUMMARY BAR */
-    .sentiment-bar{display:flex;gap:16px;margin-bottom:24px;}
+    .sentiment-bar{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;}
     .sentiment-pill{display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:50px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;border:2px solid;}
-    .sentiment-pill.happy{background:var(--happy-bg);border-color:var(--happy);color:var(--happy);}
-    .sentiment-pill.sad{background:var(--sad-bg);border-color:var(--sad);color:var(--sad);}
-    .sentiment-pill.cry{background:var(--cry-bg);border-color:var(--cry);color:var(--cry);}
+    .sentiment-pill.happy{background:var(--green-bg);border-color:var(--green);color:var(--green);}
+    .sentiment-pill.sad{background:var(--amber-bg);border-color:var(--amber);color:var(--amber);}
+    .sentiment-pill.cry{background:var(--red-bg);border-color:var(--red);color:var(--red);}
     .sentiment-emoji{font-size:20px;}
     .sentiment-count{font-size:22px;font-weight:800;}
     .sentiment-label{font-size:12px;font-weight:600;opacity:0.8;}
 
-    /* BRAND GRID */
     .brand-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
-
     .brand-card{background:white;border-radius:14px;padding:18px;box-shadow:var(--shadow);border:2px solid var(--border);cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;}
     .brand-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-3px);}
     .brand-card.selected{box-shadow:var(--shadow-lg);}
-
-    /* Sentiment-based card styling */
-    .brand-card.happy{border-color:var(--happy-border);background:linear-gradient(160deg,white 70%,var(--happy-bg));}
-    .brand-card.sad{border-color:var(--sad-border);background:linear-gradient(160deg,white 70%,var(--sad-bg));}
-    .brand-card.cry{border-color:var(--cry-border);background:linear-gradient(160deg,white 70%,var(--cry-bg));}
-
+    .brand-card.happy{border-color:var(--green);background:linear-gradient(160deg,white 70%,var(--green-bg));}
+    .brand-card.sad{border-color:var(--amber);background:linear-gradient(160deg,white 70%,var(--amber-bg));}
+    .brand-card.cry{border-color:var(--red);background:linear-gradient(160deg,white 70%,var(--red-bg));}
     .brand-card-accent{position:absolute;top:0;left:0;right:0;height:4px;}
-
-    /* Big emoji */
     .brand-sentiment-emoji{position:absolute;top:14px;right:14px;font-size:28px;line-height:1;}
-
     .brand-card-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--text);margin-bottom:4px;padding-right:40px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
     .brand-sentiment-label{font-size:10px;font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;}
-    .brand-sentiment-label.happy{color:var(--happy);}
-    .brand-sentiment-label.sad{color:var(--sad);}
-    .brand-sentiment-label.cry{color:var(--cry);}
-
+    .brand-sentiment-label.happy{color:var(--green);}
+    .brand-sentiment-label.sad{color:var(--amber);}
+    .brand-sentiment-label.cry{color:var(--red);}
     .brand-metrics{display:grid;gap:7px;}
     .bm-row{display:flex;justify-content:space-between;align-items:center;}
     .bm-label{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;}
@@ -117,12 +76,10 @@
     .yoy-up{color:var(--green);background:var(--green-bg);}
     .yoy-down{color:var(--red);background:var(--red-bg);}
     .yoy-na{color:var(--text3);}
-
     .supply-alert{margin-top:10px;padding:5px 8px;border-radius:5px;font-size:10px;font-weight:700;text-align:center;display:none;}
     .supply-alert.show-red{display:block;background:var(--red-bg);color:var(--red);}
     .supply-alert.show-amber{display:block;background:var(--amber-bg);color:var(--amber);}
 
-    /* DETAIL PANEL */
     .detail-panel{background:white;border-radius:16px;box-shadow:var(--shadow);border:2px solid var(--border);overflow:hidden;}
     .detail-header{background:var(--blue-light);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--border);}
     .detail-header-left{display:flex;align-items:center;gap:16px;}
@@ -144,7 +101,6 @@
     .kpi-value.c-text{color:var(--text);}
     .kpi-yoy{font-size:11px;font-weight:600;margin-top:6px;color:var(--text2);}
 
-    /* TABLE */
     .data-table{width:100%;border-collapse:collapse;}
     .data-table th{text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;padding:8px 12px;border-bottom:2px solid var(--border);white-space:nowrap;}
     .data-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;}
@@ -163,7 +119,6 @@
     .bar-bg{height:4px;background:var(--border);border-radius:2px;margin-top:4px;}
     .bar-fg{height:100%;background:var(--blue);border-radius:2px;}
 
-    /* SUPPLY PANEL */
     .supply-panel{background:white;border-radius:16px;box-shadow:var(--shadow);border:2px solid #FFD0D0;overflow:hidden;}
     .supply-header{background:linear-gradient(135deg,#FFF0F0,#FFF8EC);padding:16px 24px;border-bottom:2px solid #FFD0D0;display:flex;align-items:center;justify-content:space-between;}
     .supply-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:1px;}
@@ -175,26 +130,21 @@
     .si-name{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;}
     .si-stats{display:flex;gap:10px;flex-wrap:wrap;}
     .si-stat{font-size:10px;color:var(--text2);}
-    .mp-tiny{font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;margin-left:4px;}
 
-    /* PROCESSING */
-    .overlay{display:none;position:fixed;inset:0;background:rgba(0,58,84,0.88);z-index:1000;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
-    .overlay.on{display:flex;}
-    .overlay-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:white;}
-    .overlay-sub{font-size:12px;color:rgba(255,255,255,0.6);font-family:'DM Mono',monospace;}
-    .overlay-bar{width:220px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;overflow:hidden;}
-    .overlay-bar::after{content:'';display:block;height:100%;width:40%;background:var(--blue);border-radius:2px;animation:lb 1.2s ease infinite;}
+    .loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:400px;gap:16px;}
+    .loading-text{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text2);}
+    .loading-bar{width:200px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+    .loading-bar::after{content:'';display:block;height:100%;width:40%;background:var(--blue);border-radius:2px;animation:lb 1.2s ease infinite;}
     @keyframes lb{0%{transform:translateX(-150%)}100%{transform:translateX(400%)}}
+
+    .no-data{text-align:center;padding:80px 40px;}
+    .no-data-emoji{font-size:64px;margin-bottom:16px;}
+    .no-data-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text2);margin-bottom:8px;}
+    .no-data-sub{font-size:14px;color:var(--text3);}
     .empty{text-align:center;padding:48px;color:var(--text3);font-size:13px;}
   </style>
 </head>
 <body>
-
-<div class="overlay" id="overlay">
-  <div class="overlay-title">Processing data...</div>
-  <div class="overlay-sub" id="overlay-sub">Reading files</div>
-  <div class="overlay-bar"></div>
-</div>
 
 <header>
   <div class="logo">
@@ -205,7 +155,7 @@
     </div>
   </div>
   <div class="header-right">
-    <div class="week-badge" id="week-badge">No data loaded</div>
+    <div class="week-badge" id="week-badge">Loading...</div>
     <div class="currency-toggle">
       <button class="currency-btn active" id="btn-eur" onclick="setCurrency('eur')">€ EUR</button>
       <button class="currency-btn" id="btn-gbp" onclick="setCurrency('gbp')">£ GBP</button>
@@ -214,505 +164,219 @@
   </div>
 </header>
 
-<!-- UPLOAD -->
-<div id="upload-section">
-  <div class="upload-title">Upload Weekly Reports</div>
-  <div class="upload-subtitle">Drop your three Vendor Central exports — EU5 markets, YoY comparison ticked</div>
-  <div class="upload-grid">
-    <div class="upload-card" id="card-sales" onclick="document.getElementById('file-sales').click()"
-      ondragover="dOver(event,'card-sales')" ondragleave="dLeave('card-sales')" ondrop="dDrop(event,'sales')">
-      <div class="upload-icon">📊</div>
-      <div class="upload-card-title">Sales Report</div>
-      <div class="upload-card-sub" id="lbl-sales">CSV or Excel<br>Ordered &amp; Dispatched Revenue</div>
-      <div class="upload-checkmark">✅</div>
-      <input type="file" id="file-sales" accept=".csv,.xlsx" onchange="onFile(event,'sales')">
-    </div>
-    <div class="upload-card" id="card-traffic" onclick="document.getElementById('file-traffic').click()"
-      ondragover="dOver(event,'card-traffic')" ondragleave="dLeave('card-traffic')" ondrop="dDrop(event,'traffic')">
-      <div class="upload-icon">👁️</div>
-      <div class="upload-card-title">Traffic Report</div>
-      <div class="upload-card-sub" id="lbl-traffic">CSV or Excel<br>Glance Views by ASIN</div>
-      <div class="upload-checkmark">✅</div>
-      <input type="file" id="file-traffic" accept=".csv,.xlsx" onchange="onFile(event,'traffic')">
-    </div>
-    <div class="upload-card" id="card-inventory" onclick="document.getElementById('file-inventory').click()"
-      ondragover="dOver(event,'card-inventory')" ondragleave="dLeave('card-inventory')" ondrop="dDrop(event,'inventory')">
-      <div class="upload-icon">📦</div>
-      <div class="upload-card-title">Inventory Report</div>
-      <div class="upload-card-sub" id="lbl-inventory">CSV or Excel<br>OOS % &amp; Unfilled Orders</div>
-      <div class="upload-checkmark">✅</div>
-      <input type="file" id="file-inventory" accept=".csv,.xlsx" onchange="onFile(event,'inventory')">
-    </div>
+<div class="filter-bar">
+  <span class="filter-label">Market</span>
+  <div class="market-tabs">
+    <button class="market-tab active" onclick="setMarket('ALL',this)">All EU5</button>
+    <button class="market-tab" onclick="setMarket('GB',this)">🇬🇧 GB</button>
+    <button class="market-tab" onclick="setMarket('DE',this)">🇩🇪 DE</button>
+    <button class="market-tab" onclick="setMarket('FR',this)">🇫🇷 FR</button>
+    <button class="market-tab" onclick="setMarket('IT',this)">🇮🇹 IT</button>
+    <button class="market-tab" onclick="setMarket('ES',this)">🇪🇸 ES</button>
   </div>
-  <button class="upload-btn" id="process-btn" onclick="processAll()" disabled>Generate Dashboard →</button>
-  <div class="upload-note">All processing happens locally in your browser — nothing is sent to any server.<br>Export with EU5 markets selected (GB, DE, FR, IT, ES) and "Year over year" ticked.</div>
+  <div class="divider"></div>
+  <span class="filter-label">Week</span>
+  <select class="week-select" id="week-select" onchange="loadWeek(this.value)">
+    <option>Loading...</option>
+  </select>
+  <span class="week-info" id="week-info"></span>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboard-section">
-  <div class="filter-bar">
-    <span class="filter-label">Market</span>
-    <div class="market-tabs">
-      <button class="market-tab active" onclick="setMarket('ALL',this)">All EU5</button>
-      <button class="market-tab" onclick="setMarket('GB',this)">🇬🇧 GB</button>
-      <button class="market-tab" onclick="setMarket('DE',this)">🇩🇪 DE</button>
-      <button class="market-tab" onclick="setMarket('FR',this)">🇫🇷 FR</button>
-      <button class="market-tab" onclick="setMarket('IT',this)">🇮🇹 IT</button>
-      <button class="market-tab" onclick="setMarket('ES',this)">🇪🇸 ES</button>
-    </div>
-    <div class="divider"></div>
-    <span class="week-info" id="week-info">—</span>
-    <button class="reload-btn" onclick="showUpload()">↑ Load New Data</button>
-  </div>
-
-  <main>
-    <!-- SENTIMENT SUMMARY -->
-    <div>
-      <div class="section-title">Portfolio Health Summary</div>
-      <div class="sentiment-bar" id="sentiment-bar"></div>
-    </div>
-
-    <!-- BRAND SCORECARDS -->
-    <div>
-      <div class="section-title">Brand Scorecards — click to drill down</div>
-      <div class="brand-grid" id="brand-grid"></div>
-    </div>
-
-    <!-- DETAIL PANEL -->
-    <div class="detail-panel" id="detail-panel" style="display:none">
-      <div class="detail-header">
-        <div class="detail-header-left">
-          <div class="detail-sentiment" id="detail-sentiment">—</div>
-          <div class="detail-name" id="detail-name">—</div>
-        </div>
-        <div class="detail-tabs">
-          <button class="detail-tab active" onclick="setTab('revenue',this)">Revenue</button>
-          <button class="detail-tab" onclick="setTab('traffic',this)">Traffic</button>
-          <button class="detail-tab" onclick="setTab('conversion',this)">Conversion</button>
-          <button class="detail-tab" onclick="setTab('asp',this)">ASP</button>
-          <button class="detail-tab" onclick="setTab('supply',this)">Supply Gap</button>
-        </div>
-      </div>
-      <div class="detail-content">
-        <div class="kpi-row" id="kpi-row"></div>
-        <div id="table-wrap"></div>
-      </div>
-    </div>
-
-    <!-- SUPPLY ALERTS -->
-    <div class="supply-panel" id="supply-panel">
-      <div class="supply-header">
-        <div class="supply-title">⚠️ Supply Gap Alerts</div>
-        <div class="supply-subtitle">High demand, low fulfilment — OOS &gt; 10% or Unfilled Orders &gt; 50</div>
-      </div>
-      <div class="supply-items" id="supply-items"></div>
-    </div>
-  </main>
+<div id="loading-screen" class="loading-screen">
+  <div class="loading-text">Loading brand data...</div>
+  <div class="loading-bar"></div>
 </div>
+
+<div id="no-data-screen" class="no-data" style="display:none">
+  <div class="no-data-emoji">📭</div>
+  <div class="no-data-title">No data uploaded yet</div>
+  <div class="no-data-sub">The admin needs to upload weekly reports first.</div>
+</div>
+
+<main id="main-content" style="display:none">
+  <div>
+    <div class="section-title">Portfolio Health Summary</div>
+    <div class="sentiment-bar" id="sentiment-bar"></div>
+  </div>
+  <div>
+    <div class="section-title">Brand Scorecards — click to drill down</div>
+    <div class="brand-grid" id="brand-grid"></div>
+  </div>
+  <div class="detail-panel" id="detail-panel" style="display:none">
+    <div class="detail-header">
+      <div class="detail-header-left">
+        <div class="detail-sentiment" id="detail-sentiment">—</div>
+        <div class="detail-name" id="detail-name">—</div>
+      </div>
+      <div class="detail-tabs">
+        <button class="detail-tab active" onclick="setTab('revenue',this)">Revenue</button>
+        <button class="detail-tab" onclick="setTab('traffic',this)">Traffic</button>
+        <button class="detail-tab" onclick="setTab('conversion',this)">Conversion</button>
+        <button class="detail-tab" onclick="setTab('asp',this)">ASP</button>
+        <button class="detail-tab" onclick="setTab('supply',this)">Supply Gap</button>
+      </div>
+    </div>
+    <div class="detail-content">
+      <div class="kpi-row" id="kpi-row"></div>
+      <div id="table-wrap"></div>
+    </div>
+  </div>
+  <div class="supply-panel">
+    <div class="supply-header">
+      <div class="supply-title">⚠️ Supply Gap Alerts</div>
+      <div class="supply-subtitle">OOS &gt; 10% or Unfilled Orders &gt; 50</div>
+    </div>
+    <div class="supply-items" id="supply-items"></div>
+  </div>
+</main>
 
 <script>
-// ─── CONSTANTS ───────────────────────────────────────────────
-const EU5 = ['GB','DE','FR','IT','ES'];
-const FX = { eur:1, gbp:0.862, usd:1.09 };
-// YoY cap: ignore values beyond ±1000% (10x) as bad data
-const YOY_CAP = 10;
+const SUPABASE_URL = 'https://rycqfwzgvpzwhphgclpb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CbKFhpN2dWI_UXhwGkclqw_AMPSprs4';
+const FX = {eur:1, gbp:0.862, usd:1.09};
+
+const BRAND_COLORS = {
+  DISNEY_KIDS:'#9B59B6', MARVEL:'#E8423F', STAR_WARS:'#1a1a2e',
+  MONOPOLY:'#B22222', GAMES:'#009CDE', PLAY_DOH:'#E91E8C',
+  PEPPA_PIG:'#FF6B9D', TRANSFORMERS:'#F5A623', BEYBLADE:'#00B388',
+  NERF:'#FF6B00', OTHER:'#A0C8D8'
+};
+
+const BRAND_LABELS = {
+  DISNEY_KIDS:'Disney Kids', MARVEL:'Marvel / Spider-Man', STAR_WARS:'Star Wars',
+  MONOPOLY:'Monopoly', GAMES:'Games', PLAY_DOH:'Play-Doh',
+  PEPPA_PIG:'Peppa Pig', TRANSFORMERS:'Transformers', BEYBLADE:'Beyblade',
+  NERF:'Nerf', OTHER:'Other'
+};
+
+const BRAND_ORDER = ['DISNEY_KIDS','MARVEL','STAR_WARS','MONOPOLY','GAMES','PLAY_DOH','PEPPA_PIG','TRANSFORMERS','BEYBLADE','NERF','OTHER'];
 
 let currency = 'eur';
 let currentMarket = 'ALL';
+let currentWeek = null;
 let selectedBrand = null;
 let currentTab = 'revenue';
-let rawData = { sales:[], traffic:[], inventory:[] };
-let files = { sales:null, traffic:null, inventory:null };
-let weekLabel = '';
+let allRows = [];
 
-// ─── BRAND RULES ─────────────────────────────────────────────
-const BRANDS = [
-  { id:'DISNEY_KIDS', label:'Disney Kids', color:'#9B59B6',
-    titleKeys:['spidey and his amazing friends','spidey and amazing friends','iron man and his awesome friends','iron man and friends','spidey and his'],
-    brandKeys:['hasbro spidey','iron man and his awesome','hasbro iron man and his','spidey and his amazing'] },
-  { id:'MARVEL', label:'Marvel / Spider-Man', color:'#E8423F',
-    titleKeys:['marvel','spider-man','spiderman','avengers','black widow','captain america','iron man','thor ','hulk','x-men','eternals','shang chi','daredevil','dr. strange','dr strange','ghost rider'],
-    brandKeys:['marvel','hasbro marvel','hasbro mavel','avengers','hasbro avengers','spider-man','spiderman','hasbro marvel avengers','marvel avengers','marvel legends','marvel spider-man','marvel classic','black widow','shang chi','the eternals','overwatch','hasbro avengers'] },
-  { id:'STAR_WARS', label:'Star Wars', color:'#1a1a2e',
-    titleKeys:['star wars','mandalorian','grogu','jedi','sith','darth','clone wars','boba fett','lightsaber','stormtrooper','scout trooper','bb-8','han solo'],
-    brandKeys:['star wars','hasbro star wars','hasbro star wars the black series','star wars han solo movie'] },
-  { id:'MONOPOLY', label:'Monopoly', color:'#B22222',
-    titleKeys:['monopoly'],
-    brandKeys:['monopoly','hasbro monopoly'] },
-  { id:'GAMES', label:'Games', color:'#009CDE',
-    titleKeys:['guess who','game of life','operation ','trivial pursuit','yahtzee','buckaroo','mousetrap','mouse trap','battleship','cluedo','clue ','boggle','connect 4','connect4','jenga','twister','looping louie','hungry hungry','cranium','taboo','pictionary','heroquest','dungeons & dragons','dungeons and dragons','avalon hill'],
-    brandKeys:['hasbro gaming','hasbro games','hasbro spiele','games (excl. monopoly)','clue','twister','dungeons & dragons','hasbro dungeons & dragons','avalon hill','ghostbusters','hasbro ghostbusters','hasbro indiana jones'] },
-  { id:'PLAY_DOH', label:'Play-Doh', color:'#E91E8C',
-    titleKeys:['play-doh','play doh','playdoh','pate a modeler','pâte à modeler','knete','plastilina'],
-    brandKeys:['play-doh','play doh','playdoh','hasbro play-doh','hasbro pt','play doh'] },
-  { id:'PEPPA_PIG', label:'Peppa Pig', color:'#FF6B9D',
-    titleKeys:['peppa pig','peppa'],
-    brandKeys:['peppa pig'] },
-  { id:'TRANSFORMERS', label:'Transformers', color:'#F5A623',
-    titleKeys:['transformers','optimus prime','megatron','autobot','decepticon'],
-    brandKeys:['transformers','hasbro transformers','transfromers'] },
-  { id:'BEYBLADE', label:'Beyblade', color:'#00B388',
-    titleKeys:['beyblade','bey blade'],
-    brandKeys:['beyblade','hasbro beyblade','beyblade'] },
-  { id:'NERF', label:'Nerf', color:'#FF6B00',
-    titleKeys:['nerf','super soaker','supersoaker'],
-    brandKeys:['nerf','hasbro nerf','super soaker','supersoaker'] },
-  { id:'OTHER', label:'Other', color:'#A0C8D8', titleKeys:[], brandKeys:[] }
-];
-
-function classifyBrand(title, brandCol) {
-  const t = (title||'').toLowerCase();
-  const b = (brandCol||'').toLowerCase().trim();
-  // Disney Kids first — must come before Marvel
-  const dk = BRANDS[0];
-  if (dk.titleKeys.some(k=>t.includes(k)) || dk.brandKeys.some(k=>b===k||b.includes(k))) return dk.id;
-  for (let i=1; i<BRANDS.length-1; i++) {
-    const br = BRANDS[i];
-    if (br.titleKeys.some(k=>t.includes(k)) || br.brandKeys.some(k=>b===k||b.includes(k))) return br.id;
-  }
-  return 'OTHER';
-}
-
-// ─── YoY NORMALISATION ───────────────────────────────────────
-// Sales file: values are decimal multipliers e.g. 0.1066 = +10.66%, 25.6608 = +2566%
-// Traffic/Inventory file: percentage strings e.g. "4,191.24%" = +4191.24%
-// Both get normalised to decimal fraction: 0.1066, 25.66 → capped at YOY_CAP
-
-function parseYoy(v, isPercentString) {
-  if (v === null || v === undefined || v === '' || v === '-') return null;
-  let n;
-  if (isPercentString) {
-    // "4,191.24%" → remove commas, %, parse, divide by 100
-    const s = String(v).replace(/,/g,'').replace(/%/g,'').trim();
-    if (s===''||s==='nan') return null;
-    n = parseFloat(s) / 100;
-  } else {
-    // Already decimal multiplier
-    n = typeof v === 'number' ? v : parseFloat(String(v).replace(/,/g,'').trim());
-  }
-  if (isNaN(n)) return null;
-  // Cap extreme values (bad data)
-  if (Math.abs(n) > YOY_CAP) return null;
-  return n;
-}
-
-// ─── FILE HANDLING ───────────────────────────────────────────
-function dOver(e,id){e.preventDefault();document.getElementById(id).style.borderColor='var(--blue)';}
-function dLeave(id){if(!files[id.replace('card-','')]){document.getElementById(id).style.borderColor='';}}
-function dDrop(e,type){e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f,type);}
-function onFile(e,type){if(e.target.files[0])loadFile(e.target.files[0],type);}
-
-function loadFile(f,type){
-  files[type]=f;
-  document.getElementById('card-'+type).classList.add('loaded');
-  document.getElementById('lbl-'+type).textContent='✓ '+f.name;
-  checkReady();
-}
-function checkReady(){
-  document.getElementById('process-btn').disabled=!(files.sales&&files.traffic&&files.inventory);
-}
-
-// ─── PARSING ─────────────────────────────────────────────────
-function normaliseKey(s) {
-  // Normalise unicode dashes and trim — ensures column name matching works
-  // across Excel/CSV exports which use different dash characters
-  return String(s).trim()
-    .replace(/\u2013|\u2014|\u2212/g, '–') // normalise all dashes to en-dash
-    .replace(/\s+/g, ' ');
-}
-
-function parseVCFile(file) {
-  return new Promise(resolve => {
-    const ext = file.name.split('.').pop().toLowerCase();
-    if (ext==='xlsx') {
-      const reader = new FileReader();
-      reader.onload = e => {
-        const wb = XLSX.read(e.target.result, {type:'array', cellText:false, cellDates:true});
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:true});
-
-        // Find header row containing 'ASIN'
-        let hi = raw.findIndex(r => r.some(c => String(c).trim() === 'ASIN'));
-        if (hi === -1) hi = 1;
-
-        const headers = raw[hi].map(h => normaliseKey(h));
-
-        const rows = raw.slice(hi + 1)
-          .filter(r => r.some(c => c !== ''))
-          .map(r => {
-            const o = {};
-            headers.forEach((h, i) => { o[h] = (r[i] !== undefined && r[i] !== null) ? r[i] : ''; });
-            return o;
-          })
-          .filter(r => r['ASIN'] && String(r['ASIN']).trim().length > 5);
-
-        console.log(`Parsed ${rows.length} rows from ${file.name}`);
-        if (rows.length > 0) {
-          console.log('Sample row keys:', Object.keys(rows[0]).slice(0,8));
-          console.log('Sample revenue value:', rows[0]['Dispatched revenue'] ?? rows[0]['Ordered revenue']);
-        }
-        resolve(rows);
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
-      const reader = new FileReader();
-      reader.onload = e => {
-        // Strip BOM if present
-        let text = e.target.result.replace(/^\uFEFF/, '');
-        const lines = text.split('\n');
-        let hi = lines.findIndex(l => /^ASIN[,"]/.test(l.trim()));
-        if (hi === -1) hi = lines.findIndex(l => l.includes(',ASIN,') || l.startsWith('ASIN,'));
-        if (hi === -1) hi = 1;
-        const result = Papa.parse(lines.slice(hi).join('\n'), {
-          header: true, skipEmptyLines: true, dynamicTyping: false,
-          transformHeader: h => normaliseKey(h)
-        });
-        const rows = result.data.filter(r => r['ASIN'] && r['ASIN'].trim().length > 5);
-        console.log(`Parsed ${rows.length} rows from ${file.name}`);
-        if (rows.length > 0) {
-          console.log('Sample row keys:', Object.keys(rows[0]).slice(0,8));
-        }
-        resolve(rows);
-      };
-      reader.readAsText(file, 'UTF-8');
-    }
-  });
-}
-
-function cleanNum(v) {
-  if (v === null || v === undefined || v === "") return null;
-  if (typeof v === "number") return isNaN(v) ? null : v;
-  const s = String(v).replace(/[€£$,\s%]/g, "").trim();
-  if (s === "" || s.toLowerCase() === "nan" || s === "-") return null;
-  const n = parseFloat(s);
-  return isNaN(n) ? null : n;
-}
-
-// ─── PROCESS ─────────────────────────────────────────────────
-async function processAll() {
-  document.getElementById('overlay').classList.add('on');
-  await sleep(50);
+async function init() {
   try {
-    document.getElementById('overlay-sub').textContent='Reading Sales report...';
-    await sleep(30);
-    const salesRaw = await parseVCFile(files.sales);
-
-    document.getElementById('overlay-sub').textContent='Reading Traffic report...';
-    await sleep(30);
-    const trafficRaw = await parseVCFile(files.traffic);
-
-    document.getElementById('overlay-sub').textContent='Reading Inventory report...';
-    await sleep(30);
-    const invRaw = await parseVCFile(files.inventory);
-
-    document.getElementById('overlay-sub').textContent='Classifying brands & cleaning data...';
-    await sleep(30);
-
-    // Filter EU5 + classify + tag YoY format
-    rawData.sales = salesRaw
-      .filter(r=>EU5.includes(String(r['Store code']||'').trim().toUpperCase()))
-      .map(r=>({...r,
-        _brand: classifyBrand(r['Product title'],r['Brand']),
-        _market: String(r['Store code']||'').trim().toUpperCase(),
-        _isPercentStr: false  // sales file uses decimal multipliers
-      }));
-
-    rawData.traffic = trafficRaw
-      .filter(r=>EU5.includes(String(r['Store code']||'').trim().toUpperCase()))
-      .map(r=>({...r,
-        _brand: classifyBrand(r['Product title'],r['Brand']),
-        _market: String(r['Store code']||'').trim().toUpperCase(),
-        _isPercentStr: true  // traffic CSV uses "%" strings
-      }));
-
-    rawData.inventory = invRaw
-      .filter(r=>EU5.includes(String(r['Store code']||'').trim().toUpperCase()))
-      .map(r=>({...r,
-        _brand: classifyBrand(r['Product title'],r['Brand']),
-        _market: String(r['Store code']||'').trim().toUpperCase(),
-        _isPercentStr: true
-      }));
-
-    document.getElementById('overlay-sub').textContent='Building dashboard...';
-    await sleep(30);
-
-    updateWeekBadge();
-    buildDashboard();
-
-    document.getElementById('overlay').classList.remove('on');
-    document.getElementById('upload-section').style.display='none';
-    document.getElementById('dashboard-section').style.display='block';
-
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/brand_health_weeks?select=*&order=week_start.desc`, {
+      headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+    });
+    const weeks = await res.json();
+    if (!weeks.length) {
+      document.getElementById('loading-screen').style.display='none';
+      document.getElementById('no-data-screen').style.display='block';
+      return;
+    }
+    const sel = document.getElementById('week-select');
+    sel.innerHTML = weeks.map(w=>`<option value="${w.week_start}">${w.week_label||w.week_start}</option>`).join('');
+    await loadWeek(weeks[0].week_start);
   } catch(err) {
-    document.getElementById('overlay').classList.remove('on');
-    alert('Error processing files: '+err.message+'\n\nCheck console for details.');
-    console.error(err);
+    document.getElementById('loading-screen').innerHTML = `<div style="color:var(--red);font-family:'DM Mono',monospace;font-size:12px;text-align:center;padding:40px">Error: ${err.message}</div>`;
   }
 }
 
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-
-function updateWeekBadge() {
-  const fname = files.sales.name;
-  const match = fname.match(/(\d{2}-\d{2}-\d{4})_(\d{2}-\d{2}-\d{4})/);
-  if (match) {
-    weekLabel = match[1]+' – '+match[2];
-    document.getElementById('week-badge').textContent = weekLabel;
-    document.getElementById('week-info').textContent = weekLabel;
-  }
+async function loadWeek(weekStart) {
+  currentWeek = weekStart;
+  document.getElementById('loading-screen').style.display='flex';
+  document.getElementById('main-content').style.display='none';
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}&select=*&limit=20000`, {
+    headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+  });
+  allRows = await res.json();
+  const sel = document.getElementById('week-select');
+  document.getElementById('week-badge').textContent = sel.options[sel.selectedIndex]?.text || weekStart;
+  document.getElementById('week-info').textContent = allRows.length+' ASINs';
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('main-content').style.display='grid';
+  buildDashboard();
 }
 
-// ─── AGGREGATION ─────────────────────────────────────────────
-function getRows(type) {
-  const rows = rawData[type];
-  if (currentMarket==='ALL') return rows;
-  return rows.filter(r=>r._market===currentMarket);
-}
-
-// Flexible column getter — finds a column by normalised name
-// This handles unicode dash differences between Excel and CSV exports
-function col(row, name) {
-  // Direct match first
-  if (row[name] !== undefined) return row[name];
-  // Normalised match — try replacing all dash variants
-  const norm = name.replace(/[-\u2013\u2014\u2212]/g, '–').toLowerCase();
-  for (const k of Object.keys(row)) {
-    const kn = k.replace(/[-\u2013\u2014\u2212]/g, '–').toLowerCase();
-    if (kn === norm) return row[k];
-  }
-  // Partial match on key words (last resort)
-  const words = norm.split(' ').filter(w=>w.length>3);
-  for (const k of Object.keys(row)) {
-    const kl = k.toLowerCase();
-    if (words.every(w=>kl.includes(w))) return row[k];
-  }
-  return undefined;
+function getRows(brandId) {
+  let rows = allRows.filter(r=>r.brand_classified===brandId);
+  if (currentMarket!=='ALL') rows=rows.filter(r=>r.market===currentMarket);
+  return rows;
 }
 
 function aggregateBrand(brandId) {
-  const sRows = getRows('sales').filter(r=>r._brand===brandId);
-  const tRows = getRows('traffic').filter(r=>r._brand===brandId);
-  const iRows = getRows('inventory').filter(r=>r._brand===brandId);
-
-  let revenue=0, revYoyNum=0, revYoyDen=0;
-  let units=0;
-  let gviews=0, gvYoyNum=0, gvYoyDen=0;
-  let unfilled=0, oosVals=[];
-
-  sRows.forEach(r=>{
-    const rev = cleanNum(col(r,'Dispatched revenue')) || cleanNum(col(r,'Ordered revenue')) || 0;
-    revenue += rev;
-    units += cleanNum(col(r,'Dispatched units')) || cleanNum(col(r,'Ordered units')) || 0;
-    const yoy = parseYoy(col(r,'Dispatched Revenue – Same Period Last Year (%)'), false)
-             ?? parseYoy(col(r,'Ordered Revenue – Same Period Last Year (%)'), false);
-    if (yoy!==null && rev>0) { revYoyNum+=rev*yoy; revYoyDen+=rev; }
+  const rows = getRows(brandId);
+  let revenue=0,revYoyN=0,revYoyD=0,units=0,gviews=0,gvYoyN=0,gvYoyD=0,unfilled=0,oosVals=[];
+  rows.forEach(r=>{
+    const rev=r.dispatched_revenue||r.ordered_revenue||0;
+    revenue+=rev; units+=r.dispatched_units||r.ordered_units||0;
+    if(r.revenue_yoy!==null&&r.revenue_yoy!==undefined&&rev>0){revYoyN+=rev*r.revenue_yoy;revYoyD+=rev;}
+    const gv=r.glance_views||0; gviews+=gv;
+    if(r.glance_views_yoy!==null&&r.glance_views_yoy!==undefined&&gv>0){gvYoyN+=gv*r.glance_views_yoy;gvYoyD+=gv;}
+    unfilled+=r.unfilled_units||0;
+    if(r.oos_pct!==null&&r.oos_pct!==undefined) oosVals.push(r.oos_pct);
   });
-
-  tRows.forEach(r=>{
-    const gv = cleanNum(col(r,'Featured offer page views')) || 0;
-    gviews += gv;
-    const yoy = parseYoy(col(r,'Featured offer page views – Same Period Last Year (%)'), true);
-    if (yoy!==null && gv>0) { gvYoyNum+=gv*yoy; gvYoyDen+=gv; }
-  });
-
-  iRows.forEach(r=>{
-    unfilled += cleanNum(col(r,'Unfilled Customer Ordered Units')) || 0;
-    const oos = cleanNum(col(r,'Sourceable product OOS %'));
-    if (oos!==null) oosVals.push(oos);
-  });
-
-  const revenueYoy = revYoyDen>0 ? revYoyNum/revYoyDen : null;
-  const gviewsYoy = gvYoyDen>0 ? gvYoyNum/gvYoyDen : null;
-  const asp = units>0 ? revenue/units : 0;
-  const conv = gviews>0 ? (units/gviews)*100 : 0;
-  const avgOos = oosVals.length>0 ? oosVals.reduce((a,b)=>a+b,0)/oosVals.length : 0;
-
-  return { revenue, revenueYoy, units, asp, conv, gviews, gviewsYoy, unfilled, avgOos };
+  return {
+    revenue, revenueYoy:revYoyD>0?revYoyN/revYoyD:null,
+    units, asp:units>0?revenue/units:0,
+    conv:gviews>0?(units/gviews)*100:0,
+    gviews, gviewsYoy:gvYoyD>0?gvYoyN/gvYoyD:null,
+    unfilled, avgOos:oosVals.length>0?oosVals.reduce((a,b)=>a+b,0)/oosVals.length:0
+  };
 }
 
-// ─── SENTIMENT ENGINE ─────────────────────────────────────────
-// Returns: 'happy' | 'sad' | 'cry'
 function getSentiment(d) {
-  const revUp = d.revenueYoy !== null && d.revenueYoy > 0;
-  const revDown = d.revenueYoy !== null && d.revenueYoy < 0;
-  const gvUp = d.gviewsYoy !== null && d.gviewsYoy > 0;
-  const gvDown = d.gviewsYoy !== null && d.gviewsYoy < 0;
-  const supplyOk = d.avgOos <= 10 && d.unfilled <= 50;
-  const supplyBad = d.avgOos > 20 || d.unfilled > 200;
-  const supplyWarn = (d.avgOos > 10 || d.unfilled > 50) && !supplyBad;
-
-  // 😢 Crying: revenue down AND (traffic down OR big supply issue)
-  if (revDown && (gvDown || supplyBad)) return 'cry';
-  // 😢 Crying: revenue down AND multiple negatives
-  if (revDown && supplyBad) return 'cry';
-  // 😊 Happy: revenue up AND traffic up AND no supply issues
-  if (revUp && gvUp && supplyOk) return 'happy';
-  // 😊 Happy: revenue up AND traffic up (minor supply ok)
-  if (revUp && gvUp && !supplyBad) return 'happy';
-  // Everything else is 😐 Sad (mixed signals)
+  const revUp=d.revenueYoy!==null&&d.revenueYoy>0;
+  const revDown=d.revenueYoy!==null&&d.revenueYoy<0;
+  const gvUp=d.gviewsYoy!==null&&d.gviewsYoy>0;
+  const gvDown=d.gviewsYoy!==null&&d.gviewsYoy<0;
+  const supplyBad=d.avgOos>20||d.unfilled>200;
+  if(revDown&&(gvDown||supplyBad)) return 'cry';
+  if(revUp&&gvUp&&!supplyBad) return 'happy';
   return 'sad';
 }
 
-const SENTIMENT_CONFIG = {
-  happy: { emoji:'😊', label:'Happy', cls:'happy' },
-  sad:   { emoji:'😐', label:'Mixed', cls:'sad' },
-  cry:   { emoji:'😢', label:'Needs Attention', cls:'cry' }
+const SC = {
+  happy:{emoji:'😊',label:'Happy',cls:'happy'},
+  sad:{emoji:'😐',label:'Mixed',cls:'sad'},
+  cry:{emoji:'😢',label:'Needs Attention',cls:'cry'}
 };
 
-// ─── RENDER ───────────────────────────────────────────────────
 function buildDashboard() {
   renderSentimentBar();
   renderBrandCards();
   renderSupplyAlerts();
+  if(selectedBrand) renderDetailTab(selectedBrand,currentTab);
 }
 
 function renderSentimentBar() {
-  const counts = {happy:0, sad:0, cry:0};
-  BRANDS.forEach(br=>{
-    if (br.id==='OTHER') return;
-    const d = aggregateBrand(br.id);
-    if (d.revenue===0 && d.gviews===0) return;
+  const counts={happy:0,sad:0,cry:0};
+  BRAND_ORDER.forEach(id=>{
+    const d=aggregateBrand(id);
+    if(d.revenue===0&&d.gviews===0) return;
     counts[getSentiment(d)]++;
   });
-  document.getElementById('sentiment-bar').innerHTML = `
-    <div class="sentiment-pill happy">
-      <span class="sentiment-emoji">😊</span>
-      <span class="sentiment-count">${counts.happy}</span>
-      <span class="sentiment-label">Brands Happy</span>
-    </div>
-    <div class="sentiment-pill sad">
-      <span class="sentiment-emoji">😐</span>
-      <span class="sentiment-count">${counts.sad}</span>
-      <span class="sentiment-label">Brands Mixed</span>
-    </div>
-    <div class="sentiment-pill cry">
-      <span class="sentiment-emoji">😢</span>
-      <span class="sentiment-count">${counts.cry}</span>
-      <span class="sentiment-label">Need Attention</span>
-    </div>
+  document.getElementById('sentiment-bar').innerHTML=`
+    <div class="sentiment-pill happy"><span class="sentiment-emoji">😊</span><span class="sentiment-count">${counts.happy}</span><span class="sentiment-label">Brands Happy</span></div>
+    <div class="sentiment-pill sad"><span class="sentiment-emoji">😐</span><span class="sentiment-count">${counts.sad}</span><span class="sentiment-label">Brands Mixed</span></div>
+    <div class="sentiment-pill cry"><span class="sentiment-emoji">😢</span><span class="sentiment-count">${counts.cry}</span><span class="sentiment-label">Need Attention</span></div>
   `;
 }
 
 function renderBrandCards() {
-  const grid = document.getElementById('brand-grid');
-  grid.innerHTML = '';
-  BRANDS.forEach(br=>{
-    const d = aggregateBrand(br.id);
-    if (d.revenue===0 && d.gviews===0) return;
-
-    const sentiment = getSentiment(d);
-    const sc = SENTIMENT_CONFIG[sentiment];
-    const supplyClass = d.avgOos>20||d.unfilled>200?'show-red':d.avgOos>10||d.unfilled>50?'show-amber':'';
-    const supplyText = d.avgOos>10?`⚠️ OOS ${d.avgOos.toFixed(0)}%`:d.unfilled>50?`⚠️ ${Math.round(d.unfilled).toLocaleString()} unfilled`:'';
-
-    const card = document.createElement('div');
-    card.className = `brand-card ${sc.cls}`;
-    card.dataset.brandId = br.id;
-    card.onclick = () => selectBrand(br.id, card);
-    card.innerHTML = `
-      <div class="brand-card-accent" style="background:${br.color}"></div>
+  const grid=document.getElementById('brand-grid');
+  grid.innerHTML='';
+  BRAND_ORDER.forEach(id=>{
+    const d=aggregateBrand(id);
+    if(d.revenue===0&&d.gviews===0) return;
+    const s=getSentiment(d);
+    const sc=SC[s];
+    const color=BRAND_COLORS[id];
+    const label=BRAND_LABELS[id];
+    const supplyClass=d.avgOos>20||d.unfilled>200?'show-red':d.avgOos>10||d.unfilled>50?'show-amber':'';
+    const supplyText=d.avgOos>10?`⚠️ OOS ${d.avgOos.toFixed(0)}%`:d.unfilled>50?`⚠️ ${Math.round(d.unfilled).toLocaleString()} unfilled`:'';
+    const card=document.createElement('div');
+    card.className=`brand-card ${sc.cls}${selectedBrand===id?' selected':''}`;
+    card.onclick=()=>selectBrand(id,card);
+    card.innerHTML=`
+      <div class="brand-card-accent" style="background:${color}"></div>
       <div class="brand-sentiment-emoji">${sc.emoji}</div>
-      <div class="brand-card-name">${br.label}</div>
+      <div class="brand-card-name">${label}</div>
       <div class="brand-sentiment-label ${sc.cls}">${sc.label}</div>
       <div class="brand-metrics">
         <div class="bm-row"><span class="bm-label">Revenue</span><span class="bm-right"><span class="bm-value">${fmtCur(d.revenue)}</span>${fmtYoy(d.revenueYoy)}</span></div>
@@ -727,59 +391,50 @@ function renderBrandCards() {
   });
 }
 
-function selectBrand(brandId, cardEl) {
-  selectedBrand = brandId;
+function selectBrand(brandId,cardEl) {
+  selectedBrand=brandId;
   document.querySelectorAll('.brand-card').forEach(c=>c.classList.remove('selected'));
-  if (cardEl) cardEl.classList.add('selected');
-  const br = BRANDS.find(b=>b.id===brandId);
-  const d = aggregateBrand(brandId);
-  const sc = SENTIMENT_CONFIG[getSentiment(d)];
-  document.getElementById('detail-sentiment').textContent = sc.emoji;
-  document.getElementById('detail-name').textContent = br.label;
+  if(cardEl) cardEl.classList.add('selected');
+  const d=aggregateBrand(brandId);
+  const sc=SC[getSentiment(d)];
+  document.getElementById('detail-sentiment').textContent=sc.emoji;
+  document.getElementById('detail-name').textContent=BRAND_LABELS[brandId];
   document.getElementById('detail-panel').style.display='block';
-  renderDetailTab(brandId, currentTab);
+  renderDetailTab(brandId,currentTab);
   setTimeout(()=>document.getElementById('detail-panel').scrollIntoView({behavior:'smooth',block:'start'}),100);
 }
 
-function setTab(tab, btn) {
-  currentTab = tab;
+function setTab(tab,btn) {
+  currentTab=tab;
   document.querySelectorAll('.detail-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if (selectedBrand) renderDetailTab(selectedBrand, tab);
+  if(selectedBrand) renderDetailTab(selectedBrand,tab);
 }
 
-function renderDetailTab(brandId, tab) {
-  const sRows = getRows('sales').filter(r=>r._brand===brandId);
-  const tRows = getRows('traffic').filter(r=>r._brand===brandId);
-  const iRows = getRows('inventory').filter(r=>r._brand===brandId);
-  const d = aggregateBrand(brandId);
-
-  // KPI row
-  document.getElementById('kpi-row').innerHTML = `
+function renderDetailTab(brandId,tab) {
+  const rows=getRows(brandId);
+  const d=aggregateBrand(brandId);
+  document.getElementById('kpi-row').innerHTML=`
     <div class="kpi-card"><div class="kpi-label">Dispatched Revenue</div><div class="kpi-value c-blue">${fmtCur(d.revenue)}</div><div class="kpi-yoy">${fmtYoyText(d.revenueYoy)} vs last year</div></div>
     <div class="kpi-card"><div class="kpi-label">Glance Views</div><div class="kpi-value c-green">${fmtNum(d.gviews)}</div><div class="kpi-yoy">${fmtYoyText(d.gviewsYoy)} vs last year</div></div>
     <div class="kpi-card"><div class="kpi-label">Conversion Rate</div><div class="kpi-value c-amber">${d.conv.toFixed(2)}%</div><div class="kpi-yoy">Units ÷ Glance Views</div></div>
     <div class="kpi-card"><div class="kpi-label">ASP</div><div class="kpi-value c-text">${fmtCur(d.asp)}</div><div class="kpi-yoy">Revenue ÷ Units</div></div>
     <div class="kpi-card"><div class="kpi-label">Unfilled Orders</div><div class="kpi-value ${d.unfilled>50?'c-red':d.unfilled>20?'c-amber':'c-text'}">${Math.round(d.unfilled).toLocaleString()}</div><div class="kpi-yoy">Supply gap indicator</div></div>
   `;
-
-  const wrap = document.getElementById('table-wrap');
-
-  if (tab==='revenue') {
+  const wrap=document.getElementById('table-wrap');
+  if(tab==='revenue') {
     const m={};
-    sRows.forEach(r=>{
-      const k=r['ASIN']+'_'+r._market;
-      if(!m[k]) m[k]={asin:r['ASIN'],name:r['Product title'],market:r._market,rev:0,revYoy:null,units:0};
-      const rev=cleanNum(col(r,'Dispatched revenue'))||cleanNum(col(r,'Ordered revenue'))||0;
-      m[k].rev+=rev;
-      const yoy=parseYoy(col(r,'Dispatched Revenue – Same Period Last Year (%)'),false)??parseYoy(col(r,'Ordered Revenue – Same Period Last Year (%)'),false);
-      if(yoy!==null) m[k].revYoy=yoy;
-      m[k].units+=cleanNum(col(r,'Dispatched units'))||cleanNum(col(r,'Ordered units'))||0;
+    rows.forEach(r=>{
+      const k=r.asin+'_'+r.market;
+      if(!m[k]) m[k]={asin:r.asin,name:r.product_title,market:r.market,rev:0,revYoy:null,units:0};
+      m[k].rev+=r.dispatched_revenue||r.ordered_revenue||0;
+      if(r.revenue_yoy!==null) m[k].revYoy=r.revenue_yoy;
+      m[k].units+=r.dispatched_units||r.ordered_units||0;
     });
-    const rows=Object.values(m).sort((a,b)=>b.rev-a.rev).slice(0,10);
-    const maxR=rows[0]?.rev||1;
+    const top=Object.values(m).sort((a,b)=>b.rev-a.rev).slice(0,10);
+    const maxR=top[0]?.rev||1;
     wrap.innerHTML=buildTable(['#','ASIN','Product','Market','Revenue','YoY','Units'],
-      rows.map((r,i)=>`<tr>
+      top.map((r,i)=>`<tr>
         <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
         <td><div class="td-asin">${r.asin}</div></td>
         <td><span class="td-name" title="${r.name}">${r.name}</span></td>
@@ -788,21 +443,18 @@ function renderDetailTab(brandId, tab) {
         <td class="td-yoy">${fmtYoyText(r.revYoy)}</td>
         <td class="td-val">${Math.round(r.units).toLocaleString()}</td>
       </tr>`));
-
-  } else if (tab==='traffic') {
+  } else if(tab==='traffic') {
     const m={};
-    tRows.forEach(r=>{
-      const k=r['ASIN']+'_'+r._market;
-      if(!m[k]) m[k]={asin:r['ASIN'],name:r['Product title'],market:r._market,gv:0,gvYoy:null};
-      const gv=cleanNum(col(r,'Featured offer page views'))||0;
-      m[k].gv+=gv;
-      const yoy=parseYoy(col(r,'Featured offer page views – Same Period Last Year (%)'),true);
-      if(yoy!==null) m[k].gvYoy=yoy;
+    rows.forEach(r=>{
+      const k=r.asin+'_'+r.market;
+      if(!m[k]) m[k]={asin:r.asin,name:r.product_title,market:r.market,gv:0,gvYoy:null};
+      m[k].gv+=r.glance_views||0;
+      if(r.glance_views_yoy!==null) m[k].gvYoy=r.glance_views_yoy;
     });
-    const rows=Object.values(m).sort((a,b)=>b.gv-a.gv).slice(0,10);
-    const maxG=rows[0]?.gv||1;
+    const top=Object.values(m).sort((a,b)=>b.gv-a.gv).slice(0,10);
+    const maxG=top[0]?.gv||1;
     wrap.innerHTML=buildTable(['#','ASIN','Product','Market','Glance Views','YoY'],
-      rows.map((r,i)=>`<tr>
+      top.map((r,i)=>`<tr>
         <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
         <td><div class="td-asin">${r.asin}</div></td>
         <td><span class="td-name" title="${r.name}">${r.name}</span></td>
@@ -810,19 +462,17 @@ function renderDetailTab(brandId, tab) {
         <td class="td-val">${r.gv.toLocaleString()}<div class="bar-bg"><div class="bar-fg" style="width:${(r.gv/maxG*100).toFixed(1)}%"></div></div></td>
         <td class="td-yoy">${fmtYoyText(r.gvYoy)}</td>
       </tr>`));
-
-  } else if (tab==='conversion') {
-    const sm={};
-    sRows.forEach(r=>{const k=r['ASIN']+'_'+r._market;if(!sm[k])sm[k]=0;sm[k]+=cleanNum(col(r,'Dispatched units'))||cleanNum(col(r,'Ordered units'))||0;});
+  } else if(tab==='conversion') {
     const m={};
-    tRows.forEach(r=>{
-      const k=r['ASIN']+'_'+r._market;
-      if(!m[k]) m[k]={asin:r['ASIN'],name:r['Product title'],market:r._market,gv:0};
-      m[k].gv+=cleanNum(col(r,'Featured offer page views'))||0;
+    rows.forEach(r=>{
+      const k=r.asin+'_'+r.market;
+      if(!m[k]) m[k]={asin:r.asin,name:r.product_title,market:r.market,gv:0,units:0};
+      m[k].gv+=r.glance_views||0;
+      m[k].units+=r.dispatched_units||r.ordered_units||0;
     });
-    const rows=Object.values(m).filter(r=>r.gv>100).map(r=>({...r,units:sm[r.asin+'_'+r.market]||0,conv:r.gv>0?((sm[r.asin+'_'+r.market]||0)/r.gv)*100:0})).sort((a,b)=>b.conv-a.conv).slice(0,10);
+    const top=Object.values(m).filter(r=>r.gv>100).map(r=>({...r,conv:r.gv>0?(r.units/r.gv)*100:0})).sort((a,b)=>b.conv-a.conv).slice(0,10);
     wrap.innerHTML=buildTable(['#','ASIN','Product','Market','Conversion','Units','Glance Views'],
-      rows.map((r,i)=>`<tr>
+      top.map((r,i)=>`<tr>
         <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
         <td><div class="td-asin">${r.asin}</div></td>
         <td><span class="td-name" title="${r.name}">${r.name}</span></td>
@@ -831,18 +481,17 @@ function renderDetailTab(brandId, tab) {
         <td class="td-val">${Math.round(r.units).toLocaleString()}</td>
         <td class="td-val">${r.gv.toLocaleString()}</td>
       </tr>`));
-
-  } else if (tab==='asp') {
+  } else if(tab==='asp') {
     const m={};
-    sRows.forEach(r=>{
-      const k=r['ASIN']+'_'+r._market;
-      if(!m[k]) m[k]={asin:r['ASIN'],name:r['Product title'],market:r._market,rev:0,units:0};
-      m[k].rev+=cleanNum(col(r,'Dispatched revenue'))||cleanNum(col(r,'Ordered revenue'))||0;
-      m[k].units+=cleanNum(col(r,'Dispatched units'))||cleanNum(col(r,'Ordered units'))||0;
+    rows.forEach(r=>{
+      const k=r.asin+'_'+r.market;
+      if(!m[k]) m[k]={asin:r.asin,name:r.product_title,market:r.market,rev:0,units:0};
+      m[k].rev+=r.dispatched_revenue||r.ordered_revenue||0;
+      m[k].units+=r.dispatched_units||r.ordered_units||0;
     });
-    const rows=Object.values(m).filter(r=>r.units>0).map(r=>({...r,asp:r.rev/r.units})).sort((a,b)=>b.asp-a.asp).slice(0,10);
+    const top=Object.values(m).filter(r=>r.units>0).map(r=>({...r,asp:r.rev/r.units})).sort((a,b)=>b.asp-a.asp).slice(0,10);
     wrap.innerHTML=buildTable(['#','ASIN','Product','Market','ASP','Revenue','Units'],
-      rows.map((r,i)=>`<tr>
+      top.map((r,i)=>`<tr>
         <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
         <td><div class="td-asin">${r.asin}</div></td>
         <td><span class="td-name" title="${r.name}">${r.name}</span></td>
@@ -851,18 +500,16 @@ function renderDetailTab(brandId, tab) {
         <td class="td-val">${fmtCur(r.rev)}</td>
         <td class="td-val">${Math.round(r.units).toLocaleString()}</td>
       </tr>`));
-
-  } else if (tab==='supply') {
+  } else if(tab==='supply') {
     const m={};
-    iRows.forEach(r=>{
-      const k=r['ASIN']+'_'+r._market;
-      if(!m[k]) m[k]={asin:r['ASIN'],name:r['Product title'],market:r._market,oos:0,unfilled:0};
-      m[k].oos=cleanNum(col(r,'Sourceable product OOS %'))||0;
-      m[k].unfilled+=cleanNum(col(r,'Unfilled Customer Ordered Units'))||0;
+    rows.forEach(r=>{
+      const k=r.asin+'_'+r.market;
+      if(!m[k]) m[k]={asin:r.asin,name:r.product_title,market:r.market,oos:r.oos_pct||0,unfilled:0};
+      m[k].unfilled+=r.unfilled_units||0;
     });
-    const rows=Object.values(m).filter(r=>r.oos>0||r.unfilled>0).sort((a,b)=>b.unfilled-a.unfilled).slice(0,10);
-    wrap.innerHTML=buildTable(['#','ASIN','Product','Market','OOS %','Unfilled Orders'],
-      rows.map((r,i)=>`<tr>
+    const top=Object.values(m).filter(r=>r.oos>0||r.unfilled>0).sort((a,b)=>b.unfilled-a.unfilled).slice(0,10);
+    wrap.innerHTML=buildTable(['#','ASIN','Product','Market','OOS %','Unfilled'],
+      top.map((r,i)=>`<tr>
         <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
         <td><div class="td-asin">${r.asin}</div></td>
         <td><span class="td-name" title="${r.name}">${r.name}</span></td>
@@ -873,20 +520,15 @@ function renderDetailTab(brandId, tab) {
   }
 }
 
-function buildTable(headers, rows) {
-  return `<table class="data-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
-}
-
 function renderSupplyAlerts() {
-  const iRows = getRows('inventory');
-  const seen = new Set();
-  const alerts = [];
-  iRows.forEach(r=>{
-    const oos=cleanNum(col(r,'Sourceable product OOS %'))||0;
-    const uf=cleanNum(col(r,'Unfilled Customer Ordered Units'))||0;
-    if ((oos>10||uf>50)&&r['ASIN']) {
-      const k=r['ASIN']+'_'+r._market;
-      if(!seen.has(k)){seen.add(k);alerts.push({asin:r['ASIN'],name:r['Product title'],market:r._market,oos,uf});}
+  let rows=allRows;
+  if(currentMarket!=='ALL') rows=rows.filter(r=>r.market===currentMarket);
+  const seen=new Set(); const alerts=[];
+  rows.forEach(r=>{
+    const oos=r.oos_pct||0; const uf=r.unfilled_units||0;
+    if((oos>10||uf>50)&&r.asin){
+      const k=r.asin+'_'+r.market;
+      if(!seen.has(k)){seen.add(k);alerts.push({asin:r.asin,name:r.product_title,market:r.market,oos,uf});}
     }
   });
   alerts.sort((a,b)=>b.uf-a.uf);
@@ -894,7 +536,7 @@ function renderSupplyAlerts() {
   if(!alerts.length){g.innerHTML='<div class="empty">✅ No supply gap alerts this week</div>';return;}
   g.innerHTML=alerts.slice(0,16).map(a=>`
     <div class="supply-item">
-      <div class="si-asin">${a.asin}<span class="mp mp-tiny mp-${a.market}" style="font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;margin-left:4px;" class="mp-${a.market}">${a.market}</span></div>
+      <div class="si-asin">${a.asin} <span class="mp mp-${a.market}">${a.market}</span></div>
       <div class="si-name" title="${a.name}">${a.name}</div>
       <div class="si-stats">
         <div class="si-stat"><b style="color:${a.oos>20?'var(--red)':'var(--amber)'}">${a.oos.toFixed(1)}%</b> OOS</div>
@@ -904,47 +546,18 @@ function renderSupplyAlerts() {
   `).join('');
 }
 
-// ─── FORMATTING ───────────────────────────────────────────────
-function fmtCur(val) {
-  const v = val * FX[currency];
-  const sym = currency==='gbp'?'£':currency==='usd'?'$':'€';
-  if(v>=1000000) return sym+(v/1000000).toFixed(1)+'M';
-  if(v>=1000) return sym+(v/1000).toFixed(1)+'K';
-  return sym+v.toFixed(0);
+function buildTable(headers,rows){
+  return `<table class="data-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
 }
 
-function fmtNum(n) {
-  if(n>=1000000) return (n/1000000).toFixed(1)+'M';
-  if(n>=1000) return (n/1000).toFixed(0)+'K';
-  return Math.round(n).toLocaleString();
-}
-
-function fmtYoy(val) {
-  if(val===null||isNaN(val)) return '<span class="yoy yoy-na">n/a</span>';
-  const p=(val*100).toFixed(1);
-  const cls=val>0?'yoy-up':val<0?'yoy-down':'yoy-na';
-  const arr=val>0?'▲':val<0?'▼':'';
-  return `<span class="yoy ${cls}">${arr}${Math.abs(p)}%</span>`;
-}
-
-function fmtYoyText(val) {
-  if(val===null||isNaN(val)) return '<span style="color:var(--text3)">n/a</span>';
-  const p=(val*100).toFixed(1);
-  const col=val>0?'var(--green)':val<0?'var(--red)':'var(--text3)';
-  const arr=val>0?'▲':val<0?'▼':'';
-  return `<span style="color:${col};font-weight:700">${arr}${Math.abs(p)}%</span>`;
-}
-
-// ─── CONTROLS ────────────────────────────────────────────────
-function setMarket(m,btn) {
+function setMarket(m,btn){
   currentMarket=m;
   document.querySelectorAll('.market-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   buildDashboard();
-  if(selectedBrand) renderDetailTab(selectedBrand,currentTab);
 }
 
-function setCurrency(c) {
+function setCurrency(c){
   currency=c;
   ['eur','gbp','usd'].forEach(x=>document.getElementById('btn-'+x).classList.remove('active'));
   document.getElementById('btn-'+c).classList.add('active');
@@ -952,10 +565,34 @@ function setCurrency(c) {
   if(selectedBrand) renderDetailTab(selectedBrand,currentTab);
 }
 
-function showUpload() {
-  document.getElementById('dashboard-section').style.display='none';
-  document.getElementById('upload-section').style.display='flex';
+function fmtCur(val){
+  const v=val*FX[currency];
+  const sym=currency==='gbp'?'£':currency==='usd'?'$':'€';
+  if(v>=1000000) return sym+(v/1000000).toFixed(1)+'M';
+  if(v>=1000) return sym+(v/1000).toFixed(1)+'K';
+  return sym+v.toFixed(0);
 }
+function fmtNum(n){
+  if(n>=1000000) return (n/1000000).toFixed(1)+'M';
+  if(n>=1000) return (n/1000).toFixed(0)+'K';
+  return Math.round(n).toLocaleString();
+}
+function fmtYoy(val){
+  if(val===null||val===undefined||isNaN(val)) return '<span class="yoy yoy-na">n/a</span>';
+  const p=(val*100).toFixed(1);
+  const cls=val>0?'yoy-up':val<0?'yoy-down':'yoy-na';
+  const arr=val>0?'▲':val<0?'▼':'';
+  return `<span class="yoy ${cls}">${arr}${Math.abs(p)}%</span>`;
+}
+function fmtYoyText(val){
+  if(val===null||val===undefined||isNaN(val)) return '<span style="color:var(--text3)">n/a</span>';
+  const p=(val*100).toFixed(1);
+  const col=val>0?'var(--green)':val<0?'var(--red)':'var(--text3)';
+  const arr=val>0?'▲':val<0?'▼':'';
+  return `<span style="color:${col};font-weight:700">${arr}${Math.abs(p)}%</span>`;
+}
+
+init();
 </script>
 </body>
 </html>
