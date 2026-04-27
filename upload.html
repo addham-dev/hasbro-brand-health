@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- saved from url=(0047)file:///C:/Users/hayesa/Downloads/upload_2.html -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">  
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hasbro Brand Health — Data Upload</title>
-  <link href="./Hasbro Brand Health — Data Upload_files/css2" rel="stylesheet">
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
@@ -128,7 +128,7 @@
     <div class="login-icon">🔐</div>
     <div class="login-title">Admin Access</div>
     <div class="login-sub">Enter your password to access the data upload panel</div>
-    <input type="password" class="login-input" id="password-input" placeholder="Enter password" onkeydown="if(event.key===&#39;Enter&#39;)checkPassword()">
+    <input type="password" class="login-input" id="password-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPassword()">
     <button class="login-btn" onclick="checkPassword()">Sign In →</button>
     <div class="login-error" id="login-error">Incorrect password. Try again.</div>
   </div>
@@ -154,7 +154,7 @@
           <label class="input-label">Week End (Sunday)</label>
           <input type="date" class="date-input" id="week-end">
         </div>
-        <button style="padding:10px 20px;background:var(--blue-light);border:2px solid var(--border);border-radius:8px;font-family:&#39;Inter&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--blue-dark);cursor:pointer;" onclick="setCurrentWeek()">This Week</button>
+        <button style="padding:10px 20px;background:var(--blue-light);border:2px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;color:var(--blue-dark);cursor:pointer;" onclick="setCurrentWeek()">This Week</button>
       </div>
     </div>
 
@@ -162,26 +162,29 @@
     <div class="week-card">
       <div class="card-title">Report Files</div>
       <div class="upload-card-grid">
-        <div class="upload-card" id="card-sales" onclick="document.getElementById(&#39;file-sales&#39;).click()" ondragover="dOver(event,&#39;card-sales&#39;)" ondragleave="dLeave(&#39;card-sales&#39;)" ondrop="dDrop(event,&#39;sales&#39;)">
+        <div class="upload-card" id="card-sales" onclick="document.getElementById('file-sales').click()"
+          ondragover="dOver(event,'card-sales')" ondragleave="dLeave('card-sales')" ondrop="dDrop(event,'sales')">
           <div class="uc-icon">📊</div>
           <div class="uc-title">Sales Report</div>
           <div class="uc-sub" id="lbl-sales">CSV or Excel<br>EU5 markets, YoY ticked</div>
           <div class="uc-check">✅</div>
-          <input type="file" id="file-sales" accept=".csv,.xlsx" onchange="onFile(event,&#39;sales&#39;)">
+          <input type="file" id="file-sales" accept=".csv,.xlsx" onchange="onFile(event,'sales')">
         </div>
-        <div class="upload-card" id="card-traffic" onclick="document.getElementById(&#39;file-traffic&#39;).click()" ondragover="dOver(event,&#39;card-traffic&#39;)" ondragleave="dLeave(&#39;card-traffic&#39;)" ondrop="dDrop(event,&#39;traffic&#39;)">
+        <div class="upload-card" id="card-traffic" onclick="document.getElementById('file-traffic').click()"
+          ondragover="dOver(event,'card-traffic')" ondragleave="dLeave('card-traffic')" ondrop="dDrop(event,'traffic')">
           <div class="uc-icon">👁️</div>
           <div class="uc-title">Traffic Report</div>
           <div class="uc-sub" id="lbl-traffic">CSV or Excel<br>Glance Views, YoY ticked</div>
           <div class="uc-check">✅</div>
-          <input type="file" id="file-traffic" accept=".csv,.xlsx" onchange="onFile(event,&#39;traffic&#39;)">
+          <input type="file" id="file-traffic" accept=".csv,.xlsx" onchange="onFile(event,'traffic')">
         </div>
-        <div class="upload-card" id="card-inventory" onclick="document.getElementById(&#39;file-inventory&#39;).click()" ondragover="dOver(event,&#39;card-inventory&#39;)" ondragleave="dLeave(&#39;card-inventory&#39;)" ondrop="dDrop(event,&#39;inventory&#39;)">
+        <div class="upload-card" id="card-inventory" onclick="document.getElementById('file-inventory').click()"
+          ondragover="dOver(event,'card-inventory')" ondragleave="dLeave('card-inventory')" ondrop="dDrop(event,'inventory')">
           <div class="uc-icon">📦</div>
           <div class="uc-title">Inventory Report</div>
           <div class="uc-sub" id="lbl-inventory">CSV or Excel<br>OOS % &amp; Unfilled Orders</div>
           <div class="uc-check">✅</div>
-          <input type="file" id="file-inventory" accept=".csv,.xlsx" onchange="onFile(event,&#39;inventory&#39;)">
+          <input type="file" id="file-inventory" accept=".csv,.xlsx" onchange="onFile(event,'inventory')">
         </div>
       </div>
     </div>
@@ -189,7 +192,7 @@
     <!-- PROCESS -->
     <div class="process-card">
       <div class="card-title">Process &amp; Upload</div>
-      <button class="process-btn" id="process-btn" onclick="processAndUpload()" disabled="">
+      <button class="process-btn" id="process-btn" onclick="processAndUpload()" disabled>
         🚀 Process &amp; Push to Dashboard
       </button>
       <div class="log-area" id="log-area">
@@ -338,11 +341,28 @@ function parseVCFile(file) {
       reader.onload = e => {
         let text = e.target.result.replace(/^\uFEFF/,'');
         const lines = text.split('\n');
-        let hi = lines.findIndex(l=>/^ASIN[,"]/.test(l.trim()));
-        if (hi===-1) hi=lines.findIndex(l=>l.includes(',ASIN,')||l.startsWith('ASIN,'));
-        if (hi===-1) hi=1;
-        const result = Papa.parse(lines.slice(hi).join('\n'),{header:true,skipEmptyLines:true,dynamicTyping:false,transformHeader:h=>normaliseKey(h)});
-        resolve(result.data.filter(r=>r['ASIN']&&r['ASIN'].trim().length>5));
+        // Find header row — the one that starts with ASIN
+        let hi = -1;
+        for (let i=0; i<Math.min(lines.length,10); i++) {
+          const t = lines[i].trim().replace(/^\uFEFF/,'');
+          if (t.startsWith('ASIN,') || t === 'ASIN') { hi = i; break; }
+        }
+        if (hi === -1) hi = 1;
+        const csvText = lines.slice(hi).join('\n');
+        const result = Papa.parse(csvText, {header:true, skipEmptyLines:true, dynamicTyping:false});
+        // Find actual ASIN key (handles BOM/whitespace variants)
+        const fields = result.meta.fields || [];
+        const asinKey = fields.find(f => f.trim().replace(/^\uFEFF/,'') === 'ASIN') || 'ASIN';
+        const rows = result.data
+          .filter(r => r[asinKey] && String(r[asinKey]).trim().length > 5)
+          .map(r => {
+            const o = {};
+            Object.keys(r).forEach(k => { o[normaliseKey(k.replace(/^\uFEFF/,''))] = r[k]; });
+            return o;
+          });
+        console.log('CSV parsed:', rows.length, 'rows, hi=', hi, 'asinKey=', asinKey);
+        if (rows.length > 0) console.log('Sample keys:', Object.keys(rows[0]).slice(0,6));
+        resolve(rows);
       };
       reader.readAsText(file,'UTF-8');
     }
@@ -595,6 +615,5 @@ async function deleteWeek(weekStart) {
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 </script>
-
-
-</body></html>
+</body>
+</html>
