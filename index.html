@@ -341,11 +341,28 @@ function parseVCFile(file) {
       reader.onload = e => {
         let text = e.target.result.replace(/^\uFEFF/,'');
         const lines = text.split('\n');
-        let hi = lines.findIndex(l=>/^ASIN[,"]/.test(l.trim()));
-        if (hi===-1) hi=lines.findIndex(l=>l.includes(',ASIN,')||l.startsWith('ASIN,'));
-        if (hi===-1) hi=1;
-        const result = Papa.parse(lines.slice(hi).join('\n'),{header:true,skipEmptyLines:true,dynamicTyping:false,transformHeader:h=>normaliseKey(h)});
-        resolve(result.data.filter(r=>r['ASIN']&&r['ASIN'].trim().length>5));
+        // Find header row — the one that starts with ASIN
+        let hi = -1;
+        for (let i=0; i<Math.min(lines.length,10); i++) {
+          const t = lines[i].trim().replace(/^\uFEFF/,'');
+          if (t.startsWith('ASIN,') || t === 'ASIN') { hi = i; break; }
+        }
+        if (hi === -1) hi = 1;
+        const csvText = lines.slice(hi).join('\n');
+        const result = Papa.parse(csvText, {header:true, skipEmptyLines:true, dynamicTyping:false});
+        // Find actual ASIN key (handles BOM/whitespace variants)
+        const fields = result.meta.fields || [];
+        const asinKey = fields.find(f => f.trim().replace(/^\uFEFF/,'') === 'ASIN') || 'ASIN';
+        const rows = result.data
+          .filter(r => r[asinKey] && String(r[asinKey]).trim().length > 5)
+          .map(r => {
+            const o = {};
+            Object.keys(r).forEach(k => { o[normaliseKey(k.replace(/^\uFEFF/,''))] = r[k]; });
+            return o;
+          });
+        console.log('CSV parsed:', rows.length, 'rows, hi=', hi, 'asinKey=', asinKey);
+        if (rows.length > 0) console.log('Sample keys:', Object.keys(rows[0]).slice(0,6));
+        resolve(rows);
       };
       reader.readAsText(file,'UTF-8');
     }
