@@ -502,10 +502,10 @@ async function processAndUpload() {
       const ordRev = cleanNum(col(r,'Ordered revenue'));
       const dispUnits = cleanNum(col(r,'Dispatched units'));
       const ordUnits = cleanNum(col(r,'Ordered units'));
-      const revYoy = parseYoy(col(r,'Dispatched Revenue – Same Period Last Year (%)'),false)
-                  ?? parseYoy(col(r,'Ordered Revenue – Same Period Last Year (%)'),false);
-      const unitsYoy = parseYoy(col(r,'Dispatched Units – Same Period Last Year (%)'),false)
-                    ?? parseYoy(col(r,'Ordered Units – Same Period Last Year (%)'),false);
+      const revYoy = parseYoy(col(r,'Dispatched Revenue – Same Period Last Year (%)'),true)
+                  ?? parseYoy(col(r,'Ordered Revenue – Same Period Last Year (%)'),true);
+      const unitsYoy = parseYoy(col(r,'Dispatched Units – Same Period Last Year (%)'),true)
+                    ?? parseYoy(col(r,'Ordered Units – Same Period Last Year (%)'),true);
 
       rows.push({
         week_start: weekStart,
