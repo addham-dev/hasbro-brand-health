@@ -305,4 +305,258 @@ function parseVCFile(file) {
         let hi=-1;
         for(let i=0;i<Math.min(lines.length,10);i++){
           const t=lines[i].trim().replace(/^\uFEFF/,'');
-          if(t.startsWith('ASIN,')||t==='ASIN'){hi
+          if(t.startsWith('ASIN,')||t==='ASIN'){hi=i;break;}
+        }
+        if(hi===-1) hi=1;
+        const result=Papa.parse(lines.slice(hi).join('\n'),{header:true,skipEmptyLines:true,dynamicTyping:false});
+        const fields=result.meta.fields||[];
+        const asinKey=fields.find(f=>f.trim().replace(/^\uFEFF/,'')==='ASIN')||'ASIN';
+        const rows=result.data
+          .filter(r=>r[asinKey]&&String(r[asinKey]).trim().length>5)
+          .map(r=>{
+            const o={};
+            Object.keys(r).forEach(k=>{o[normaliseKey(k.replace(/^\uFEFF/,''))]=r[k];});
+            return o;
+          });
+        resolve(rows);
+      };
+      reader.readAsText(file,'UTF-8');
+    }
+  });
+}
+
+function cleanNum(v) {
+  if(v===null||v===undefined||v==='') return null;
+  if(typeof v==='number') return isNaN(v)?null:v;
+  // Strip ALL non-numeric characters except dot and minus
+  const s=String(v).replace(/[^0-9.\-]/g,'').trim();
+  if(s===''||s==='-') return null;
+  const n=parseFloat(s);
+  return isNaN(n)?null:n;
+}
+
+function parseYoy(v, isPercentStr) {
+  if(v===null||v===undefined||v===''||v==='-') return null;
+  let n;
+  if(isPercentStr) {
+    const s=String(v).replace(/,/g,'').replace(/%/g,'').trim();
+    if(s===''||s==='nan') return null;
+    n=parseFloat(s)/100;
+  } else {
+    n=typeof v==='number'?v:parseFloat(String(v).replace(/,/g,'').trim());
+  }
+  if(isNaN(n)) return null;
+  // Exclude new products (no prior year = -100%) and extreme values
+  if(n<=-0.99) return null;
+  if(Math.abs(n)>10) return null;
+  return n;
+}
+
+function col(row, name) {
+  if(row[name]!==undefined) return row[name];
+  const norm=name.replace(/[-\u2013\u2014\u2212]/g,'–').toLowerCase();
+  for(const k of Object.keys(row)){
+    if(k.replace(/[-\u2013\u2014\u2212]/g,'–').toLowerCase()===norm) return row[k];
+  }
+  return undefined;
+}
+
+function log(msg,type='') {
+  const area=document.getElementById('log-area');
+  const line=document.createElement('span');
+  line.className='log-line '+type;
+  line.textContent=new Date().toLocaleTimeString('en-GB')+' → '+msg;
+  area.appendChild(line);
+  area.scrollTop=area.scrollHeight;
+}
+
+async function processAndUpload() {
+  const weekStart=document.getElementById('week-start').value;
+  const weekEnd=document.getElementById('week-end').value;
+  if(!weekStart||!weekEnd){alert('Please set the reporting week dates first.');return;}
+
+  document.getElementById('overlay').classList.add('on');
+  document.getElementById('log-area').innerHTML='';
+  log('Starting process...','info');
+
+  try {
+    document.getElementById('overlay-sub').textContent='Reading Sales report...';
+    log('Reading Sales report...');
+    await sleep(30);
+    const salesRaw=await parseVCFile(files.sales);
+    log(`✓ Sales: ${salesRaw.length} total rows`,'ok');
+
+    document.getElementById('overlay-sub').textContent='Reading Traffic report...';
+    log('Reading Traffic report...');
+    await sleep(30);
+    const trafficRaw=await parseVCFile(files.traffic);
+    log(`✓ Traffic: ${trafficRaw.length} total rows`,'ok');
+
+    document.getElementById('overlay-sub').textContent='Reading Inventory report...';
+    log('Reading Inventory report...');
+    await sleep(30);
+    const invRaw=await parseVCFile(files.inventory);
+    log(`✓ Inventory: ${invRaw.length} total rows`,'ok');
+
+    const sales=salesRaw.filter(r=>EU5.includes(String(col(r,'Store code')||'').trim().toUpperCase()));
+    const traffic=trafficRaw.filter(r=>EU5.includes(String(col(r,'Store code')||'').trim().toUpperCase()));
+    const inv=invRaw.filter(r=>EU5.includes(String(col(r,'Store code')||'').trim().toUpperCase()));
+    log(`EU5 filter: ${sales.length} sales, ${traffic.length} traffic, ${inv.length} inventory`,'info');
+
+    document.getElementById('overlay-sub').textContent='Joining data...';
+    log('Joining traffic data...');
+    const trafficMap={};
+    traffic.forEach(r=>{
+      const k=String(r['ASIN']).trim()+'_'+String(col(r,'Store code')||'').trim().toUpperCase();
+      if(!trafficMap[k]) trafficMap[k]={gviews:0,gviewsYoy:null};
+      trafficMap[k].gviews+=cleanNum(col(r,'Featured offer page views'))||0;
+      const yoy=parseYoy(col(r,'Featured offer page views – Same Period Last Year (%)'),true);
+      if(yoy!==null) trafficMap[k].gviewsYoy=yoy;
+    });
+
+    const invMap={};
+    inv.forEach(r=>{
+      const k=String(r['ASIN']).trim()+'_'+String(col(r,'Store code')||'').trim().toUpperCase();
+      if(!invMap[k]) invMap[k]={oos:0,unfilled:0};
+      invMap[k].oos=cleanNum(col(r,'Sourceable product OOS %'))||0;
+      invMap[k].unfilled+=cleanNum(col(r,'Unfilled Customer Ordered Units'))||0;
+    });
+
+    log('Classifying brands & building rows...');
+    const rows=[];
+    sales.forEach(r=>{
+      const asin=String(r['ASIN']).trim();
+      const market=String(col(r,'Store code')||'').trim().toUpperCase();
+      const k=asin+'_'+market;
+      const t=trafficMap[k]||{gviews:0,gviewsYoy:null};
+      const iv=invMap[k]||{oos:0,unfilled:0};
+
+      const dispRev=cleanNum(col(r,'Dispatched revenue'));
+      const ordRev=cleanNum(col(r,'Ordered revenue'));
+      const dispUnits=cleanNum(col(r,'Dispatched units'));
+      const ordUnits=cleanNum(col(r,'Ordered units'));
+
+      // KEY FIX: Sales CSV uses percent strings like "174.64%" — isPercentStr=true
+      const revYoy=parseYoy(col(r,'Dispatched Revenue – Same Period Last Year (%)'),true)
+               ??parseYoy(col(r,'Ordered Revenue – Same Period Last Year (%)'),true);
+      const unitsYoy=parseYoy(col(r,'Dispatched Units – Same Period Last Year (%)'),true)
+                 ??parseYoy(col(r,'Ordered Units – Same Period Last Year (%)'),true);
+
+      rows.push({
+        week_start:weekStart,
+        asin,
+        product_title:String(col(r,'Product title')||'').trim().substring(0,500),
+        brand_raw:String(col(r,'Brand')||'').trim(),
+        brand_classified:classifyBrand(col(r,'Product title'),col(r,'Brand')),
+        market,
+        dispatched_revenue:dispRev,
+        ordered_revenue:ordRev,
+        dispatched_units:dispUnits?Math.round(dispUnits):null,
+        ordered_units:ordUnits?Math.round(ordUnits):null,
+        revenue_yoy:revYoy,
+        units_yoy:unitsYoy,
+        glance_views:t.gviews?Math.round(t.gviews):null,
+        glance_views_yoy:t.gviewsYoy,
+        oos_pct:iv.oos,
+        unfilled_units:Math.round(iv.unfilled)
+      });
+    });
+    log(`✓ Built ${rows.length} rows`,'ok');
+
+    document.getElementById('overlay-sub').textContent='Clearing existing week data...';
+    log(`Clearing existing data for week ${weekStart}...`);
+    const delRes=await fetch(`${SUPABASE_URL}/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}`,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+    });
+    if(!delRes.ok) throw new Error('Failed to clear existing data: '+delRes.status);
+    log('✓ Cleared existing data','ok');
+
+    document.getElementById('overlay-sub').textContent='Uploading to Supabase...';
+    const BATCH=500;
+    let uploaded=0;
+    for(let i=0;i<rows.length;i+=BATCH){
+      const batch=rows.slice(i,i+BATCH);
+      const res=await fetch(`${SUPABASE_URL}/rest/v1/brand_health_snapshots`,{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'apikey':SUPABASE_KEY,
+          'Authorization':`Bearer ${SUPABASE_KEY}`,
+          'Prefer':'return=minimal'
+        },
+        body:JSON.stringify(batch)
+      });
+      if(!res.ok){const err=await res.text();throw new Error(`Upload failed at row ${i}: ${err}`);}
+      uploaded+=batch.length;
+      document.getElementById('overlay-progress').textContent=`${uploaded} / ${rows.length} rows`;
+      log(`Uploaded ${uploaded}/${rows.length} rows...`);
+    }
+
+    await fetch(`${SUPABASE_URL}/rest/v1/brand_health_weeks`,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_KEY,
+        'Authorization':`Bearer ${SUPABASE_KEY}`,
+        'Prefer':'resolution=merge-duplicates'
+      },
+      body:JSON.stringify({
+        week_start:weekStart,
+        week_label:formatDate(weekStart)+' – '+formatDate(weekEnd)
+      })
+    });
+
+    document.getElementById('overlay').classList.remove('on');
+    log(`✅ Done! ${rows.length} rows uploaded for week ${weekStart}`,'ok');
+    log('Dashboard will now show updated data.','ok');
+    loadHistory();
+
+  } catch(err) {
+    document.getElementById('overlay').classList.remove('on');
+    log('❌ Error: '+err.message,'err');
+    console.error(err);
+  }
+}
+
+function formatDate(d) {
+  const parts=d.split('-');
+  return parts[2]+'/'+parts[1]+'/'+parts[0];
+}
+
+async function loadHistory() {
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/brand_health_weeks?select=*&order=week_start.desc&limit=10`,{
+    headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+  });
+  const weeks=await res.json();
+  const tbody=document.getElementById('history-tbody');
+  if(!weeks.length){
+    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">No uploads yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML=weeks.map(w=>`
+    <tr>
+      <td>${w.week_label||w.week_start}</td>
+      <td>${new Date(w.uploaded_at).toLocaleString('en-GB')}</td>
+      <td>—</td>
+      <td><button class="del-btn" onclick="deleteWeek('${w.week_start}')">Delete</button></td>
+    </tr>
+  `).join('');
+}
+
+async function deleteWeek(weekStart) {
+  if(!confirm(`Delete all data for week ${weekStart}?`)) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}`,{
+    method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+  });
+  await fetch(`${SUPABASE_URL}/rest/v1/brand_health_weeks?week_start=eq.${weekStart}`,{
+    method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+  });
+  log(`Deleted data for week ${weekStart}`,'info');
+  loadHistory();
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+</script>
+</body>
+</html>
