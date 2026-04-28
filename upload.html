@@ -372,8 +372,10 @@ function parseVCFile(file) {
 function cleanNum(v) {
   if (v===null||v===undefined||v==='') return null;
   if (typeof v==='number') return isNaN(v)?null:v;
-  const s = String(v).replace(/[€£$,\s%]/g,'').trim();
-  if (s===''||s.toLowerCase()==='nan'||s==='-') return null;
+  // Strip ALL non-numeric characters except dot and minus
+  // This handles €, £, $, commas, spaces and any other currency symbols
+  const s = String(v).replace(/[^0-9.\-]/g,'').trim();
+  if (s===''||s==='-') return null;
   const n = parseFloat(s);
   return isNaN(n)?null:n;
 }
@@ -389,8 +391,21 @@ function parseYoy(v, isPercentStr) {
     n = typeof v==='number'?v:parseFloat(String(v).replace(/,/g,'').trim());
   }
   if (isNaN(n)) return null;
+  // Exclude new products (no prior year = -100%) and extreme values
+  if (n <= -0.99) return null;
   if (Math.abs(n)>YOY_CAP) return null;
   return n;
+}
+
+function cleanRevenueStr(v) {
+  // Strip non-ASCII characters (€, £, $) and commas robustly
+  if (v===null||v===undefined||v==='') return null;
+  if (typeof v==='number') return isNaN(v)?null:v;
+  // Remove any character that isn't a digit, dot, minus or comma
+  const s = String(v).replace(/[^0-9.,\-]/g,'').replace(/,/g,'').trim();
+  if (s===''||s==='-') return null;
+  const n = parseFloat(s);
+  return isNaN(n)?null:n;
 }
 
 function col(row, name) {
