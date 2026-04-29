@@ -544,6 +544,7 @@ function aggregateBrand(brandId) {
     });
     if(ads.ad_revenue===0&&ads.ad_spend===0) ads=null;
   }
+  if(brandId==='GAMES') console.log('GAMES ads debug:', JSON.stringify(adsData['GAMES']), 'result:', ads);
   return{revenue,revenueYoy:revYoyD>0?revYoyN/revYoyD:null,units,asp,conv,gviews,gviewsYoy:gvYoyD>0?gvYoyN/gvYoyD:null,unfilled,avgOos,repeatRate,ltv,loyaltyQuarter:loyalty?.quarter,ads};
 }
 
