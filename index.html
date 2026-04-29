@@ -230,8 +230,7 @@
         <button class="rca-tab active" onclick="setTab('revenue',this)">Revenue</button>
         <button class="rca-tab" onclick="setTab('traffic',this)">Traffic</button>
         <button class="rca-tab" onclick="setTab('conversion',this)">Conversion</button>
-        <button class="rca-tab" onclick="setTab('supply',this)">Supply Gap</button>
-        <button class="rca-tab" onclick="setTab('loyalty',this)">Loyalty & LTV</button>
+        <button class="rca-tab" onclick="setTab('supply',this)">Supply &amp; OOS</button>
         <button class="rca-tab" onclick="setTab('adopp',this)">Ad Opportunities</button>
       </div>
     </div>
@@ -341,7 +340,7 @@ function getSentiment(d) {
 const SC={happy:{emoji:'😊',label:'Happy',cls:'happy'},sad:{emoji:'😐',label:'Mixed',cls:'sad'},cry:{emoji:'😢',label:'Needs Attention',cls:'cry'}};
 
 function isAdOpportunity(d) {
-  return d.asp>20&&d.conv<5&&d.gviews>5000&&d.avgOos<10;
+  return d.asp>8&&d.conv<10&&d.gviews>500&&d.avgOos<20;
 }
 
 // ─── BUILD DASHBOARD ─────────────────────────────────────────
@@ -442,7 +441,7 @@ function renderRCA(brandId,tab) {
     <div class="kpi-card"><div class="kpi-label">Revenue</div><div class="kpi-value c-blue">${fmtCur(d.revenue)}</div><div class="kpi-yoy">${fmtYoyText(d.revenueYoy)} vs last year</div></div>
     <div class="kpi-card"><div class="kpi-label">Glance Views</div><div class="kpi-value c-green">${fmtNum(d.gviews)}</div><div class="kpi-yoy">${fmtYoyText(d.gviewsYoy)} vs last year</div></div>
     <div class="kpi-card"><div class="kpi-label">Conversion Rate</div><div class="kpi-value c-amber">${d.conv.toFixed(2)}%</div><div class="kpi-yoy">Units ÷ Glance Views</div></div>
-    <div class="kpi-card"><div class="kpi-label">Root Cause</div><div class="kpi-value c-text" style="font-size:14px;line-height:1.3;margin-top:4px;">${d.unfilled>200||d.avgOos>20?'<span style="color:var(--red)">⚠️ Supply Issue</span>':d.conv<3&&d.gviews>5000?'<span style="color:var(--amber)">👁️ Low Conversion</span>':d.revenueYoy!==null&&d.revenueYoy<0?'<span style="color:var(--red)">📉 Revenue Down</span>':'<span style="color:var(--green)">✅ On Track</span>'}</div><div class="kpi-yoy">Unfilled: ${Math.round(d.unfilled)} · OOS: ${d.avgOos.toFixed(1)}%</div></div>
+    <div class="kpi-card"><div class="kpi-label">Root Cause</div><div class="kpi-value c-text" style="font-size:14px;line-height:1.3;margin-top:4px;">${d.unfilled>200||d.avgOos>20?`<span style="color:var(--red)">⚠️ Supply Issue</span>`:(d.conv<3&&d.gviews>5000)?`<span style="color:var(--amber)">👁️ Low Conversion</span>`:(d.revenueYoy!==null&&d.revenueYoy<0)?`<span style="color:var(--red)">📉 Revenue Down</span>`:`<span style="color:var(--green)">✅ On Track</span>`}</div><div class="kpi-yoy">Unfilled: ${Math.round(d.unfilled)} · OOS: ${d.avgOos.toFixed(1)}%</div></div>
   `;
   const wrap=document.getElementById('table-wrap');
 
@@ -507,10 +506,6 @@ function renderRCA(brandId,tab) {
   } else if(tab==='adopp') {
     const m=buildAsinMap(rows,r=>({rev:r.dispatched_revenue||r.ordered_revenue||0,units:r.dispatched_units||r.ordered_units||0,gv:r.glance_views||0,oos:r.oos_pct||0}));
     // Ad opportunity = high ASP + low conversion + decent traffic + in stock
-    const opps=Object.values(m).filter(r=>r.gv>100).map(r=>({
-      ...r,
-      asp:r.units>0?r.rev/r.units:0,
-      conv:r.gv>0?(r.units/r.gv)*100:0
     const opps=Object.values(m).filter(r=>r.gv>50).map(r=>({
       ...r,
       asp:r.units>0?r.rev/r.units:0,
