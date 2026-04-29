@@ -694,6 +694,38 @@ function logLoyalty(msg, type='') {
   area.scrollTop = area.scrollHeight;
 }
 
+
+// Dedicated parser for loyalty CSV (starts with Brand, not ASIN)
+function parseLoyaltyFile(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      let text = e.target.result.replace(/^\uFEFF/, '');
+      const lines = text.split('\n');
+      // Find header row — starts with Brand,
+      let hi = -1;
+      for (let i = 0; i < Math.min(lines.length, 10); i++) {
+        const t = lines[i].trim().replace(/^\uFEFF/, '');
+        if (t.startsWith('Brand,') || t.startsWith('"Brand"')) {
+          hi = i; break;
+        }
+      }
+      if (hi === -1) hi = 1;
+      const result = Papa.parse(lines.slice(hi).join('\n'), {
+        header: true, skipEmptyLines: true, dynamicTyping: false
+      });
+      const rows = result.data.filter(r => {
+        const brand = r['Brand'] || r[Object.keys(r)[0]] || '';
+        return brand.trim().length > 0;
+      });
+      console.log('Loyalty parser: found', rows.length, 'rows, hi=', hi);
+      if (rows.length > 0) console.log('Sample keys:', Object.keys(rows[0]).slice(0, 5));
+      resolve(rows);
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
 async function uploadLoyalty() {
   const quarter = document.getElementById('quarter-select').value;
   const file = files.loyalty;
@@ -704,15 +736,20 @@ async function uploadLoyalty() {
   logLoyalty('Reading repeat purchase file...', 'info');
 
   try {
-    const raw = await parseVCFile(file);
+    // Loyalty CSV has Brand, not ASIN as first column — use dedicated parser
+    const raw = await parseLoyaltyFile(file);
     logLoyalty(`Parsed ${raw.length} brand rows`, 'ok');
+
+    if (raw.length === 0) throw new Error('No rows found — check file is the GB Repeat Purchase Behaviour CSV');
 
     // Find correct column keys
     const sampleKeys = raw.length > 0 ? Object.keys(raw[0]) : [];
+    logLoyalty(`Columns found: ${sampleKeys.slice(0,4).join(', ')}`, 'info');
     const totalCustKey = sampleKeys.find(k => k.toLowerCase().includes('unique customer'));
     const repeatCustKey = sampleKeys.find(k => k.toLowerCase().includes('repeat customer count: count'));
     const repeatSalesKey = sampleKeys.find(k => k.toLowerCase().includes('repeat ordered product sales: sales'));
-    const brandKey = sampleKeys.find(k => k.toLowerCase() === 'brand') || 'Brand';
+    const brandKey = sampleKeys.find(k => k.toLowerCase().trim() === 'brand') || 'Brand';
+    logLoyalty(`Brand key: ${brandKey}, Total cust key: ${totalCustKey}`, 'info');
 
     // Aggregate by our brand groups
     const agg = {};
