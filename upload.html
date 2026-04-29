@@ -3,610 +3,775 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hasbro EU Brand Health</title>
+  <title>Hasbro Brand Health — Data Upload</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
-      --blue:#009CDE;--blue-dark:#0077A8;--blue-light:#E5F6FF;
-      --bg:#F0F8FC;--white:#fff;--text:#003A54;--text2:#5A8DA0;
-      --text3:#A0C8D8;--border:#D0EAF5;
-      --green:#00B388;--green-bg:#E5FFF6;
-      --red:#E8423F;--red-bg:#FFF0F0;
-      --amber:#F5A623;--amber-bg:#FFF8EC;
-      --purple:#9B59B6;--purple-bg:#F5EEF8;
+      --blue:#009CDE; --blue-dark:#0077A8; --blue-light:#E5F6FF;
+      --bg:#F0F8FC; --white:#fff; --text:#003A54; --text2:#5A8DA0;
+      --text3:#A0C8D8; --border:#D0EAF5;
+      --green:#00B388; --green-bg:#E5FFF6;
+      --red:#E8423F; --red-bg:#FFF0F0;
+      --amber:#F5A623; --amber-bg:#FFF8EC;
       --shadow:0 2px 16px rgba(0,156,222,0.08);
-      --shadow-lg:0 8px 32px rgba(0,156,222,0.15);
     }
     *{margin:0;padding:0;box-sizing:border-box;}
     body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
 
-    header{background:var(--blue);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:68px;box-shadow:0 4px 20px rgba(0,156,222,0.25);}
-    .logo{display:flex;align-items:center;gap:14px;}
-    .logo-mark{width:40px;height:40px;background:white;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--blue);}
-    .logo-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:white;}
-    .logo-sub{font-size:10px;color:rgba(255,255,255,0.7);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;}
-    .header-right{display:flex;align-items:center;gap:14px;}
-    .week-badge{background:rgba(255,255,255,0.15);border-radius:6px;padding:6px 12px;font-family:'DM Mono',monospace;font-size:11px;color:white;}
-    .currency-toggle{display:flex;background:rgba(255,255,255,0.15);border-radius:6px;overflow:hidden;}
-    .currency-btn{padding:6px 12px;border:none;background:transparent;color:rgba(255,255,255,0.7);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;}
-    .currency-btn.active{background:white;color:var(--blue);}
+    header{background:var(--blue-dark);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:64px;}
+    .logo{display:flex;align-items:center;gap:12px;}
+    .logo-mark{width:36px;height:36px;background:white;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--blue);}
+    .logo-text{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:white;}
+    .logo-sub{font-size:10px;color:rgba(255,255,255,0.6);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;}
+    .admin-badge{background:rgba(255,255,255,0.15);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:white;letter-spacing:1px;}
 
-    .filter-bar{background:white;padding:10px 40px;display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--border);box-shadow:var(--shadow);flex-wrap:wrap;}
-    .filter-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
-    .market-tabs,.sort-tabs{display:flex;gap:4px;}
-    .market-tab,.sort-tab{padding:6px 14px;border-radius:6px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;}
-    .market-tab.active,.sort-tab.active{background:var(--blue);color:white;border-color:var(--blue);}
-    .divider{width:1px;height:24px;background:var(--border);}
-    .week-select{padding:6px 12px;border-radius:6px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;outline:none;}
+    /* LOGIN */
+    #login-section{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 64px);}
+    .login-box{background:white;border-radius:16px;padding:40px;width:360px;box-shadow:var(--shadow);border:2px solid var(--border);text-align:center;}
+    .login-icon{font-size:48px;margin-bottom:16px;}
+    .login-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;}
+    .login-sub{font-size:13px;color:var(--text2);margin-bottom:24px;}
+    .login-input{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:12px;transition:border-color 0.2s;}
+    .login-input:focus{border-color:var(--blue);}
+    .login-btn{width:100%;background:var(--blue);color:white;border:none;border-radius:8px;padding:12px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+    .login-btn:hover{background:var(--blue-dark);}
+    .login-error{color:var(--red);font-size:12px;margin-top:8px;display:none;}
 
-    main{padding:24px 40px;max-width:1600px;margin:0 auto;display:grid;gap:28px;}
+    /* MAIN UPLOAD */
+    #main-section{display:none;}
+    main{padding:32px 40px;max-width:1000px;margin:0 auto;display:grid;gap:24px;}
 
-    .section-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
-    .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+    .page-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:var(--text);}
+    .page-sub{font-size:14px;color:var(--text2);margin-top:4px;}
 
-    /* SENTIMENT BAR */
-    .sentiment-bar{display:flex;gap:16px;flex-wrap:wrap;}
-    .sentiment-pill{display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:50px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;border:2px solid;}
-    .sentiment-pill.happy{background:var(--green-bg);border-color:var(--green);color:var(--green);}
-    .sentiment-pill.sad{background:var(--amber-bg);border-color:var(--amber);color:var(--amber);}
-    .sentiment-pill.cry{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+    /* WEEK SELECTOR */
+    .week-card{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);border:2px solid var(--border);}
+    .card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;}
+    .week-inputs{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;}
+    .input-group{display:flex;flex-direction:column;gap:6px;}
+    .input-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;}
+    .date-input{padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:13px;color:var(--text);outline:none;transition:border-color 0.2s;}
+    .date-input:focus{border-color:var(--blue);}
 
-    /* BRAND GRID */
-    .brand-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
-    .brand-card{background:white;border-radius:14px;padding:18px;box-shadow:var(--shadow);border:2px solid var(--border);cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;}
-    .brand-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-3px);}
-    .brand-card.selected{box-shadow:var(--shadow-lg);border-width:3px;}
-    .brand-card.happy{border-color:var(--green);}
-    .brand-card.sad{border-color:var(--amber);}
-    .brand-card.cry{border-color:var(--red);}
-    .brand-card-accent{position:absolute;top:0;left:0;right:0;height:4px;}
-    .brand-sentiment-emoji{position:absolute;top:14px;right:14px;font-size:26px;line-height:1;}
-    .brand-card-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--text);margin-bottom:3px;padding-right:40px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .brand-sentiment-label{font-size:10px;font-weight:700;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;}
-    .brand-sentiment-label.happy{color:var(--green);}
-    .brand-sentiment-label.sad{color:var(--amber);}
-    .brand-sentiment-label.cry{color:var(--red);}
-    .brand-metrics{display:grid;gap:6px;}
-    .bm-row{display:flex;justify-content:space-between;align-items:center;}
-    .bm-label{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;}
-    .bm-right{display:flex;align-items:center;gap:4px;}
-    .bm-value{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--text);}
-    .yoy{font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;}
-    .yoy-up{color:var(--green);background:var(--green-bg);}
-    .yoy-down{color:var(--red);background:var(--red-bg);}
-    .yoy-na{color:var(--text3);}
-    .brand-divider{height:1px;background:var(--border);margin:8px 0;}
-    .loyalty-row{display:flex;justify-content:space-between;align-items:center;margin-top:2px;}
-    .ltv-badge{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--purple);background:var(--purple-bg);padding:2px 6px;border-radius:4px;}
-    .supply-alert{margin-top:8px;padding:5px 8px;border-radius:5px;font-size:10px;font-weight:700;text-align:center;}
-    .supply-alert.show-red{background:var(--red-bg);color:var(--red);}
-    .supply-alert.show-amber{background:var(--amber-bg);color:var(--amber);}
-    .ad-opp{margin-top:4px;padding:4px 8px;border-radius:5px;font-size:10px;font-weight:700;text-align:center;background:#EEF2FF;color:#4F46E5;}
+    /* UPLOAD CARDS */
+    .upload-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+    .upload-card{background:white;border:2px dashed var(--border);border-radius:14px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;}
+    .upload-card:hover{border-color:var(--blue);background:var(--blue-light);}
+    .upload-card.loaded{border-color:var(--green);border-style:solid;background:var(--green-bg);}
+    .upload-card.error{border-color:var(--red);border-style:solid;background:var(--red-bg);}
+    .uc-icon{font-size:32px;margin-bottom:10px;}
+    .uc-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+    .uc-sub{font-size:11px;color:var(--text2);line-height:1.5;}
+    .upload-card.loaded .uc-sub{color:var(--green);font-weight:600;}
+    .upload-card.error .uc-sub{color:var(--red);font-weight:600;}
+    .uc-check{position:absolute;top:10px;right:10px;font-size:16px;display:none;}
+    .upload-card.loaded .uc-check{display:block;}
+    input[type="file"]{display:none;}
 
-    /* ROOT CAUSE ANALYSIS */
-    .rca-panel{background:white;border-radius:16px;box-shadow:var(--shadow);border:2px solid var(--border);overflow:hidden;}
-    .rca-header{background:var(--blue-light);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--border);}
-    .rca-brand{display:flex;align-items:center;gap:12px;}
-    .rca-emoji{font-size:32px;}
-    .rca-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--blue-dark);}
-    .rca-subtitle{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:1px;}
-    .rca-tabs{display:flex;gap:4px;}
-    .rca-tab{padding:7px 14px;border-radius:6px;border:2px solid var(--border);background:white;color:var(--text2);font-family:'Inter',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.5px;}
-    .rca-tab.active{background:var(--blue);color:white;border-color:var(--blue);}
-    .rca-content{padding:20px 24px;}
+    /* PROCESS */
+    .process-card{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);border:2px solid var(--border);}
+    .process-btn{background:var(--blue);color:white;border:none;border-radius:10px;padding:14px 32px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(0,156,222,0.3);}
+    .process-btn:hover{background:var(--blue-dark);transform:translateY(-1px);}
+    .process-btn:disabled{background:var(--text3);cursor:not-allowed;transform:none;box-shadow:none;}
 
-    /* KPI ROW */
-    .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
-    .kpi-card{background:var(--bg);border-radius:10px;padding:14px;border:1px solid var(--border);}
-    .kpi-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
-    .kpi-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1;}
-    .kpi-value.c-blue{color:var(--blue);}
-    .kpi-value.c-green{color:var(--green);}
-    .kpi-value.c-amber{color:var(--amber);}
-    .kpi-value.c-red{color:var(--red);}
-    .kpi-value.c-purple{color:var(--purple);}
-    .kpi-value.c-text{color:var(--text);}
-    .kpi-yoy{font-size:11px;font-weight:600;margin-top:4px;color:var(--text2);}
+    /* LOG */
+    .log-area{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);height:200px;overflow-y:auto;margin-top:16px;line-height:1.8;}
+    .log-line{display:block;}
+    .log-line.ok{color:var(--green);}
+    .log-line.err{color:var(--red);}
+    .log-line.info{color:var(--blue);}
 
-    /* DATA TABLE */
-    .data-table{width:100%;border-collapse:collapse;}
-    .data-table th{text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;padding:8px 12px;border-bottom:2px solid var(--border);white-space:nowrap;}
-    .data-table th.r{text-align:right;}
-    .data-table td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:12px;}
-    .data-table tr:last-child td{border-bottom:none;}
-    .data-table tr:hover td{background:var(--blue-light);}
-    .td-asin{font-family:'DM Mono',monospace;font-size:10px;color:var(--blue);}
-    .td-name{color:var(--text2);font-weight:500;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
-    .td-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--text);text-align:right;}
-    .td-yoy{font-size:10px;font-weight:700;text-align:right;}
-    .mp{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;}
-    .mp-GB{background:#E8F4FF;color:#0077A8;}
-    .mp-DE{background:#FFF3E0;color:#E65100;}
-    .mp-FR{background:#F3E5F5;color:#6A1B9A;}
-    .mp-IT{background:#E8F5E9;color:#2E7D32;}
-    .mp-ES{background:#FFF8E1;color:#F57F17;}
-    .bar-bg{height:4px;background:var(--border);border-radius:2px;margin-top:3px;}
-    .bar-fg{height:100%;background:var(--blue);border-radius:2px;}
-    .flag{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;}
-    .flag-ad{background:#EEF2FF;color:#4F46E5;}
-    .flag-oos{background:var(--red-bg);color:var(--red);}
-    .flag-low{background:var(--amber-bg);color:var(--amber);}
+    /* HISTORY */
+    .history-card{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);border:2px solid var(--border);}
+    .history-table{width:100%;border-collapse:collapse;margin-top:12px;}
+    .history-table th{text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;padding:8px 12px;border-bottom:2px solid var(--border);}
+    .history-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;font-family:'DM Mono',monospace;}
+    .history-table tr:last-child td{border-bottom:none;}
+    .del-btn{background:var(--red-bg);color:var(--red);border:1px solid var(--red);border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:700;}
 
-    /* SUPPLY PANEL */
-    .supply-panel{background:white;border-radius:16px;box-shadow:var(--shadow);border:2px solid #FFD0D0;overflow:hidden;}
-    .supply-header{background:linear-gradient(135deg,#FFF0F0,#FFF8EC);padding:16px 24px;border-bottom:2px solid #FFD0D0;display:flex;align-items:center;justify-content:space-between;}
-    .supply-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:1px;}
-    .supply-items{display:grid;grid-template-columns:repeat(4,1fr);}
-    .supply-item{padding:14px 18px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
-    .supply-item:nth-child(4n){border-right:none;}
-    .si-asin{font-family:'DM Mono',monospace;font-size:10px;color:var(--blue);margin-bottom:3px;}
-    .si-name{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;}
-    .si-stats{display:flex;gap:10px;flex-wrap:wrap;}
-    .si-stat{font-size:10px;color:var(--text2);}
-
-    .loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:400px;gap:16px;}
-    .loading-text{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text2);}
-    .loading-bar{width:200px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
-    .loading-bar::after{content:'';display:block;height:100%;width:40%;background:var(--blue);border-radius:2px;animation:lb 1.2s ease infinite;}
+    /* OVERLAY */
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,58,84,0.88);z-index:1000;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+    .overlay.on{display:flex;}
+    .overlay-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:white;}
+    .overlay-sub{font-size:12px;color:rgba(255,255,255,0.6);font-family:'DM Mono',monospace;}
+    .overlay-bar{width:300px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;overflow:hidden;}
+    .overlay-bar::after{content:'';display:block;height:100%;width:40%;background:var(--blue);border-radius:2px;animation:lb 1.2s ease infinite;}
     @keyframes lb{0%{transform:translateX(-150%)}100%{transform:translateX(400%)}}
-    .no-data{text-align:center;padding:80px 40px;}
-    .no-data-emoji{font-size:64px;margin-bottom:16px;}
-    .no-data-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text2);margin-bottom:8px;}
-    .empty{text-align:center;padding:40px;color:var(--text3);font-size:13px;}
+    .overlay-progress{font-family:'DM Mono',monospace;font-size:13px;color:rgba(255,255,255,0.8);}
   </style>
 </head>
 <body>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-title">Uploading to Supabase...</div>
+  <div class="overlay-sub" id="overlay-sub">Processing files</div>
+  <div class="overlay-bar"></div>
+  <div class="overlay-progress" id="overlay-progress">0 / 0 rows</div>
+</div>
+
 <header>
   <div class="logo">
     <div class="logo-mark">HB</div>
     <div>
-      <div class="logo-text">Brand Health Dashboard</div>
-      <div class="logo-sub">EU5 Weekly Performance</div>
+      <div class="logo-text">Brand Health — Data Upload</div>
+      <div class="logo-sub">Admin Only</div>
     </div>
   </div>
-  <div class="header-right">
-    <div class="week-badge" id="week-badge">Loading...</div>
-    <div class="currency-toggle">
-      <button class="currency-btn active" id="btn-eur" onclick="setCurrency('eur')">€ EUR</button>
-      <button class="currency-btn" id="btn-gbp" onclick="setCurrency('gbp')">£ GBP</button>
-      <button class="currency-btn" id="btn-usd" onclick="setCurrency('usd')">$ USD</button>
-    </div>
-  </div>
+  <div class="admin-badge">🔒 ADMIN</div>
 </header>
 
-<div class="filter-bar">
-  <span class="filter-label">Market</span>
-  <div class="market-tabs">
-    <button class="market-tab active" onclick="setMarket('ALL',this)">All EU5</button>
-    <button class="market-tab" onclick="setMarket('GB',this)">🇬🇧 GB</button>
-    <button class="market-tab" onclick="setMarket('DE',this)">🇩🇪 DE</button>
-    <button class="market-tab" onclick="setMarket('FR',this)">🇫🇷 FR</button>
-    <button class="market-tab" onclick="setMarket('IT',this)">🇮🇹 IT</button>
-    <button class="market-tab" onclick="setMarket('ES',this)">🇪🇸 ES</button>
-  </div>
-  <div class="divider"></div>
-  <span class="filter-label">Week</span>
-  <select class="week-select" id="week-select" onchange="loadWeek(this.value)">
-    <option>Loading...</option>
-  </select>
-  <div class="divider"></div>
-  <span class="filter-label">Sort</span>
-  <div class="sort-tabs">
-    <button class="sort-tab active" onclick="setSort('revenue',this)">Revenue</button>
-    <button class="sort-tab" onclick="setSort('sentiment',this)">Sentiment</button>
-    <button class="sort-tab" onclick="setSort('ltv',this)">LTV</button>
+<!-- LOGIN -->
+<div id="login-section">
+  <div class="login-box">
+    <div class="login-icon">🔐</div>
+    <div class="login-title">Admin Access</div>
+    <div class="login-sub">Enter your password to access the data upload panel</div>
+    <input type="password" class="login-input" id="password-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button class="login-btn" onclick="checkPassword()">Sign In →</button>
+    <div class="login-error" id="login-error">Incorrect password. Try again.</div>
   </div>
 </div>
 
-<div id="loading-screen" class="loading-screen">
-  <div class="loading-text">Loading brand data...</div>
-  <div class="loading-bar"></div>
-</div>
+<!-- MAIN -->
+<div id="main-section">
+  <main>
+    <div>
+      <div class="page-title">Weekly Data Upload</div>
+      <div class="page-sub">Upload the three Vendor Central reports to update the Brand Health Dashboard for all users.</div>
+    </div>
 
-<div id="no-data-screen" class="no-data" style="display:none">
-  <div class="no-data-emoji">📭</div>
-  <div class="no-data-title">No data uploaded yet</div>
-</div>
+    <!-- WEEK -->
+    <div class="week-card">
+      <div class="card-title">Reporting Week</div>
+      <div class="week-inputs">
+        <div class="input-group">
+          <label class="input-label">Week Start (Monday)</label>
+          <input type="date" class="date-input" id="week-start">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Week End (Sunday)</label>
+          <input type="date" class="date-input" id="week-end">
+        </div>
+        <button style="padding:10px 20px;background:var(--blue-light);border:2px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;color:var(--blue-dark);cursor:pointer;" onclick="setCurrentWeek()">This Week</button>
+      </div>
+    </div>
 
-<main id="main-content" style="display:none">
-  <div>
-    <div class="section-title">Portfolio Health Summary</div>
-    <div class="sentiment-bar" id="sentiment-bar"></div>
-  </div>
-  <div>
-    <div class="section-title">Brand Scorecards — click for Root Cause Analysis</div>
-    <div class="brand-grid" id="brand-grid"></div>
-  </div>
-  <div class="rca-panel" id="rca-panel" style="display:none">
-    <div class="rca-header">
-      <div class="rca-brand">
-        <div class="rca-emoji" id="rca-emoji">—</div>
-        <div>
-          <div class="rca-name" id="rca-name">—</div>
-          <div class="rca-subtitle">Root Cause Analysis</div>
+    <!-- FILE UPLOADS -->
+    <div class="week-card">
+      <div class="card-title">Report Files</div>
+      <div class="upload-card-grid">
+        <div class="upload-card" id="card-sales" onclick="document.getElementById('file-sales').click()"
+          ondragover="dOver(event,'card-sales')" ondragleave="dLeave('card-sales')" ondrop="dDrop(event,'sales')">
+          <div class="uc-icon">📊</div>
+          <div class="uc-title">Sales Report</div>
+          <div class="uc-sub" id="lbl-sales">CSV or Excel<br>EU5 markets, YoY ticked</div>
+          <div class="uc-check">✅</div>
+          <input type="file" id="file-sales" accept=".csv,.xlsx" onchange="onFile(event,'sales')">
+        </div>
+        <div class="upload-card" id="card-traffic" onclick="document.getElementById('file-traffic').click()"
+          ondragover="dOver(event,'card-traffic')" ondragleave="dLeave('card-traffic')" ondrop="dDrop(event,'traffic')">
+          <div class="uc-icon">👁️</div>
+          <div class="uc-title">Traffic Report</div>
+          <div class="uc-sub" id="lbl-traffic">CSV or Excel<br>Glance Views, YoY ticked</div>
+          <div class="uc-check">✅</div>
+          <input type="file" id="file-traffic" accept=".csv,.xlsx" onchange="onFile(event,'traffic')">
+        </div>
+        <div class="upload-card" id="card-inventory" onclick="document.getElementById('file-inventory').click()"
+          ondragover="dOver(event,'card-inventory')" ondragleave="dLeave('card-inventory')" ondrop="dDrop(event,'inventory')">
+          <div class="uc-icon">📦</div>
+          <div class="uc-title">Inventory Report</div>
+          <div class="uc-sub" id="lbl-inventory">CSV or Excel<br>OOS % &amp; Unfilled Orders</div>
+          <div class="uc-check">✅</div>
+          <input type="file" id="file-inventory" accept=".csv,.xlsx" onchange="onFile(event,'inventory')">
         </div>
       </div>
-      <div class="rca-tabs">
-        <button class="rca-tab active" onclick="setTab('revenue',this)">Revenue</button>
-        <button class="rca-tab" onclick="setTab('traffic',this)">Traffic</button>
-        <button class="rca-tab" onclick="setTab('conversion',this)">Conversion</button>
-        <button class="rca-tab" onclick="setTab('supply',this)">Supply Gap</button>
-        <button class="rca-tab" onclick="setTab('loyalty',this)">Loyalty & LTV</button>
-        <button class="rca-tab" onclick="setTab('adopp',this)">Ad Opportunities</button>
+    </div>
+
+    <!-- PROCESS -->
+    <div class="process-card">
+      <div class="card-title">Process &amp; Upload</div>
+      <button class="process-btn" id="process-btn" onclick="processAndUpload()" disabled>
+        🚀 Process &amp; Push to Dashboard
+      </button>
+      <div class="log-area" id="log-area">
+        <span class="log-line">Ready. Upload files and click Process.</span>
       </div>
     </div>
-    <div class="rca-content">
-      <div class="kpi-row" id="kpi-row"></div>
-      <div id="table-wrap"></div>
+
+
+    <!-- QUARTERLY LOYALTY -->
+    <div class="week-card" style="border-color:var(--amber);">
+      <div class="card-title" style="color:var(--amber);">Quarterly Loyalty Data — Upload Once Per Quarter</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">Upload the GB Repeat Purchase Behaviour report (Brand view). This data persists until you replace it — upload in Jan, Apr, Jul, Oct.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:start;margin-bottom:16px;">
+        <div class="input-group">
+          <label class="input-label">Quarter</label>
+          <select class="date-input" id="quarter-select" style="cursor:pointer;">
+            <option value="Q1-2026">Q1 2026 (Jan-Mar)</option>
+            <option value="Q2-2026" selected>Q2 2026 (Apr-Jun)</option>
+            <option value="Q3-2026">Q3 2026 (Jul-Sep)</option>
+            <option value="Q4-2026">Q4 2026 (Oct-Dec)</option>
+            <option value="Q1-2027">Q1 2027 (Jan-Mar)</option>
+          </select>
+        </div>
+        <div class="upload-card" id="card-loyalty" onclick="document.getElementById('file-loyalty').click()"
+          ondragover="dOver(event,'card-loyalty')" ondragleave="dLeave('card-loyalty')" ondrop="dDrop(event,'loyalty')"
+          style="border-color:var(--amber);background:var(--amber-bg);">
+          <div class="uc-icon">🔄</div>
+          <div class="uc-title">Repeat Purchase Report</div>
+          <div class="uc-sub" id="lbl-loyalty">GB Brand View CSV<br>Quarterly cadence</div>
+          <div class="uc-check">✅</div>
+          <input type="file" id="file-loyalty" accept=".csv,.xlsx" onchange="onFile(event,'loyalty')">
+        </div>
+        <button class="process-btn" id="loyalty-btn" onclick="uploadLoyalty()" disabled style="padding:12px 20px;font-size:13px;">
+          Upload Loyalty Data
+        </button>
+      </div>
+      <div class="log-area" id="loyalty-log" style="height:100px;">
+        <span class="log-line">Upload the repeat purchase CSV to add loyalty metrics to the dashboard.</span>
+      </div>
     </div>
-  </div>
-  <div class="supply-panel">
-    <div class="supply-header">
-      <div class="supply-title">⚠️ Supply Gap Alerts</div>
-      <span style="font-size:11px;color:var(--text2);font-weight:600;">OOS &gt; 10% or Unfilled &gt; 50</span>
+
+    <!-- HISTORY -->
+    <div class="history-card">
+      <div class="card-title">Upload History</div>
+      <table class="history-table">
+        <thead><tr><th>Week</th><th>Uploaded At</th><th>Rows</th><th></th></tr></thead>
+        <tbody id="history-tbody"><tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Loading...</td></tr></tbody>
+      </table>
     </div>
-    <div class="supply-items" id="supply-items"></div>
-  </div>
-</main>
+  </main>
+</div>
 
 <script>
-const SUPABASE_URL='https://rycqfwzgvpzwhphgclpb.supabase.co';
-const SUPABASE_KEY='sb_publishable_CbKFhpN2dWI_UXhwGkclqw_AMPSprs4';
-const FX={eur:1,gbp:0.862,usd:1.09};
+// ─── CONFIG ──────────────────────────────────────────────────
+const SUPABASE_URL = 'https://rycqfwzgvpzwhphgclpb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CbKFhpN2dWI_UXhwGkclqw_AMPSprs4';
+// Simple password — change this to something only you know
+const ADMIN_PASSWORD = 'hasbro2026';
 
-const BRAND_COLORS={DISNEY_KIDS:'#9B59B6',MARVEL:'#E8423F',STAR_WARS:'#1a1a2e',MONOPOLY:'#B22222',GAMES:'#009CDE',PLAY_DOH:'#E91E8C',PEPPA_PIG:'#FF6B9D',TRANSFORMERS:'#F5A623',BEYBLADE:'#00B388',NERF:'#FF6B00',OTHER:'#A0C8D8'};
-const BRAND_LABELS={DISNEY_KIDS:'Disney Kids',MARVEL:'Marvel / Spider-Man',STAR_WARS:'Star Wars',MONOPOLY:'Monopoly',GAMES:'Games',PLAY_DOH:'Play-Doh',PEPPA_PIG:'Peppa Pig',TRANSFORMERS:'Transformers',BEYBLADE:'Beyblade',NERF:'Nerf',OTHER:'Other'};
-const BRAND_ORDER=['DISNEY_KIDS','MARVEL','STAR_WARS','MONOPOLY','GAMES','PLAY_DOH','PEPPA_PIG','TRANSFORMERS','BEYBLADE','NERF','OTHER'];
+const EU5 = ['GB','DE','FR','IT','ES'];
+const YOY_CAP = 2.0; // Cap at 200% — excludes new products with tiny prior year base
 
-let currency='eur',currentMarket='ALL',currentSort='revenue',selectedBrand=null,currentTab='revenue';
-let allRows=[],loyaltyData={};
+let files = { sales:null, traffic:null, inventory:null };
 
-// ─── INIT ─────────────────────────────────────────────────────
-async function init() {
+// ─── LOGIN ────────────────────────────────────────────────────
+function checkPassword() {
+  const pw = document.getElementById('password-input').value;
+  if (pw === ADMIN_PASSWORD) {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('main-section').style.display = 'block';
+    setCurrentWeek();
+    loadHistory();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('password-input').value = '';
+  }
+}
+
+// ─── WEEK ─────────────────────────────────────────────────────
+function setCurrentWeek() {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(now.setDate(diff));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  document.getElementById('week-start').value = monday.toISOString().split('T')[0];
+  document.getElementById('week-end').value = sunday.toISOString().split('T')[0];
+}
+
+// ─── FILE HANDLING ────────────────────────────────────────────
+function dOver(e,id){e.preventDefault();document.getElementById(id).style.borderColor='var(--blue)';}
+function dLeave(id){document.getElementById(id).style.borderColor='';}
+function dDrop(e,type){e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f,type);}
+function onFile(e,type){if(e.target.files[0])loadFile(e.target.files[0],type);}
+
+function loadFile(f,type) {
+  files[type] = f;
+  document.getElementById('card-'+type).classList.add('loaded');
+  document.getElementById('lbl-'+type).textContent = '✓ '+f.name;
+  checkReady();
+}
+
+function checkReady() {
+  document.getElementById('process-btn').disabled = !(files.sales && files.traffic && files.inventory);
+}
+
+// ─── BRAND RULES ─────────────────────────────────────────────
+const BRANDS = [
+  { id:'DISNEY_KIDS', label:'Disney Kids',
+    titleKeys:['spidey and his amazing friends','spidey and amazing friends','iron man and his awesome friends','iron man and friends','spidey and his'],
+    brandKeys:['hasbro spidey','iron man and his awesome','hasbro iron man and his','spidey and his amazing'] },
+  { id:'MARVEL', label:'Marvel / Spider-Man',
+    titleKeys:['marvel','spider-man','spiderman','avengers','black widow','captain america','iron man','thor ','hulk','x-men','eternals','shang chi','daredevil','dr. strange','dr strange','ghost rider'],
+    brandKeys:['marvel','hasbro marvel','hasbro mavel','avengers','hasbro avengers','spider-man','spiderman','hasbro marvel avengers','marvel avengers','marvel legends','marvel spider-man','marvel classic','black widow','shang chi','the eternals','overwatch'] },
+  { id:'STAR_WARS', label:'Star Wars',
+    titleKeys:['star wars','mandalorian','grogu','jedi','sith','darth','clone wars','boba fett','lightsaber','stormtrooper','scout trooper','bb-8','han solo'],
+    brandKeys:['star wars','hasbro star wars','hasbro star wars the black series','star wars han solo movie'] },
+  { id:'MONOPOLY', label:'Monopoly',
+    titleKeys:['monopoly'],
+    brandKeys:['monopoly','hasbro monopoly'] },
+  { id:'GAMES', label:'Games',
+    titleKeys:['guess who','game of life','operation ','trivial pursuit','yahtzee','buckaroo','mousetrap','mouse trap','battleship','cluedo','clue ','boggle','connect 4','connect4','jenga','twister','looping louie','hungry hungry','cranium','taboo','pictionary','heroquest','dungeons & dragons','dungeons and dragons','avalon hill'],
+    brandKeys:['hasbro gaming','hasbro games','hasbro spiele','games (excl. monopoly)','clue','twister','dungeons & dragons','hasbro dungeons & dragons','avalon hill','ghostbusters','hasbro ghostbusters','hasbro indiana jones'] },
+  { id:'PLAY_DOH', label:'Play-Doh',
+    titleKeys:['play-doh','play doh','playdoh','pate a modeler','pâte à modeler','knete','plastilina'],
+    brandKeys:['play-doh','play doh','playdoh','hasbro play-doh','hasbro pt','play doh'] },
+  { id:'PEPPA_PIG', label:'Peppa Pig',
+    titleKeys:['peppa pig','peppa'],
+    brandKeys:['peppa pig'] },
+  { id:'TRANSFORMERS', label:'Transformers',
+    titleKeys:['transformers','optimus prime','megatron','autobot','decepticon'],
+    brandKeys:['transformers','hasbro transformers','transfromers'] },
+  { id:'BEYBLADE', label:'Beyblade',
+    titleKeys:['beyblade','bey blade'],
+    brandKeys:['beyblade','hasbro beyblade'] },
+  { id:'NERF', label:'Nerf',
+    titleKeys:['nerf','super soaker','supersoaker'],
+    brandKeys:['nerf','hasbro nerf','super soaker','supersoaker'] },
+  { id:'OTHER', label:'Other', titleKeys:[], brandKeys:[] }
+];
+
+function classifyBrand(title, brandCol) {
+  const t = (title||'').toLowerCase();
+  const b = (brandCol||'').toLowerCase().trim();
+  const dk = BRANDS[0];
+  if (dk.titleKeys.some(k=>t.includes(k))||dk.brandKeys.some(k=>b===k||b.includes(k))) return dk.id;
+  for (let i=1;i<BRANDS.length-1;i++) {
+    const br=BRANDS[i];
+    if (br.titleKeys.some(k=>t.includes(k))||br.brandKeys.some(k=>b===k||b.includes(k))) return br.id;
+  }
+  return 'OTHER';
+}
+
+// ─── PARSING ─────────────────────────────────────────────────
+function normaliseKey(s) {
+  return String(s).trim().replace(/\u2013|\u2014|\u2212/g,'–').replace(/\s+/g,' ');
+}
+
+function parseVCFile(file) {
+  return new Promise(resolve => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext==='xlsx') {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const wb = XLSX.read(e.target.result,{type:'array',cellText:false,cellDates:true});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
+        let hi = raw.findIndex(r=>r.some(c=>String(c).trim()==='ASIN'));
+        if (hi===-1) hi=1;
+        const headers = raw[hi].map(h=>normaliseKey(h));
+        const rows = raw.slice(hi+1).filter(r=>r.some(c=>c!=='')).map(r=>{
+          const o={};headers.forEach((h,i)=>{o[h]=(r[i]!==undefined&&r[i]!==null)?r[i]:'';});return o;
+        }).filter(r=>r['ASIN']&&String(r['ASIN']).trim().length>5);
+        resolve(rows);
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = e => {
+        let text = e.target.result.replace(/^\uFEFF/,'');
+        const lines = text.split('\n');
+        // Find header row — the one that starts with ASIN
+        let hi = -1;
+        for (let i=0; i<Math.min(lines.length,10); i++) {
+          const t = lines[i].trim().replace(/^\uFEFF/,'');
+          if (t.startsWith('ASIN,') || t === 'ASIN') { hi = i; break; }
+        }
+        if (hi === -1) hi = 1;
+        const csvText = lines.slice(hi).join('\n');
+        const result = Papa.parse(csvText, {header:true, skipEmptyLines:true, dynamicTyping:false});
+        // Find actual ASIN key (handles BOM/whitespace variants)
+        const fields = result.meta.fields || [];
+        const asinKey = fields.find(f => f.trim().replace(/^\uFEFF/,'') === 'ASIN') || 'ASIN';
+        const rows = result.data
+          .filter(r => r[asinKey] && String(r[asinKey]).trim().length > 5)
+          .map(r => {
+            const o = {};
+            Object.keys(r).forEach(k => { o[normaliseKey(k.replace(/^\uFEFF/,''))] = r[k]; });
+            return o;
+          });
+        console.log('CSV parsed:', rows.length, 'rows, hi=', hi, 'asinKey=', asinKey);
+        if (rows.length > 0) console.log('Sample keys:', Object.keys(rows[0]).slice(0,6));
+        resolve(rows);
+      };
+      reader.readAsText(file,'UTF-8');
+    }
+  });
+}
+
+function cleanNum(v) {
+  if (v===null||v===undefined||v==='') return null;
+  if (typeof v==='number') return isNaN(v)?null:v;
+  // Strip ALL non-numeric characters except dot and minus
+  // This handles €, £, $, commas, spaces and any other currency symbols
+  const s = String(v).replace(/[^0-9.\-]/g,'').trim();
+  if (s===''||s==='-') return null;
+  const n = parseFloat(s);
+  return isNaN(n)?null:n;
+}
+
+function parseYoy(v, isPercentStr) {
+  if (v===null||v===undefined||v===''||v==='-') return null;
+  let n;
+  if (isPercentStr) {
+    const s = String(v).replace(/,/g,'').replace(/%/g,'').trim();
+    if (s===''||s==='nan') return null;
+    n = parseFloat(s)/100;
+  } else {
+    n = typeof v==='number'?v:parseFloat(String(v).replace(/,/g,'').trim());
+  }
+  if (isNaN(n)) return null;
+  // Exclude new products (no prior year = -100%) and extreme values
+  if (n <= -0.99) return null;
+  if (Math.abs(n)>YOY_CAP) return null;
+  return n;
+}
+
+function cleanRevenueStr(v) {
+  // Strip non-ASCII characters (€, £, $) and commas robustly
+  if (v===null||v===undefined||v==='') return null;
+  if (typeof v==='number') return isNaN(v)?null:v;
+  // Remove any character that isn't a digit, dot, minus or comma
+  const s = String(v).replace(/[^0-9.,\-]/g,'').replace(/,/g,'').trim();
+  if (s===''||s==='-') return null;
+  const n = parseFloat(s);
+  return isNaN(n)?null:n;
+}
+
+function col(row, name) {
+  if (row[name]!==undefined) return row[name];
+  const norm = name.replace(/[-\u2013\u2014\u2212]/g,'–').toLowerCase();
+  for (const k of Object.keys(row)) {
+    if (k.replace(/[-\u2013\u2014\u2212]/g,'–').toLowerCase()===norm) return row[k];
+  }
+  return undefined;
+}
+
+// ─── LOGGING ─────────────────────────────────────────────────
+function log(msg, type='') {
+  const area = document.getElementById('log-area');
+  const line = document.createElement('span');
+  line.className = 'log-line '+type;
+  line.textContent = new Date().toLocaleTimeString('en-GB')+' → '+msg;
+  area.appendChild(line);
+  area.scrollTop = area.scrollHeight;
+}
+
+// ─── MAIN PROCESS ─────────────────────────────────────────────
+async function processAndUpload() {
+  const weekStart = document.getElementById('week-start').value;
+  const weekEnd = document.getElementById('week-end').value;
+
+  if (!weekStart || !weekEnd) {
+    alert('Please set the reporting week dates first.');
+    return;
+  }
+
+  document.getElementById('overlay').classList.add('on');
+  document.getElementById('log-area').innerHTML = '';
+  log('Starting process...', 'info');
+
   try {
-    const [weeksRes,loyaltyRes]=await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/brand_health_weeks?select=*&order=week_start.desc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}}),
-      fetch(`${SUPABASE_URL}/rest/v1/brand_health_loyalty?select=*&order=uploaded_at.desc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}})
-    ]);
-    const weeks=await weeksRes.json();
-    const loyalty=await loyaltyRes.json();
+    // Parse files
+    document.getElementById('overlay-sub').textContent = 'Reading Sales report...';
+    log('Reading Sales report...');
+    await sleep(30);
+    const salesRaw = await parseVCFile(files.sales);
+    log(`✓ Sales: ${salesRaw.length} total rows`, 'ok');
 
-    // Build loyalty lookup — latest per brand
-    loyaltyData={};
-    loyalty.forEach(r=>{
-      if(!loyaltyData[r.brand_classified]) loyaltyData[r.brand_classified]=r;
+    document.getElementById('overlay-sub').textContent = 'Reading Traffic report...';
+    log('Reading Traffic report...');
+    await sleep(30);
+    const trafficRaw = await parseVCFile(files.traffic);
+    log(`✓ Traffic: ${trafficRaw.length} total rows`, 'ok');
+
+    document.getElementById('overlay-sub').textContent = 'Reading Inventory report...';
+    log('Reading Inventory report...');
+    await sleep(30);
+    const invRaw = await parseVCFile(files.inventory);
+    log(`✓ Inventory: ${invRaw.length} total rows`, 'ok');
+
+    // Filter EU5
+    const sales = salesRaw.filter(r=>EU5.includes(String(col(r,'Store code')||'').trim().toUpperCase()));
+    const traffic = trafficRaw.filter(r=>EU5.includes(String(col(r,'Store code')||'').trim().toUpperCase()));
+    const inv = invRaw.filter(r=>EU5.includes(String(col(r,'Store code')||'').trim().toUpperCase()));
+    log(`EU5 filter: ${sales.length} sales, ${traffic.length} traffic, ${inv.length} inventory`, 'info');
+
+    // Build traffic lookup: ASIN+market → {gviews, gviewsYoy}
+    document.getElementById('overlay-sub').textContent = 'Joining data...';
+    log('Joining traffic data...');
+    const trafficMap = {};
+    traffic.forEach(r=>{
+      const k = String(r['ASIN']).trim()+'_'+String(col(r,'Store code')||'').trim().toUpperCase();
+      if (!trafficMap[k]) trafficMap[k] = {gviews:0, gviewsYoy:null};
+      trafficMap[k].gviews += cleanNum(col(r,'Featured offer page views'))||0;
+      const yoy = parseYoy(col(r,'Featured offer page views – Same Period Last Year (%)'),true);
+      if (yoy!==null) trafficMap[k].gviewsYoy = yoy;
     });
 
-    if(!weeks.length){
-      document.getElementById('loading-screen').style.display='none';
-      document.getElementById('no-data-screen').style.display='block';
-      return;
-    }
-    const sel=document.getElementById('week-select');
-    sel.innerHTML=weeks.map(w=>`<option value="${w.week_start}">${w.week_label||w.week_start}</option>`).join('');
-    await loadWeek(weeks[0].week_start);
-  } catch(err) {
-    document.getElementById('loading-screen').innerHTML=`<div style="color:var(--red);font-family:'DM Mono',monospace;font-size:12px;text-align:center;padding:40px">Error: ${err.message}</div>`;
-  }
-}
+    // Build inventory lookup
+    const invMap = {};
+    inv.forEach(r=>{
+      const k = String(r['ASIN']).trim()+'_'+String(col(r,'Store code')||'').trim().toUpperCase();
+      if (!invMap[k]) invMap[k] = {oos:0, unfilled:0};
+      invMap[k].oos = cleanNum(col(r,'Sourceable product OOS %'))||0;
+      invMap[k].unfilled += cleanNum(col(r,'Unfilled Customer Ordered Units'))||0;
+    });
 
-async function loadWeek(weekStart) {
-  document.getElementById('loading-screen').style.display='flex';
-  document.getElementById('main-content').style.display='none';
-  const res=await fetch(`${SUPABASE_URL}/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}&select=*&limit=20000`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}});
-  allRows=await res.json();
-  const sel=document.getElementById('week-select');
-  document.getElementById('week-badge').textContent=sel.options[sel.selectedIndex]?.text||weekStart;
-  document.getElementById('loading-screen').style.display='none';
-  document.getElementById('main-content').style.display='grid';
-  buildDashboard();
-}
+    // Build final rows from sales
+    log('Classifying brands & building rows...');
+    const rows = [];
+    sales.forEach(r=>{
+      const asin = String(r['ASIN']).trim();
+      const market = String(col(r,'Store code')||'').trim().toUpperCase();
+      const k = asin+'_'+market;
+      const t = trafficMap[k]||{gviews:0,gviewsYoy:null};
+      const iv = invMap[k]||{oos:0,unfilled:0};
 
-// ─── DATA ─────────────────────────────────────────────────────
-function getRows(brandId) {
-  let rows=allRows.filter(r=>r.brand_classified===brandId);
-  if(currentMarket!=='ALL') rows=rows.filter(r=>r.market===currentMarket);
-  return rows;
-}
+      const dispRev = cleanNum(col(r,'Dispatched revenue'));
+      const ordRev = cleanNum(col(r,'Ordered revenue'));
+      const dispUnits = cleanNum(col(r,'Dispatched units'));
+      const ordUnits = cleanNum(col(r,'Ordered units'));
+      const revYoy = parseYoy(col(r,'Dispatched Revenue – Same Period Last Year (%)'),true)
+                  ?? parseYoy(col(r,'Ordered Revenue – Same Period Last Year (%)'),true);
+      const unitsYoy = parseYoy(col(r,'Dispatched Units – Same Period Last Year (%)'),true)
+                    ?? parseYoy(col(r,'Ordered Units – Same Period Last Year (%)'),true);
 
-function aggregateBrand(brandId) {
-  const rows=getRows(brandId);
-  let revenue=0,revYoyN=0,revYoyD=0,units=0,gviews=0,gvYoyN=0,gvYoyD=0,unfilled=0,oosVals=[];
-  rows.forEach(r=>{
-    const rev=r.dispatched_revenue||r.ordered_revenue||0;
-    revenue+=rev; units+=r.dispatched_units||r.ordered_units||0;
-    if(r.revenue_yoy!==null&&r.revenue_yoy!==undefined&&rev>0){revYoyN+=rev*r.revenue_yoy;revYoyD+=rev;}
-    const gv=r.glance_views||0; gviews+=gv;
-    if(r.glance_views_yoy!==null&&r.glance_views_yoy!==undefined&&gv>0){gvYoyN+=gv*r.glance_views_yoy;gvYoyD+=gv;}
-    unfilled+=r.unfilled_units||0;
-    if(r.oos_pct!==null&&r.oos_pct!==undefined) oosVals.push(r.oos_pct);
-  });
-  const asp=units>0?revenue/units:0;
-  const loyalty=loyaltyData[brandId];
-  const repeatRate=loyalty?loyalty.repeat_rate:null;
-  const ltv=repeatRate&&repeatRate<1&&asp>0?asp/(1-repeatRate):null;
-  return{revenue,revenueYoy:revYoyD>0?revYoyN/revYoyD:null,units,asp,conv:gviews>0?(units/gviews)*100:0,gviews,gviewsYoy:gvYoyD>0?gvYoyN/gvYoyD:null,unfilled,avgOos:oosVals.length>0?oosVals.reduce((a,b)=>a+b,0)/oosVals.length:0,repeatRate,ltv,loyaltyQuarter:loyalty?.quarter};
-}
+      rows.push({
+        week_start: weekStart,
+        asin,
+        product_title: String(col(r,'Product title')||'').trim().substring(0,500),
+        brand_raw: String(col(r,'Brand')||'').trim(),
+        brand_classified: classifyBrand(col(r,'Product title'), col(r,'Brand')),
+        market,
+        dispatched_revenue: dispRev,
+        ordered_revenue: ordRev,
+        dispatched_units: dispUnits ? Math.round(dispUnits) : null,
+        ordered_units: ordUnits ? Math.round(ordUnits) : null,
+        revenue_yoy: revYoy,
+        units_yoy: unitsYoy,
+        glance_views: t.gviews ? Math.round(t.gviews) : null,
+        glance_views_yoy: t.gviewsYoy,
+        oos_pct: iv.oos,
+        unfilled_units: Math.round(iv.unfilled)
+      });
+    });
+    log(`✓ Built ${rows.length} rows`, 'ok');
 
-function getSentiment(d) {
-  const revUp=d.revenueYoy!==null&&d.revenueYoy>0;
-  const revDown=d.revenueYoy!==null&&d.revenueYoy<0;
-  const gvDown=d.gviewsYoy!==null&&d.gviewsYoy<0;
-  const supplyBad=d.avgOos>20||d.unfilled>200;
-  if(revDown&&(gvDown||supplyBad)) return 'cry';
-  if(revUp&&d.gviewsYoy!==null&&d.gviewsYoy>0&&!supplyBad) return 'happy';
-  return 'sad';
-}
+    // Delete existing data for this week
+    document.getElementById('overlay-sub').textContent = 'Clearing existing week data...';
+    log(`Clearing existing data for week ${weekStart}...`);
+    const delRes = await fetch(`${SUPABASE_URL}/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}`, {
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+    });
+    if (!delRes.ok) throw new Error('Failed to clear existing data: '+delRes.status);
+    log('✓ Cleared existing data', 'ok');
 
-const SC={happy:{emoji:'😊',label:'Happy',cls:'happy'},sad:{emoji:'😐',label:'Mixed',cls:'sad'},cry:{emoji:'😢',label:'Needs Attention',cls:'cry'}};
-
-function isAdOpportunity(d) {
-  return d.asp>20&&d.conv<5&&d.gviews>5000&&d.avgOos<10;
-}
-
-// ─── BUILD DASHBOARD ─────────────────────────────────────────
-function buildDashboard() {
-  renderSentimentBar();
-  renderBrandCards();
-  renderSupplyAlerts();
-  if(selectedBrand) renderRCA(selectedBrand,currentTab);
-}
-
-function renderSentimentBar() {
-  const counts={happy:0,sad:0,cry:0};
-  BRAND_ORDER.forEach(id=>{
-    const d=aggregateBrand(id);
-    if(d.revenue===0&&d.gviews===0) return;
-    counts[getSentiment(d)]++;
-  });
-  document.getElementById('sentiment-bar').innerHTML=`
-    <div class="sentiment-pill happy"><span style="font-size:20px">😊</span><span style="font-size:22px;font-weight:800">${counts.happy}</span><span style="font-size:12px;font-weight:600;opacity:0.8">Brands Happy</span></div>
-    <div class="sentiment-pill sad"><span style="font-size:20px">😐</span><span style="font-size:22px;font-weight:800">${counts.sad}</span><span style="font-size:12px;font-weight:600;opacity:0.8">Brands Mixed</span></div>
-    <div class="sentiment-pill cry"><span style="font-size:20px">😢</span><span style="font-size:22px;font-weight:800">${counts.cry}</span><span style="font-size:12px;font-weight:600;opacity:0.8">Need Attention</span></div>
-  `;
-}
-
-function getSortedBrands() {
-  const brands=BRAND_ORDER.map(id=>({id,data:aggregateBrand(id)})).filter(b=>b.data.revenue>0||b.data.gviews>0);
-  if(currentSort==='revenue') brands.sort((a,b)=>b.data.revenue-a.data.revenue);
-  else if(currentSort==='sentiment') {
-    const order={cry:0,sad:1,happy:2};
-    brands.sort((a,b)=>order[getSentiment(a.data)]-order[getSentiment(b.data)]);
-  } else if(currentSort==='ltv') {
-    brands.sort((a,b)=>(b.data.ltv||0)-(a.data.ltv||0));
-  }
-  return brands;
-}
-
-function renderBrandCards() {
-  const grid=document.getElementById('brand-grid');
-  grid.innerHTML='';
-  getSortedBrands().forEach(({id,data:d})=>{
-    const s=getSentiment(d);
-    const sc=SC[s];
-    const color=BRAND_COLORS[id];
-    const supplyClass=d.avgOos>20||d.unfilled>200?'show-red':d.avgOos>10||d.unfilled>50?'show-amber':'';
-    const supplyText=d.avgOos>10?`⚠️ OOS ${d.avgOos.toFixed(0)}%`:d.unfilled>50?`⚠️ ${Math.round(d.unfilled).toLocaleString()} unfilled`:'';
-    const adOpp=isAdOpportunity(d);
-
-    const card=document.createElement('div');
-    card.className=`brand-card ${sc.cls}${selectedBrand===id?' selected':''}`;
-    card.onclick=()=>selectBrand(id,card);
-    card.innerHTML=`
-      <div class="brand-card-accent" style="background:${color}"></div>
-      <div class="brand-sentiment-emoji">${sc.emoji}</div>
-      <div class="brand-card-name">${BRAND_LABELS[id]}</div>
-      <div class="brand-sentiment-label ${sc.cls}">${sc.label}</div>
-      <div class="brand-metrics">
-        <div class="bm-row"><span class="bm-label">Revenue</span><span class="bm-right"><span class="bm-value">${fmtCur(d.revenue)}</span>${fmtYoy(d.revenueYoy)}</span></div>
-        <div class="bm-row"><span class="bm-label">Glance Views</span><span class="bm-right"><span class="bm-value">${fmtNum(d.gviews)}</span>${fmtYoy(d.gviewsYoy)}</span></div>
-        <div class="bm-row"><span class="bm-label">Conversion</span><span class="bm-right"><span class="bm-value">${d.conv.toFixed(2)}%</span></span></div>
-        <div class="bm-row"><span class="bm-label">ASP</span><span class="bm-right"><span class="bm-value">${fmtCur(d.asp)}</span></span></div>
-        <div class="brand-divider"></div>
-        <div class="bm-row"><span class="bm-label">Repeat Rate</span><span class="bm-right"><span class="bm-value">${d.repeatRate!==null?(d.repeatRate*100).toFixed(1)+'%':'—'}</span></span></div>
-        <div class="bm-row"><span class="bm-label">Est. LTV</span><span class="bm-right"><span class="ltv-badge" style="${d.ltv?'':'opacity:0.4'}">${d.ltv?fmtCur(d.ltv):'Upload Q data'}</span></span></div>
-      </div>
-      ${supplyClass?`<div class="supply-alert ${supplyClass}">${supplyText}</div>`:''}
-      ${adOpp?`<div class="ad-opp">💡 Ad Opportunity</div>`:''}
-    `;
-    grid.appendChild(card);
-  });
-}
-
-function selectBrand(brandId,cardEl) {
-  selectedBrand=brandId;
-  document.querySelectorAll('.brand-card').forEach(c=>c.classList.remove('selected'));
-  if(cardEl) cardEl.classList.add('selected');
-  const d=aggregateBrand(brandId);
-  document.getElementById('rca-emoji').textContent=SC[getSentiment(d)].emoji;
-  document.getElementById('rca-name').textContent=BRAND_LABELS[brandId];
-  document.getElementById('rca-panel').style.display='block';
-  renderRCA(brandId,currentTab);
-  setTimeout(()=>document.getElementById('rca-panel').scrollIntoView({behavior:'smooth',block:'start'}),100);
-}
-
-function setTab(tab,btn) {
-  currentTab=tab;
-  document.querySelectorAll('.rca-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  if(selectedBrand) renderRCA(selectedBrand,tab);
-}
-
-function renderRCA(brandId,tab) {
-  const rows=getRows(brandId);
-  const d=aggregateBrand(brandId);
-  const loyalty=loyaltyData[brandId];
-
-  // KPI row — always shown
-  document.getElementById('kpi-row').innerHTML=`
-    <div class="kpi-card"><div class="kpi-label">Revenue</div><div class="kpi-value c-blue">${fmtCur(d.revenue)}</div><div class="kpi-yoy">${fmtYoyText(d.revenueYoy)} vs last year</div></div>
-    <div class="kpi-card"><div class="kpi-label">Glance Views</div><div class="kpi-value c-green">${fmtNum(d.gviews)}</div><div class="kpi-yoy">${fmtYoyText(d.gviewsYoy)} vs last year</div></div>
-    <div class="kpi-card"><div class="kpi-label">Conversion Rate</div><div class="kpi-value c-amber">${d.conv.toFixed(2)}%</div><div class="kpi-yoy">Units ÷ Glance Views</div></div>
-    <div class="kpi-card"><div class="kpi-label">Root Cause</div><div class="kpi-value c-text" style="font-size:14px;line-height:1.3;margin-top:4px;">${d.unfilled>200||d.avgOos>20?'<span style="color:var(--red)">⚠️ Supply Issue</span>':d.conv<3&&d.gviews>5000?'<span style="color:var(--amber)">👁️ Low Conversion</span>':d.revenueYoy!==null&&d.revenueYoy<0?'<span style="color:var(--red)">📉 Revenue Down</span>':'<span style="color:var(--green)">✅ On Track</span>'}</div><div class="kpi-yoy">Unfilled: ${Math.round(d.unfilled)} · OOS: ${d.avgOos.toFixed(1)}%</div></div>
-  `;
-  const wrap=document.getElementById('table-wrap');
-
-  if(tab==='revenue') {
-    const m=buildAsinMap(rows,r=>({rev:r.dispatched_revenue||r.ordered_revenue||0,revYoy:r.revenue_yoy,units:r.dispatched_units||r.ordered_units||0}));
-    const top=Object.values(m).sort((a,b)=>b.rev-a.rev).slice(0,15);
-    const maxR=top[0]?.rev||1;
-    wrap.innerHTML=buildTable(['#','ASIN','Product','Market','Revenue','YoY','Units'],
-      top.map((r,i)=>`<tr>
-        <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
-        <td><div class="td-asin">${r.asin}</div></td>
-        <td><span class="td-name" title="${r.name}">${r.name}</span></td>
-        <td><span class="mp mp-${r.market}">${r.market}</span></td>
-        <td class="td-val">${fmtCur(r.rev)}<div class="bar-bg"><div class="bar-fg" style="width:${(r.rev/maxR*100).toFixed(1)}%"></div></div></td>
-        <td class="td-yoy">${fmtYoyText(r.revYoy)}</td>
-        <td class="td-val">${Math.round(r.units).toLocaleString()}</td>
-      </tr>`));
-  } else if(tab==='traffic') {
-    const m=buildAsinMap(rows,r=>({gv:r.glance_views||0,gvYoy:r.glance_views_yoy}));
-    const top=Object.values(m).sort((a,b)=>b.gv-a.gv).slice(0,15);
-    const maxG=top[0]?.gv||1;
-    wrap.innerHTML=buildTable(['#','ASIN','Product','Market','Glance Views','YoY'],
-      top.map((r,i)=>`<tr>
-        <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
-        <td><div class="td-asin">${r.asin}</div></td>
-        <td><span class="td-name" title="${r.name}">${r.name}</span></td>
-        <td><span class="mp mp-${r.market}">${r.market}</span></td>
-        <td class="td-val">${r.gv.toLocaleString()}<div class="bar-bg"><div class="bar-fg" style="width:${(r.gv/maxG*100).toFixed(1)}%"></div></div></td>
-        <td class="td-yoy">${fmtYoyText(r.gvYoy)}</td>
-      </tr>`));
-  } else if(tab==='conversion') {
-    const m=buildAsinMap(rows,r=>({gv:r.glance_views||0,units:r.dispatched_units||r.ordered_units||0,rev:r.dispatched_revenue||r.ordered_revenue||0}));
-    const top=Object.values(m).filter(r=>r.gv>50).map(r=>({...r,conv:r.gv>0?(r.units/r.gv)*100:0,asp:r.units>0?r.rev/r.units:0})).sort((a,b)=>a.conv-b.conv).slice(0,15);
-    wrap.innerHTML=`
-      <div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
-        <b style="color:var(--amber)">Root Cause Analysis:</b> ASINs sorted by lowest conversion first. High traffic + low conversion = content, price or review issue worth investigating.
-      </div>`+
-      buildTable(['#','ASIN','Product','Market','Conversion','ASP','Views','Units'],
-      top.map((r,i)=>`<tr>
-        <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
-        <td><div class="td-asin">${r.asin}</div></td>
-        <td><span class="td-name" title="${r.name}">${r.name}${r.conv<2&&r.gv>1000?'<span class="flag flag-low">Low Conv</span>':''}</span></td>
-        <td><span class="mp mp-${r.market}">${r.market}</span></td>
-        <td class="td-val" style="color:${r.conv<2?'var(--red)':r.conv<5?'var(--amber)':'var(--green)'};font-weight:700">${r.conv.toFixed(2)}%</td>
-        <td class="td-val">${fmtCur(r.asp)}</td>
-        <td class="td-val">${r.gv.toLocaleString()}</td>
-        <td class="td-val">${Math.round(r.units).toLocaleString()}</td>
-      </tr>`));
-  } else if(tab==='supply') {
-    const m=buildAsinMap(rows,r=>({oos:r.oos_pct||0,unfilled:r.unfilled_units||0,rev:r.dispatched_revenue||r.ordered_revenue||0}));
-    const top=Object.values(m).filter(r=>r.oos>0||r.unfilled>0).sort((a,b)=>b.unfilled-a.unfilled).slice(0,15);
-    wrap.innerHTML=buildTable(['#','ASIN','Product','Market','OOS %','Unfilled','Revenue at Risk'],
-      top.map((r,i)=>`<tr>
-        <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
-        <td><div class="td-asin">${r.asin}</div></td>
-        <td><span class="td-name" title="${r.name}">${r.name}</span></td>
-        <td><span class="mp mp-${r.market}">${r.market}</span></td>
-        <td class="td-val"><span style="color:${r.oos>20?'var(--red)':r.oos>10?'var(--amber)':'var(--green)'};font-weight:700">${r.oos.toFixed(1)}%</span></td>
-        <td class="td-val" style="color:${r.unfilled>100?'var(--red)':r.unfilled>50?'var(--amber)':'var(--text)'};font-weight:700">${Math.round(r.unfilled).toLocaleString()}</td>
-        <td class="td-val" style="color:var(--red)">${r.oos>10?fmtCur(r.rev*(r.oos/100)):'—'}</td>
-      </tr>`));
-  } else if(tab==='adopp') {
-    const m=buildAsinMap(rows,r=>({rev:r.dispatched_revenue||r.ordered_revenue||0,units:r.dispatched_units||r.ordered_units||0,gv:r.glance_views||0,oos:r.oos_pct||0}));
-    // Ad opportunity = high ASP + low conversion + decent traffic + in stock
-    const opps=Object.values(m).filter(r=>r.gv>50).map(r=>({
-      ...r,
-      asp:r.units>0?r.rev/r.units:0,
-      conv:r.gv>0?(r.units/r.gv)*100:0
-    })).filter(r=>r.asp>5&&r.oos<20).sort((a,b)=>(b.asp*b.gv)-(a.asp*a.gv)).slice(0,15);
-    wrap.innerHTML=`
-      <div style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
-        <b style="color:#4F46E5">💡 Ad Opportunity Logic:</b> ASINs with high ASP (price point justifies ad spend) + low conversion (something stopping the purchase) + decent traffic (demand exists) + in stock. These are prime candidates for Sponsored Products.
-      </div>`+
-      (opps.length===0?'<div class="empty">No strong ad opportunities identified for this brand with current data.</div>':
-      buildTable(['#','ASIN','Product','Market','ASP','Conv %','Views','OOS %','Score'],
-      opps.map((r,i)=>{
-        const score=Math.round((r.asp*r.gv/1000)*(1-(r.conv/8)));
-        return`<tr>
-          <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
-          <td><div class="td-asin">${r.asin}</div></td>
-          <td><span class="td-name" title="${r.name}">${r.name}<span class="flag flag-ad">AD OPP</span></span></td>
-          <td><span class="mp mp-${r.market}">${r.market}</span></td>
-          <td class="td-val" style="color:var(--amber);font-weight:700">${fmtCur(r.asp)}</td>
-          <td class="td-val" style="color:${r.conv<3?'var(--red)':'var(--amber)'};font-weight:700">${r.conv.toFixed(2)}%</td>
-          <td class="td-val">${r.gv.toLocaleString()}</td>
-          <td class="td-val" style="color:${r.oos>10?'var(--amber)':'var(--green)'}">${r.oos.toFixed(1)}%</td>
-          <td class="td-val" style="color:#4F46E5;font-weight:700">${score}</td>
-        </tr>`;
-      })));
-  }
-}
-
-function buildAsinMap(rows, extractor) {
-  const m={};
-  const yoyKeys=['revYoy','gvYoy','oos']; // these should use last value not sum
-  rows.forEach(r=>{
-    const k=r.asin+'_'+r.market;
-    if(!m[k]) m[k]={asin:r.asin,name:r.product_title,market:r.market,...Object.fromEntries(Object.entries(extractor(r)).map(([k,v])=>[k,typeof v==='number'?0:null]))};
-    const vals=extractor(r);
-    Object.entries(vals).forEach(([key,val])=>{
-      if(val!==null&&val!==undefined){
-        if(yoyKeys.includes(key)) m[k][key]=val; // overwrite, don't sum
-        else m[k][key]=(m[k][key]||0)+val;
+    // Upload in batches of 500
+    document.getElementById('overlay-sub').textContent = 'Uploading to Supabase...';
+    const BATCH = 500;
+    let uploaded = 0;
+    for (let i=0; i<rows.length; i+=BATCH) {
+      const batch = rows.slice(i, i+BATCH);
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/brand_health_snapshots`, {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'apikey':SUPABASE_KEY,
+          'Authorization':`Bearer ${SUPABASE_KEY}`,
+          'Prefer':'return=minimal'
+        },
+        body: JSON.stringify(batch)
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`Upload failed at row ${i}: ${err}`);
       }
-    });
-  });
-  return m;
-}
-
-function renderSupplyAlerts() {
-  let rows=allRows;
-  if(currentMarket!=='ALL') rows=rows.filter(r=>r.market===currentMarket);
-  const seen=new Set(); const alerts=[];
-  rows.forEach(r=>{
-    const oos=r.oos_pct||0; const uf=r.unfilled_units||0;
-    if((oos>10||uf>50)&&r.asin){
-      const k=r.asin+'_'+r.market;
-      if(!seen.has(k)){seen.add(k);alerts.push({asin:r.asin,name:r.product_title,market:r.market,oos,uf});}
+      uploaded += batch.length;
+      document.getElementById('overlay-progress').textContent = `${uploaded} / ${rows.length} rows`;
+      log(`Uploaded ${uploaded}/${rows.length} rows...`);
     }
+
+    // Record week
+    await fetch(`${SUPABASE_URL}/rest/v1/brand_health_weeks`, {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_KEY,
+        'Authorization':`Bearer ${SUPABASE_KEY}`,
+        'Prefer':'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        week_start: weekStart,
+        week_label: formatDate(weekStart)+' – '+formatDate(weekEnd)
+      })
+    });
+
+    document.getElementById('overlay').classList.remove('on');
+    log(`✅ Done! ${rows.length} rows uploaded for week ${weekStart}`, 'ok');
+    log('Dashboard will now show updated data.', 'ok');
+    loadHistory();
+
+  } catch(err) {
+    document.getElementById('overlay').classList.remove('on');
+    log('❌ Error: '+err.message, 'err');
+    console.error(err);
+  }
+}
+
+function formatDate(d) {
+  const parts = d.split('-');
+  return parts[2]+'/'+parts[1]+'/'+parts[0];
+}
+
+// ─── HISTORY ─────────────────────────────────────────────────
+async function loadHistory() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/brand_health_weeks?select=*&order=week_start.desc&limit=10`, {
+    headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
   });
-  alerts.sort((a,b)=>b.uf-a.uf);
-  const g=document.getElementById('supply-items');
-  if(!alerts.length){g.innerHTML='<div class="empty">✅ No supply gap alerts this week</div>';return;}
-  g.innerHTML=alerts.slice(0,16).map(a=>`
-    <div class="supply-item">
-      <div class="si-asin">${a.asin} <span class="mp mp-${a.market}">${a.market}</span></div>
-      <div class="si-name" title="${a.name}">${a.name}</div>
-      <div class="si-stats">
-        <div class="si-stat"><b style="color:${a.oos>20?'var(--red)':'var(--amber)'}">${a.oos.toFixed(1)}%</b> OOS</div>
-        <div class="si-stat"><b style="color:${a.uf>100?'var(--red)':'var(--amber)'}">${Math.round(a.uf)}</b> unfilled</div>
-      </div>
-    </div>`).join('');
+  const weeks = await res.json();
+  const tbody = document.getElementById('history-tbody');
+  if (!weeks.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">No uploads yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = weeks.map(w=>`
+    <tr>
+      <td>${w.week_label||w.week_start}</td>
+      <td>${new Date(w.uploaded_at).toLocaleString('en-GB')}</td>
+      <td>—</td>
+      <td><button class="del-btn" onclick="deleteWeek('${w.week_start}')">Delete</button></td>
+    </tr>
+  `).join('');
 }
 
-function buildTable(headers,rows){
-  return`<table class="data-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+async function deleteWeek(weekStart) {
+  if (!confirm(`Delete all data for week ${weekStart}?`)) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}`,{
+    method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+  });
+  await fetch(`${SUPABASE_URL}/rest/v1/brand_health_weeks?week_start=eq.${weekStart}`,{
+    method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+  });
+  log(`Deleted data for week ${weekStart}`, 'info');
+  loadHistory();
 }
 
-// ─── CONTROLS ────────────────────────────────────────────────
-function setMarket(m,btn){currentMarket=m;document.querySelectorAll('.market-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');buildDashboard();}
-function setSort(s,btn){currentSort=s;document.querySelectorAll('.sort-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderBrandCards();}
-function setCurrency(c){currency=c;['eur','gbp','usd'].forEach(x=>document.getElementById('btn-'+x).classList.remove('active'));document.getElementById('btn-'+c).classList.add('active');renderBrandCards();if(selectedBrand)renderRCA(selectedBrand,currentTab);}
 
-// ─── FORMATTING ──────────────────────────────────────────────
-function fmtCur(val){
-  const v=val*FX[currency];
-  const sym=currency==='gbp'?'£':currency==='usd'?'$':'€';
-  if(v>=1000000) return sym+(v/1000000).toFixed(1)+'M';
-  if(v>=1000) return sym+(v/1000).toFixed(1)+'K';
-  return sym+v.toFixed(0);
-}
-function fmtNum(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(0)+'K';return Math.round(n).toLocaleString();}
-function fmtYoy(val){
-  if(val===null||val===undefined||isNaN(val))return'<span class="yoy yoy-na">n/a</span>';
-  const p=(val*100).toFixed(1);const cls=val>0?'yoy-up':val<0?'yoy-down':'yoy-na';const arr=val>0?'▲':val<0?'▼':'';
-  return`<span class="yoy ${cls}">${arr}${Math.abs(p)}%</span>`;
-}
-function fmtYoyText(val){
-  if(val===null||val===undefined||isNaN(val))return'<span style="color:var(--text3)">n/a</span>';
-  const p=(val*100).toFixed(1);const col=val>0?'var(--green)':val<0?'var(--red)':'var(--text3)';const arr=val>0?'▲':val<0?'▼':'';
-  return`<span style="color:${col};font-weight:700">${arr}${Math.abs(p)}%</span>`;
+// ─── LOYALTY UPLOAD ──────────────────────────────────────────
+const BRAND_MAP_LOYALTY = {
+  DISNEY_KIDS: ['spidey and his amazing friends','iron man and his awesome friends','iron man and friends','spidey and his amazing','hasbro spidey'],
+  MARVEL: ['marvel','avengers','hasbro avengers','spider-man','spiderman','x-men','the eternals','marvel legends','marvel classic','hasbro marvel'],
+  STAR_WARS: ['star wars','hasbro star wars'],
+  MONOPOLY: ['monopoly','hasbro monopoly'],
+  GAMES: ['hasbro gaming','hasbro games','avalon hill','clue','hasbro indiana jones'],
+  PLAY_DOH: ['play-doh','play doh','playdoh','hasbro play-doh'],
+  PEPPA_PIG: ['peppa pig','peppa'],
+  TRANSFORMERS: ['transformers','hasbro transformers'],
+  BEYBLADE: ['beyblade','hasbro beyblade'],
+  NERF: ['nerf','hasbro nerf','super soaker','supersoaker']
+};
+
+function classifyLoyaltyBrand(brandName) {
+  const b = (brandName||'').toLowerCase().trim();
+  for (const [id, keys] of Object.entries(BRAND_MAP_LOYALTY)) {
+    if (keys.some(k => b.includes(k))) return id;
+  }
+  return 'OTHER';
 }
 
-init();
+function logLoyalty(msg, type='') {
+  const area = document.getElementById('loyalty-log');
+  const line = document.createElement('span');
+  line.className = 'log-line ' + type;
+  line.textContent = new Date().toLocaleTimeString('en-GB') + ' → ' + msg;
+  area.appendChild(line);
+  area.scrollTop = area.scrollHeight;
+}
+
+async function uploadLoyalty() {
+  const quarter = document.getElementById('quarter-select').value;
+  const file = files.loyalty;
+  if (!file) { alert('Please select the repeat purchase file first.'); return; }
+
+  document.getElementById('loyalty-btn').disabled = true;
+  document.getElementById('loyalty-log').innerHTML = '';
+  logLoyalty('Reading repeat purchase file...', 'info');
+
+  try {
+    const raw = await parseVCFile(file);
+    logLoyalty(`Parsed ${raw.length} brand rows`, 'ok');
+
+    // Find correct column keys
+    const sampleKeys = raw.length > 0 ? Object.keys(raw[0]) : [];
+    const totalCustKey = sampleKeys.find(k => k.toLowerCase().includes('unique customer'));
+    const repeatCustKey = sampleKeys.find(k => k.toLowerCase().includes('repeat customer count: count'));
+    const repeatSalesKey = sampleKeys.find(k => k.toLowerCase().includes('repeat ordered product sales: sales'));
+    const brandKey = sampleKeys.find(k => k.toLowerCase() === 'brand') || 'Brand';
+
+    // Aggregate by our brand groups
+    const agg = {};
+    raw.forEach(r => {
+      const brandId = classifyLoyaltyBrand(r[brandKey]);
+      if (brandId === 'OTHER') return;
+      const totalCust = parseFloat(String(r[totalCustKey]||'0').replace(/[^0-9.]/g,'')) || 0;
+      const repeatCust = parseFloat(String(r[repeatCustKey]||'0').replace(/[^0-9.]/g,'')) || 0;
+      const repeatSales = parseFloat(String(r[repeatSalesKey]||'0').replace(/[^0-9.]/g,'')) || 0;
+      if (!agg[brandId]) agg[brandId] = {total_customers:0, repeat_customers:0, repeat_sales:0};
+      agg[brandId].total_customers += totalCust;
+      agg[brandId].repeat_customers += repeatCust;
+      agg[brandId].repeat_sales += repeatSales;
+    });
+
+    // Build rows
+    const rows = Object.entries(agg).map(([brand_classified, d]) => ({
+      brand_classified,
+      repeat_rate: d.total_customers > 0 ? d.repeat_customers / d.total_customers : 0,
+      repeat_customers: Math.round(d.repeat_customers),
+      total_customers: Math.round(d.total_customers),
+      repeat_sales: d.repeat_sales,
+      quarter
+    }));
+
+    logLoyalty(`Built ${rows.length} brand loyalty rows`, 'ok');
+
+    // Delete existing quarter data
+    await fetch(`${SUPABASE_URL}/rest/v1/brand_health_loyalty?quarter=eq.${quarter}`, {
+      method: 'DELETE',
+      headers: {'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`}
+    });
+
+    // Insert new
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/brand_health_loyalty`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(rows)
+    });
+
+    if (!res.ok) throw new Error('Upload failed: ' + await res.text());
+
+    logLoyalty(`✅ Done! ${rows.length} brands uploaded for ${quarter}`, 'ok');
+    rows.forEach(r => {
+      logLoyalty(`  ${r.brand_classified}: ${(r.repeat_rate*100).toFixed(1)}% repeat rate (${r.repeat_customers}/${r.total_customers} customers)`);
+    });
+
+  } catch(err) {
+    logLoyalty('❌ Error: ' + err.message, 'err');
+  }
+  document.getElementById('loyalty-btn').disabled = false;
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 </script>
 </body>
 </html>
