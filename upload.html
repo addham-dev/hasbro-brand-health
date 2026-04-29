@@ -298,6 +298,7 @@ function loadFile(f,type) {
 
 function checkReady() {
   document.getElementById('process-btn').disabled = !(files.sales && files.traffic && files.inventory);
+  if (files.loyalty) document.getElementById('loyalty-btn').disabled = false;
 }
 
 // ─── BRAND RULES ─────────────────────────────────────────────
