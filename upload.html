@@ -702,25 +702,16 @@ function parseLoyaltyFile(file) {
     reader.onload = e => {
       let text = e.target.result.replace(/^\uFEFF/, '');
       const lines = text.split('\n');
-      // Find header row — starts with Brand,
       let hi = -1;
       for (let i = 0; i < Math.min(lines.length, 10); i++) {
         const t = lines[i].trim().replace(/^\uFEFF/, '');
-        if (t.startsWith('Brand,') || t.startsWith('"Brand"')) {
-          hi = i; break;
-        }
+        if (t.startsWith('Brand,') || t.startsWith('"Brand"')) { hi = i; break; }
       }
       if (hi === -1) hi = 1;
       const result = Papa.parse(lines.slice(hi).join('\n'), {
         header: true, skipEmptyLines: true, dynamicTyping: false
       });
-      const rows = result.data.filter(r => {
-        const brand = r['Brand'] || r[Object.keys(r)[0]] || '';
-        return brand.trim().length > 0;
-      });
-      console.log('Loyalty parser: found', rows.length, 'rows, hi=', hi);
-      if (rows.length > 0) console.log('Sample keys:', Object.keys(rows[0]).slice(0, 5));
-      resolve(rows);
+      resolve(result.data.filter(r => (r['Brand']||'').trim().length > 0));
     };
     reader.readAsText(file, 'UTF-8');
   });
@@ -736,54 +727,71 @@ async function uploadLoyalty() {
   logLoyalty('Reading repeat purchase file...', 'info');
 
   try {
-    // Loyalty CSV has Brand, not ASIN as first column — use dedicated parser
     const raw = await parseLoyaltyFile(file);
-    logLoyalty(`Parsed ${raw.length} brand rows`, 'ok');
+    logLoyalty(`✓ Parsed ${raw.length} rows from CSV`, 'ok');
+    if (raw.length === 0) throw new Error('No rows found — check this is the GB Repeat Purchase Behaviour Brand View CSV');
 
-    if (raw.length === 0) throw new Error('No rows found — check file is the GB Repeat Purchase Behaviour CSV');
+    // Exact column names from Amazon export
+    const TOTAL_CUST = 'Unique Customer Count';
+    const REPEAT_CUST = 'Repeat Customer Count: Count';
+    const REPEAT_SALES = 'Repeat Ordered Product Sales: Sales';
 
-    // Find correct column keys
-    const sampleKeys = raw.length > 0 ? Object.keys(raw[0]) : [];
-    logLoyalty(`Columns found: ${sampleKeys.slice(0,4).join(', ')}`, 'info');
-    const totalCustKey = sampleKeys.find(k => k.toLowerCase().includes('unique customer'));
-    const repeatCustKey = sampleKeys.find(k => k.toLowerCase().includes('repeat customer count: count'));
-    const repeatSalesKey = sampleKeys.find(k => k.toLowerCase().includes('repeat ordered product sales: sales'));
-    const brandKey = sampleKeys.find(k => k.toLowerCase().trim() === 'brand') || 'Brand';
-    logLoyalty(`Brand key: ${brandKey}, Total cust key: ${totalCustKey}`, 'info');
+    // Brand classification map
+    const BRAND_MAP = {
+      DISNEY_KIDS: ['spidey and his amazing friends','iron man and his awesome friends','iron man and friends','spidey and his amazing','hasbro spidey'],
+      MARVEL: ['marvel','avengers','hasbro avengers','spider-man','spiderman','x-men','the eternals','marvel legends','marvel classic','hasbro marvel'],
+      STAR_WARS: ['star wars','hasbro star wars'],
+      MONOPOLY: ['monopoly','hasbro monopoly'],
+      GAMES: ['hasbro gaming','hasbro games','avalon hill','clue','hasbro indiana jones'],
+      PLAY_DOH: ['play-doh','play doh','playdoh','hasbro play-doh'],
+      PEPPA_PIG: ['peppa pig','peppa'],
+      TRANSFORMERS: ['transformers','hasbro transformers'],
+      BEYBLADE: ['beyblade','hasbro beyblade'],
+      NERF: ['nerf','hasbro nerf','super soaker','supersoaker']
+    };
 
-    // Aggregate by our brand groups
+    function classifyBrand(name) {
+      const b = (name||'').toLowerCase().trim();
+      for (const [id, keys] of Object.entries(BRAND_MAP)) {
+        if (keys.some(k => b.includes(k))) return id;
+      }
+      return 'OTHER';
+    }
+
+    // Aggregate by brand group
     const agg = {};
     raw.forEach(r => {
-      const brandId = classifyLoyaltyBrand(r[brandKey]);
+      const brandId = classifyBrand(r['Brand']);
       if (brandId === 'OTHER') return;
-      const totalCust = parseFloat(String(r[totalCustKey]||'0').replace(/[^0-9.]/g,'')) || 0;
-      const repeatCust = parseFloat(String(r[repeatCustKey]||'0').replace(/[^0-9.]/g,'')) || 0;
-      const repeatSales = parseFloat(String(r[repeatSalesKey]||'0').replace(/[^0-9.]/g,'')) || 0;
-      if (!agg[brandId]) agg[brandId] = {total_customers:0, repeat_customers:0, repeat_sales:0};
-      agg[brandId].total_customers += totalCust;
-      agg[brandId].repeat_customers += repeatCust;
-      agg[brandId].repeat_sales += repeatSales;
+      const tc = parseFloat((r[TOTAL_CUST]||'0').replace(/[^0-9.]/g,'')) || 0;
+      const rc = parseFloat((r[REPEAT_CUST]||'0').replace(/[^0-9.]/g,'')) || 0;
+      const rs = parseFloat((r[REPEAT_SALES]||'0').replace(/[^0-9.]/g,'')) || 0;
+      if (!agg[brandId]) agg[brandId] = {tc:0, rc:0, rs:0};
+      agg[brandId].tc += tc;
+      agg[brandId].rc += rc;
+      agg[brandId].rs += rs;
     });
 
-    // Build rows
     const rows = Object.entries(agg).map(([brand_classified, d]) => ({
       brand_classified,
-      repeat_rate: d.total_customers > 0 ? d.repeat_customers / d.total_customers : 0,
-      repeat_customers: Math.round(d.repeat_customers),
-      total_customers: Math.round(d.total_customers),
-      repeat_sales: d.repeat_sales,
+      repeat_rate: d.tc > 0 ? d.rc / d.tc : 0,
+      repeat_customers: Math.round(d.rc),
+      total_customers: Math.round(d.tc),
+      repeat_sales: d.rs,
       quarter
     }));
 
-    logLoyalty(`Built ${rows.length} brand loyalty rows`, 'ok');
+    logLoyalty(`✓ Built ${rows.length} brand rows`, 'ok');
+    rows.forEach(r => logLoyalty(`  ${r.brand_classified}: ${(r.repeat_rate*100).toFixed(1)}% (${r.repeat_customers}/${r.total_customers})`));
 
-    // Delete existing quarter data
+    if (rows.length === 0) throw new Error('No matching brands found after classification');
+
+    // Delete existing and insert
     await fetch(`${SUPABASE_URL}/rest/v1/brand_health_loyalty?quarter=eq.${quarter}`, {
       method: 'DELETE',
       headers: {'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`}
     });
 
-    // Insert new
     const res = await fetch(`${SUPABASE_URL}/rest/v1/brand_health_loyalty`, {
       method: 'POST',
       headers: {
@@ -795,15 +803,12 @@ async function uploadLoyalty() {
       body: JSON.stringify(rows)
     });
 
-    if (!res.ok) throw new Error('Upload failed: ' + await res.text());
-
+    if (!res.ok) throw new Error('Supabase error: ' + await res.text());
     logLoyalty(`✅ Done! ${rows.length} brands uploaded for ${quarter}`, 'ok');
-    rows.forEach(r => {
-      logLoyalty(`  ${r.brand_classified}: ${(r.repeat_rate*100).toFixed(1)}% repeat rate (${r.repeat_customers}/${r.total_customers} customers)`);
-    });
 
   } catch(err) {
     logLoyalty('❌ Error: ' + err.message, 'err');
+    console.error(err);
   }
   document.getElementById('loyalty-btn').disabled = false;
 }
