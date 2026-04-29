@@ -462,8 +462,6 @@ async function loadPeriod(periodVal) {
       adsData[bid][mk].organic_glance_views+=(v.organic_glance_views||0);
       adsData[bid][mk].ad_glance_views+=(v.ad_glance_views||0);
     });
-    console.log('adsData keys:', Object.keys(adsData));
-    console.log('adsDataAllWeeks sample:', Object.entries(adsDataAllWeeks).slice(0,3).map(([k,v])=>({k,brand:v.brand_classified,market:v.market,spend:v.ad_spend})));
   } else {
     // Multi-week (month/quarter/year) — aggregate from allRowsAllWeeks
     allRows=allRowsAllWeeks.filter(r=>weekStarts.includes(r.week_start));
@@ -544,7 +542,6 @@ function aggregateBrand(brandId) {
     });
     if(ads.ad_revenue===0&&ads.ad_spend===0) ads=null;
   }
-  if(brandId==='GAMES') console.log('GAMES ads debug:', JSON.stringify(adsData['GAMES']), 'result:', ads);
   return{revenue,revenueYoy:revYoyD>0?revYoyN/revYoyD:null,units,asp,conv,gviews,gviewsYoy:gvYoyD>0?gvYoyN/gvYoyD:null,unfilled,avgOos,repeatRate,ltv,loyaltyQuarter:loyalty?.quarter,ads};
 }
 
@@ -698,7 +695,8 @@ function setTab(tab,btn) {
 function renderRCA(brandId,tab) {
   const rows=getRows(brandId);
   const d=aggregateBrand(brandId);
-  const ads=adsData[brandId]||null;
+  // ads comes from d.ads (already market-aggregated by aggregateBrand)
+  const ads=d.ads;
 
   // KPI row
   const adRevPct=ads&&d.revenue>0?((ads.ad_revenue/d.revenue)*100).toFixed(0):null;
