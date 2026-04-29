@@ -14,6 +14,8 @@
       --red:#E8423F;--red-bg:#FFF0F0;
       --amber:#F5A623;--amber-bg:#FFF8EC;
       --purple:#9B59B6;--purple-bg:#F5EEF8;
+      --ad-color:#4F46E5;--ad-bg:#EEF2FF;
+      --org-color:#009CDE;--org-bg:#E5F6FF;
       --shadow:0 2px 16px rgba(0,156,222,0.08);
       --shadow-lg:0 8px 32px rgba(0,156,222,0.15);
     }
@@ -33,11 +35,15 @@
 
     .filter-bar{background:white;padding:10px 40px;display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--border);box-shadow:var(--shadow);flex-wrap:wrap;}
     .filter-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
-    .market-tabs,.sort-tabs{display:flex;gap:4px;}
-    .market-tab,.sort-tab{padding:6px 14px;border-radius:6px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;}
-    .market-tab.active,.sort-tab.active{background:var(--blue);color:white;border-color:var(--blue);}
-    .divider{width:1px;height:24px;background:var(--border);}
+    .market-tabs,.sort-tabs,.period-tabs{display:flex;gap:4px;}
+    .market-tab,.sort-tab,.period-tab{padding:6px 14px;border-radius:6px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+    .market-tab.active,.sort-tab.active,.period-tab.active{background:var(--blue);color:white;border-color:var(--blue);}
+    .divider{width:1px;height:24px;background:var(--border);flex-shrink:0;}
     .week-select{padding:6px 12px;border-radius:6px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;outline:none;}
+
+    /* TIME PIVOT BAR */
+    .pivot-bar{background:white;padding:8px 40px;display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--border);flex-wrap:wrap;}
+    .pivot-bar.hidden{display:none;}
 
     main{padding:24px 40px;max-width:1600px;margin:0 auto;display:grid;gap:28px;}
 
@@ -76,12 +82,24 @@
     .yoy-down{color:var(--red);background:var(--red-bg);}
     .yoy-na{color:var(--text3);}
     .brand-divider{height:1px;background:var(--border);margin:8px 0;}
-    .loyalty-row{display:flex;justify-content:space-between;align-items:center;margin-top:2px;}
     .ltv-badge{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--purple);background:var(--purple-bg);padding:2px 6px;border-radius:4px;}
     .supply-alert{margin-top:8px;padding:5px 8px;border-radius:5px;font-size:10px;font-weight:700;text-align:center;}
     .supply-alert.show-red{background:var(--red-bg);color:var(--red);}
     .supply-alert.show-amber{background:var(--amber-bg);color:var(--amber);}
-    .ad-opp{margin-top:4px;padding:4px 8px;border-radius:5px;font-size:10px;font-weight:700;text-align:center;background:#EEF2FF;color:#4F46E5;}
+    .ad-opp{margin-top:4px;padding:4px 8px;border-radius:5px;font-size:10px;font-weight:700;text-align:center;background:var(--ad-bg);color:var(--ad-color);}
+
+    /* EXPANDABLE ADS ROWS */
+    .bm-expand-row{display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+    .bm-expand-row:hover .bm-label{color:var(--blue);}
+    .expand-toggle{font-size:9px;color:var(--text3);transition:transform 0.2s;display:inline-block;}
+    .expand-toggle.open{transform:rotate(90deg);}
+    .bm-sub-rows{display:none;margin-left:8px;margin-top:4px;display:none;border-left:2px solid var(--border);padding-left:8px;}
+    .bm-sub-rows.open{display:grid;gap:3px;}
+    .bm-sub-row{display:flex;justify-content:space-between;align-items:center;}
+    .bm-sub-label{font-size:9px;color:var(--text2);font-weight:600;}
+    .bm-sub-value{font-family:'DM Mono',monospace;font-size:10px;color:var(--text);}
+    .dot-org{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--org-color);margin-right:3px;}
+    .dot-ad{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ad-color);margin-right:3px;}
 
     /* ROOT CAUSE ANALYSIS */
     .rca-panel{background:white;border-radius:16px;box-shadow:var(--shadow);border:2px solid var(--border);overflow:hidden;}
@@ -90,7 +108,7 @@
     .rca-emoji{font-size:32px;}
     .rca-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--blue-dark);}
     .rca-subtitle{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:1px;}
-    .rca-tabs{display:flex;gap:4px;}
+    .rca-tabs{display:flex;gap:4px;flex-wrap:wrap;}
     .rca-tab{padding:7px 14px;border-radius:6px;border:2px solid var(--border);background:white;color:var(--text2);font-family:'Inter',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.5px;}
     .rca-tab.active{background:var(--blue);color:white;border-color:var(--blue);}
     .rca-content{padding:20px 24px;}
@@ -107,6 +125,18 @@
     .kpi-value.c-purple{color:var(--purple);}
     .kpi-value.c-text{color:var(--text);}
     .kpi-yoy{font-size:11px;font-weight:600;margin-top:4px;color:var(--text2);}
+
+    /* ADS SPLIT IN KPI */
+    .kpi-ads-split{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+    .kpi-split-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
+    .kpi-split-pill.org{background:var(--org-bg);color:var(--org-color);}
+    .kpi-split-pill.ad{background:var(--ad-bg);color:var(--ad-color);}
+
+    /* TREND CHART */
+    .trend-section{margin-bottom:24px;}
+    .trend-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+    .trend-chart-wrap{position:relative;height:160px;background:var(--bg);border-radius:10px;border:1px solid var(--border);overflow:hidden;}
+    canvas.trend-canvas{width:100%;height:100%;}
 
     /* DATA TABLE */
     .data-table{width:100%;border-collapse:collapse;}
@@ -128,9 +158,18 @@
     .bar-bg{height:4px;background:var(--border);border-radius:2px;margin-top:3px;}
     .bar-fg{height:100%;background:var(--blue);border-radius:2px;}
     .flag{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;}
-    .flag-ad{background:#EEF2FF;color:#4F46E5;}
+    .flag-ad{background:var(--ad-bg);color:var(--ad-color);}
     .flag-oos{background:var(--red-bg);color:var(--red);}
     .flag-low{background:var(--amber-bg);color:var(--amber);}
+
+    /* PIVOT TABLE */
+    .pivot-table-wrap{overflow-x:auto;}
+    .pivot-table{width:100%;border-collapse:collapse;min-width:600px;}
+    .pivot-table th{text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;padding:8px 12px;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--bg);}
+    .pivot-table th.r{text-align:right;}
+    .pivot-table td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:12px;}
+    .pivot-table tr:hover td{background:var(--blue-light);}
+    .pivot-table tr:last-child td{border-bottom:none;font-weight:700;background:var(--blue-light);}
 
     /* SUPPLY PANEL */
     .supply-panel{background:white;border-radius:16px;box-shadow:var(--shadow);border:2px solid #FFD0D0;overflow:hidden;}
@@ -153,6 +192,14 @@
     .no-data-emoji{font-size:64px;margin-bottom:16px;}
     .no-data-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text2);margin-bottom:8px;}
     .empty{text-align:center;padding:40px;color:var(--text3);font-size:13px;}
+
+    /* OOS colour helpers */
+    .oos-green{color:var(--green);font-weight:700;}
+    .oos-amber{color:var(--amber);font-weight:700;}
+    .oos-red{color:var(--red);font-weight:700;}
+    .cvr-green{color:var(--green);font-weight:700;}
+    .cvr-amber{color:var(--amber);font-weight:700;}
+    .cvr-red{color:var(--red);font-weight:700;}
   </style>
 </head>
 <body>
@@ -175,6 +222,14 @@
 </header>
 
 <div class="filter-bar">
+  <span class="filter-label">View</span>
+  <div class="period-tabs">
+    <button class="period-tab active" onclick="setPeriodMode('week',this)">Weekly</button>
+    <button class="period-tab" onclick="setPeriodMode('month',this)">Monthly</button>
+    <button class="period-tab" onclick="setPeriodMode('quarter',this)">Quarterly</button>
+    <button class="period-tab" onclick="setPeriodMode('year',this)">Annual</button>
+  </div>
+  <div class="divider"></div>
   <span class="filter-label">Market</span>
   <div class="market-tabs">
     <button class="market-tab active" onclick="setMarket('ALL',this)">All EU5</button>
@@ -185,8 +240,8 @@
     <button class="market-tab" onclick="setMarket('ES',this)">🇪🇸 ES</button>
   </div>
   <div class="divider"></div>
-  <span class="filter-label">Week</span>
-  <select class="week-select" id="week-select" onchange="loadWeek(this.value)">
+  <span class="filter-label" id="period-label">Week</span>
+  <select class="week-select" id="week-select" onchange="loadPeriod(this.value)">
     <option>Loading...</option>
   </select>
   <div class="divider"></div>
@@ -231,7 +286,9 @@
         <button class="rca-tab" onclick="setTab('traffic',this)">Traffic</button>
         <button class="rca-tab" onclick="setTab('conversion',this)">Conversion</button>
         <button class="rca-tab" onclick="setTab('supply',this)">Supply &amp; OOS</button>
+        <button class="rca-tab" onclick="setTab('ads',this)">Ads</button>
         <button class="rca-tab" onclick="setTab('adopp',this)">Ad Opportunities</button>
+        <button class="rca-tab" onclick="setTab('trends',this)">Trends</button>
       </div>
     </div>
     <div class="rca-content">
@@ -258,47 +315,158 @@ const BRAND_LABELS={DISNEY_KIDS:'Disney Kids',MARVEL:'Marvel / Spider-Man',STAR_
 const BRAND_ORDER=['DISNEY_KIDS','MARVEL','STAR_WARS','MONOPOLY','GAMES','PLAY_DOH','PEPPA_PIG','TRANSFORMERS','BEYBLADE','NERF','OTHER'];
 
 let currency='eur',currentMarket='ALL',currentSort='revenue',selectedBrand=null,currentTab='revenue';
-let allRows=[],loyaltyData={};
+let allRows=[],loyaltyData={},adsData={},allWeeks=[],allRowsAllWeeks=[],adsDataAllWeeks={};
+let periodMode='week'; // 'week','month','quarter','year'
+let currentPeriod=null;
+
+// ─── THRESHOLD HELPERS ────────────────────────────────────────
+function oosClass(pct) {
+  if (pct<=6) return 'oos-green';
+  if (pct<=9) return 'oos-amber';
+  return 'oos-red';
+}
+function oosLabel(pct) {
+  if (pct<=6) return 'green';
+  if (pct<=9) return 'amber';
+  return 'red';
+}
+function cvrClass(pct) {
+  if (pct>=10) return 'cvr-green';
+  if (pct>=5) return 'cvr-amber';
+  return 'cvr-red';
+}
+function cvrLevel(pct) {
+  if (pct>=10) return 'good';
+  if (pct>=5) return 'ok';
+  return 'bad';
+}
+
+// ─── PERIOD HELPERS ──────────────────────────────────────────
+function getMonthKey(dateStr){const d=new Date(dateStr);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function getQuarterKey(dateStr){const d=new Date(dateStr);const q=Math.ceil((d.getMonth()+1)/3);return`${d.getFullYear()}-Q${q}`;}
+function getYearKey(dateStr){return String(new Date(dateStr).getFullYear());}
+function periodKey(dateStr){
+  if(periodMode==='week') return dateStr;
+  if(periodMode==='month') return getMonthKey(dateStr);
+  if(periodMode==='quarter') return getQuarterKey(dateStr);
+  return getYearKey(dateStr);
+}
+function periodLabel(key){
+  if(periodMode==='week'){const p=key.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+  return key;
+}
 
 // ─── INIT ─────────────────────────────────────────────────────
 async function init() {
   try {
-    const [weeksRes,loyaltyRes]=await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/brand_health_weeks?select=*&order=week_start.desc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}}),
-      fetch(`${SUPABASE_URL}/rest/v1/brand_health_loyalty?select=*&order=uploaded_at.desc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}})
+    const [weeksRes,loyaltyRes,adsRes]=await Promise.all([
+      sbFetch('/rest/v1/brand_health_weeks?select=*&order=week_start.desc'),
+      sbFetch('/rest/v1/brand_health_loyalty?select=*&order=uploaded_at.desc'),
+      sbFetch('/rest/v1/brand_health_ads?select=*&order=week_start.desc&limit=10000')
     ]);
-    const weeks=await weeksRes.json();
-    const loyalty=await loyaltyRes.json();
+    allWeeks=weeksRes;
 
-    // Build loyalty lookup — latest per brand
+    // Build loyalty lookup
     loyaltyData={};
-    loyalty.forEach(r=>{
-      if(!loyaltyData[r.brand_classified]) loyaltyData[r.brand_classified]=r;
+    loyaltyRes.forEach(r=>{if(!loyaltyData[r.brand_classified])loyaltyData[r.brand_classified]=r;});
+
+    // Build ads lookup keyed by week_start+brand+market using row fields directly
+    adsDataAllWeeks={};
+    adsRes.forEach(r=>{
+      const k=`${r.week_start}||${r.brand_classified}||${r.market||'ALL'}`;
+      adsDataAllWeeks[k]=r;
     });
 
-    if(!weeks.length){
+    if(!allWeeks.length){
       document.getElementById('loading-screen').style.display='none';
       document.getElementById('no-data-screen').style.display='block';
       return;
     }
-    const sel=document.getElementById('week-select');
-    sel.innerHTML=weeks.map(w=>`<option value="${w.week_start}">${w.week_label||w.week_start}</option>`).join('');
-    await loadWeek(weeks[0].week_start);
+
+    // Load all snapshot data for trend/pivot (last 52 weeks max)
+    const allSnapsRes=await sbFetch('/rest/v1/brand_health_snapshots?select=week_start,brand_classified,market,dispatched_revenue,ordered_revenue,dispatched_units,ordered_units,glance_views,oos_pct,unfilled_units,revenue_yoy,glance_views_yoy&limit=500000&order=week_start.desc');
+    allRowsAllWeeks=allSnapsRes;
+
+    buildPeriodSelect();
+    await loadPeriod(currentPeriod);
   } catch(err) {
     document.getElementById('loading-screen').innerHTML=`<div style="color:var(--red);font-family:'DM Mono',monospace;font-size:12px;text-align:center;padding:40px">Error: ${err.message}</div>`;
   }
 }
 
-async function loadWeek(weekStart) {
+function sbFetch(path){
+  return fetch(SUPABASE_URL+path,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(r=>r.json());
+}
+
+function buildPeriodSelect(){
+  // Build unique period keys from allWeeks
+  const seen=new Set(); const options=[];
+  allWeeks.forEach(w=>{
+    const k=periodKey(w.week_start);
+    if(!seen.has(k)){
+      seen.add(k);
+      const label=periodMode==='week'?(w.week_label||w.week_start):k;
+      options.push({value:k,label});
+    }
+  });
+  const sel=document.getElementById('week-select');
+  sel.innerHTML=options.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  document.getElementById('period-label').textContent=periodMode.charAt(0).toUpperCase()+periodMode.slice(1);
+  if(options.length) currentPeriod=options[0].value;
+}
+
+async function loadPeriod(periodVal) {
+  if(!periodVal) return;
+  currentPeriod=periodVal;
   document.getElementById('loading-screen').style.display='flex';
   document.getElementById('main-content').style.display='none';
-  const res=await fetch(`${SUPABASE_URL}/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}&select=*&limit=20000`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}});
-  allRows=await res.json();
+
+  // Get all week_start values that belong to this period
+  const weekStarts=allWeeks.map(w=>w.week_start).filter(ws=>periodKey(ws)===periodVal);
+
+  if(periodMode==='week'&&weekStarts.length===1){
+    // Single week — fetch full detail
+    const res=await sbFetch(`/rest/v1/brand_health_snapshots?week_start=eq.${weekStarts[0]}&select=*&limit=20000`);
+    allRows=res;
+    // Build ads lookup for this week
+    adsData={};
+    Object.entries(adsDataAllWeeks).forEach(([k,v])=>{
+      if(k.startsWith(weekStarts[0]+'_')) adsData[v.brand_classified]=v;
+    });
+  } else {
+    // Multi-week (month/quarter/year) — aggregate from allRowsAllWeeks
+    allRows=allRowsAllWeeks.filter(r=>weekStarts.includes(r.week_start));
+    // Aggregate ads for selected period — sum across all markets, then filter by currentMarket when rendering
+    adsData={};
+    Object.entries(adsDataAllWeeks).forEach(([k,v])=>{
+      const [ws,bid,mkt]=k.split('||');
+      if(!weekStarts.includes(ws)) return;
+      if(!adsData[bid]) adsData[bid]={};
+      if(!adsData[bid][mkt]) adsData[bid][mkt]={ad_revenue:0,ad_spend:0,ad_impressions:0,ad_clicks:0,organic_revenue:0,organic_glance_views:0,ad_glance_views:0};
+      adsData[bid][mkt].ad_revenue+=(v.ad_revenue||0);
+      adsData[bid][mkt].ad_spend+=(v.ad_spend||0);
+      adsData[bid][mkt].ad_impressions+=(v.ad_impressions||0);
+      adsData[bid][mkt].ad_clicks+=(v.ad_clicks||0);
+      adsData[bid][mkt].organic_revenue+=(v.organic_revenue||0);
+      adsData[bid][mkt].organic_glance_views+=(v.organic_glance_views||0);
+      adsData[bid][mkt].ad_glance_views+=(v.ad_glance_views||0);
+    });
+  }
+
   const sel=document.getElementById('week-select');
-  document.getElementById('week-badge').textContent=sel.options[sel.selectedIndex]?.text||weekStart;
+  const selOpt=sel.options[sel.selectedIndex];
+  document.getElementById('week-badge').textContent=selOpt?.text||periodVal;
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('main-content').style.display='grid';
   buildDashboard();
+}
+
+function setPeriodMode(mode,btn){
+  periodMode=mode;
+  document.querySelectorAll('.period-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildPeriodSelect();
+  loadPeriod(currentPeriod);
 }
 
 // ─── DATA ─────────────────────────────────────────────────────
@@ -320,28 +488,56 @@ function aggregateBrand(brandId) {
     unfilled+=r.unfilled_units||0;
     if(r.oos_pct!==null&&r.oos_pct!==undefined) oosVals.push(r.oos_pct);
   });
+  const avgOos=oosVals.length>0?oosVals.reduce((a,b)=>a+b,0)/oosVals.length:0;
+  const conv=gviews>0?(units/gviews)*100:0;
   const asp=units>0?revenue/units:0;
   const loyalty=loyaltyData[brandId];
   const repeatRate=loyalty?loyalty.repeat_rate:null;
   const ltv=repeatRate&&repeatRate<1&&asp>0?asp/(1-repeatRate):null;
-  return{revenue,revenueYoy:revYoyD>0?revYoyN/revYoyD:null,units,asp,conv:gviews>0?(units/gviews)*100:0,gviews,gviewsYoy:gvYoyD>0?gvYoyN/gvYoyD:null,unfilled,avgOos:oosVals.length>0?oosVals.reduce((a,b)=>a+b,0)/oosVals.length:0,repeatRate,ltv,loyaltyQuarter:loyalty?.quarter};
+  // Aggregate ads for this brand — filtered by currentMarket
+  let ads=null;
+  if(adsData[brandId]){
+    const mkts=currentMarket==='ALL'?Object.keys(adsData[brandId]):[currentMarket];
+    ads={ad_revenue:0,ad_spend:0,ad_impressions:0,ad_clicks:0,organic_revenue:0,organic_glance_views:0,ad_glance_views:0};
+    mkts.forEach(mk=>{
+      const a=adsData[brandId][mk];
+      if(a){
+        ads.ad_revenue+=(a.ad_revenue||0);
+        ads.ad_spend+=(a.ad_spend||0);
+        ads.ad_impressions+=(a.ad_impressions||0);
+        ads.ad_clicks+=(a.ad_clicks||0);
+        ads.organic_revenue+=(a.organic_revenue||0);
+        ads.organic_glance_views+=(a.organic_glance_views||0);
+        ads.ad_glance_views+=(a.ad_glance_views||0);
+      }
+    });
+    if(ads.ad_revenue===0&&ads.ad_glance_views===0) ads=null;
+  }
+  return{revenue,revenueYoy:revYoyD>0?revYoyN/revYoyD:null,units,asp,conv,gviews,gviewsYoy:gvYoyD>0?gvYoyN/gvYoyD:null,unfilled,avgOos,repeatRate,ltv,loyaltyQuarter:loyalty?.quarter,ads};
 }
 
+// Updated sentiment logic using new thresholds
 function getSentiment(d) {
   const revUp=d.revenueYoy!==null&&d.revenueYoy>0;
   const revDown=d.revenueYoy!==null&&d.revenueYoy<0;
-  const gvDown=d.gviewsYoy!==null&&d.gviewsYoy<0;
-  const supplyBad=d.avgOos>20||d.unfilled>200;
-  if(revDown&&(gvDown||supplyBad)) return 'cry';
-  if(revUp&&d.gviewsYoy!==null&&d.gviewsYoy>0&&!supplyBad) return 'happy';
+  const cvrBad=cvrLevel(d.conv)==='bad'; // <5%
+  const cvrOk=cvrLevel(d.conv)==='ok';   // 5-9%
+  const oosBad=oosLabel(d.avgOos)==='red';    // >=10%
+  const oosAmber=oosLabel(d.avgOos)==='amber'; // 7-9%
+  const supplyBad=oosBad||d.unfilled>200;
+  const supplyAmber=oosAmber||d.unfilled>50;
+
+  // CRY: revenue down AND (bad CVR OR bad supply)
+  if(revDown&&(cvrBad||supplyBad)) return 'cry';
+  // CRY: multiple red signals even without revenue trend
+  if(cvrBad&&supplyBad) return 'cry';
+  // HAPPY: revenue up, CVR good or ok, supply OK or amber
+  if(revUp&&!cvrBad&&!supplyBad) return 'happy';
+  // Otherwise mixed
   return 'sad';
 }
 
 const SC={happy:{emoji:'😊',label:'Happy',cls:'happy'},sad:{emoji:'😐',label:'Mixed',cls:'sad'},cry:{emoji:'😢',label:'Needs Attention',cls:'cry'}};
-
-function isAdOpportunity(d) {
-  return d.asp>0&&d.gviews>100;
-}
 
 // ─── BUILD DASHBOARD ─────────────────────────────────────────
 function buildDashboard() {
@@ -368,12 +564,8 @@ function renderSentimentBar() {
 function getSortedBrands() {
   const brands=BRAND_ORDER.map(id=>({id,data:aggregateBrand(id)})).filter(b=>b.data.revenue>0||b.data.gviews>0);
   if(currentSort==='revenue') brands.sort((a,b)=>b.data.revenue-a.data.revenue);
-  else if(currentSort==='sentiment') {
-    const order={cry:0,sad:1,happy:2};
-    brands.sort((a,b)=>order[getSentiment(a.data)]-order[getSentiment(b.data)]);
-  } else if(currentSort==='ltv') {
-    brands.sort((a,b)=>(b.data.ltv||0)-(a.data.ltv||0));
-  }
+  else if(currentSort==='sentiment'){const order={cry:0,sad:1,happy:2};brands.sort((a,b)=>order[getSentiment(a.data)]-order[getSentiment(b.data)]);}
+  else if(currentSort==='ltv') brands.sort((a,b)=>(b.data.ltv||0)-(a.data.ltv||0));
   return brands;
 }
 
@@ -384,15 +576,23 @@ function renderBrandCards() {
     const s=getSentiment(d);
     const sc=SC[s];
     const color=BRAND_COLORS[id];
-    // Count root cause issues
-    let issueCount = 0;
-    if(d.avgOos>10||d.unfilled>50) issueCount++;
-    if(d.conv<5&&d.gviews>1000) issueCount++;
+
+    // Issue count using new thresholds
+    let issueCount=0;
+    if(oosLabel(d.avgOos)!=='green'||d.unfilled>50) issueCount++;
+    if(cvrLevel(d.conv)==='bad') issueCount++;
+    if(cvrLevel(d.conv)==='ok') issueCount+=0.5;
     if(d.revenueYoy!==null&&d.revenueYoy<0) issueCount++;
     if(d.gviewsYoy!==null&&d.gviewsYoy<0) issueCount++;
-    const supplyClass=issueCount>1?'show-red':issueCount===1?'show-amber':'';
-    const supplyText=issueCount>0?`⚠️ Root Cause (${issueCount} issue${issueCount>1?'s':''})`:'';
-    const adOpp=isAdOpportunity(d);
+
+    const issueInt=Math.ceil(issueCount);
+    const supplyClass=issueInt>1?'show-red':issueInt===1?'show-amber':'';
+    const supplyText=issueInt>0?`⚠️ Root Cause (${issueInt} issue${issueInt>1?'s':''})`:'';
+
+    const ads=d.ads;
+    const hasAds=ads&&(ads.ad_revenue>0||ads.ad_glance_views>0);
+    const adRevPct=hasAds&&d.revenue>0?((ads.ad_revenue/d.revenue)*100).toFixed(0):null;
+    const adGvPct=hasAds&&d.gviews>0?((ads.ad_glance_views/d.gviews)*100).toFixed(0):null;
 
     const card=document.createElement('div');
     card.className=`brand-card ${sc.cls}${selectedBrand===id?' selected':''}`;
@@ -403,19 +603,46 @@ function renderBrandCards() {
       <div class="brand-card-name">${BRAND_LABELS[id]}</div>
       <div class="brand-sentiment-label ${sc.cls}">${sc.label}</div>
       <div class="brand-metrics">
-        <div class="bm-row"><span class="bm-label">Revenue</span><span class="bm-right"><span class="bm-value">${fmtCur(d.revenue)}</span>${fmtYoy(d.revenueYoy)}</span></div>
-        <div class="bm-row"><span class="bm-label">Glance Views</span><span class="bm-right"><span class="bm-value">${fmtNum(d.gviews)}</span>${fmtYoy(d.gviewsYoy)}</span></div>
-        <div class="bm-row"><span class="bm-label">Conversion</span><span class="bm-right"><span class="bm-value">${d.conv.toFixed(2)}%</span></span></div>
+        <div class="bm-expand-row" onclick="toggleExpand(event,'rev-${id}')">
+          <span class="bm-label">Revenue <span class="expand-toggle" id="tog-rev-${id}">▶</span></span>
+          <span class="bm-right"><span class="bm-value">${fmtCur(d.revenue)}</span>${fmtYoy(d.revenueYoy)}</span>
+        </div>
+        <div class="bm-sub-rows" id="rev-${id}">
+          ${hasAds?`
+          <div class="bm-sub-row"><span class="bm-sub-label"><span class="dot-org"></span>Organic</span><span class="bm-sub-value">${fmtCur(ads.organic_revenue||0)}</span></div>
+          <div class="bm-sub-row"><span class="bm-sub-label"><span class="dot-ad"></span>Ad Attributed</span><span class="bm-sub-value">${fmtCur(ads.ad_revenue||0)} <span style="color:var(--ad-color);font-size:9px">${adRevPct}%</span></span></div>
+          `:'<div class="bm-sub-row"><span class="bm-sub-label" style="color:var(--text3)">No ads data uploaded</span></div>'}
+        </div>
+        <div class="bm-expand-row" onclick="toggleExpand(event,'gv-${id}')">
+          <span class="bm-label">Glance Views <span class="expand-toggle" id="tog-gv-${id}">▶</span></span>
+          <span class="bm-right"><span class="bm-value">${fmtNum(d.gviews)}</span>${fmtYoy(d.gviewsYoy)}</span>
+        </div>
+        <div class="bm-sub-rows" id="gv-${id}">
+          ${hasAds?`
+          <div class="bm-sub-row"><span class="bm-sub-label"><span class="dot-org"></span>Organic</span><span class="bm-sub-value">${fmtNum(ads.organic_glance_views||0)}</span></div>
+          <div class="bm-sub-row"><span class="bm-sub-label"><span class="dot-ad"></span>Ad Traffic</span><span class="bm-sub-value">${fmtNum(ads.ad_glance_views||0)} <span style="color:var(--ad-color);font-size:9px">${adGvPct}%</span></span></div>
+          `:'<div class="bm-sub-row"><span class="bm-sub-label" style="color:var(--text3)">No ads data uploaded</span></div>'}
+        </div>
+        <div class="bm-row"><span class="bm-label">Conversion</span><span class="bm-right"><span class="bm-value ${cvrClass(d.conv)}">${d.conv.toFixed(2)}%</span></span></div>
         <div class="bm-row"><span class="bm-label">ASP</span><span class="bm-right"><span class="bm-value">${fmtCur(d.asp)}</span></span></div>
+        <div class="bm-row"><span class="bm-label">OOS</span><span class="bm-right"><span class="bm-value ${oosClass(d.avgOos)}">${d.avgOos.toFixed(1)}%</span></span></div>
         <div class="brand-divider"></div>
         <div class="bm-row"><span class="bm-label">Repeat Rate</span><span class="bm-right"><span class="bm-value">${d.repeatRate!==null?(d.repeatRate*100).toFixed(1)+'%':'—'}</span></span></div>
-        <div class="bm-row"><span class="bm-label">Est. LTV</span><span class="bm-right"><span class="ltv-badge" style="${d.ltv?'':'opacity:0.4'}">${d.ltv?fmtCur(d.ltv):'Upload Q data'}</span></span></div>
+        <div class="bm-row"><span class="bm-label">Est. LTV</span><span class="bm-right"><span class="ltv-badge" style="${d.ltv?'':'opacity:0.4'}">${d.ltv?fmtCur(d.ltv):'—'}</span></span></div>
       </div>
       ${supplyClass?`<div class="supply-alert ${supplyClass}">${supplyText}</div>`:''}
-      ${adOpp?`<div class="ad-opp">💡 Ad Opportunity</div>`:''}
     `;
     grid.appendChild(card);
   });
+}
+
+function toggleExpand(evt,id){
+  evt.stopPropagation();
+  const el=document.getElementById(id);
+  const tog=document.getElementById('tog-'+id);
+  if(!el) return;
+  const open=el.classList.toggle('open');
+  if(tog) tog.classList.toggle('open',open);
 }
 
 function selectBrand(brandId,cardEl) {
@@ -440,15 +667,35 @@ function setTab(tab,btn) {
 function renderRCA(brandId,tab) {
   const rows=getRows(brandId);
   const d=aggregateBrand(brandId);
-  const loyalty=loyaltyData[brandId];
+  const ads=adsData[brandId]||null;
 
-  // KPI row — always shown
+  // KPI row
+  const adRevPct=ads&&d.revenue>0?((ads.ad_revenue/d.revenue)*100).toFixed(0):null;
   document.getElementById('kpi-row').innerHTML=`
-    <div class="kpi-card"><div class="kpi-label">Revenue</div><div class="kpi-value c-blue">${fmtCur(d.revenue)}</div><div class="kpi-yoy">${fmtYoyText(d.revenueYoy)} vs last year</div></div>
-    <div class="kpi-card"><div class="kpi-label">Glance Views</div><div class="kpi-value c-green">${fmtNum(d.gviews)}</div><div class="kpi-yoy">${fmtYoyText(d.gviewsYoy)} vs last year</div></div>
-    <div class="kpi-card"><div class="kpi-label">Conversion Rate</div><div class="kpi-value c-amber">${d.conv.toFixed(2)}%</div><div class="kpi-yoy">Units ÷ Glance Views</div></div>
-    <div class="kpi-card"><div class="kpi-label">Root Cause</div><div class="kpi-value c-text" style="font-size:14px;line-height:1.3;margin-top:4px;">${d.unfilled>200||d.avgOos>20?`<span style="color:var(--red)">⚠️ Supply Issue</span>`:(d.conv<3&&d.gviews>5000)?`<span style="color:var(--amber)">👁️ Low Conversion</span>`:(d.revenueYoy!==null&&d.revenueYoy<0)?`<span style="color:var(--red)">📉 Revenue Down</span>`:`<span style="color:var(--green)">✅ On Track</span>`}</div><div class="kpi-yoy">Unfilled: ${Math.round(d.unfilled)} · OOS: ${d.avgOos.toFixed(1)}%</div></div>
+    <div class="kpi-card">
+      <div class="kpi-label">Revenue</div>
+      <div class="kpi-value c-blue">${fmtCur(d.revenue)}</div>
+      <div class="kpi-yoy">${fmtYoyText(d.revenueYoy)} vs last year</div>
+      ${ads?`<div class="kpi-ads-split"><span class="kpi-split-pill org">🌿 Org ${fmtCur(ads.organic_revenue||0)}</span><span class="kpi-split-pill ad">🎯 Ads ${fmtCur(ads.ad_revenue||0)} (${adRevPct}%)</span></div>`:''}
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Glance Views</div>
+      <div class="kpi-value c-green">${fmtNum(d.gviews)}</div>
+      <div class="kpi-yoy">${fmtYoyText(d.gviewsYoy)} vs last year</div>
+      ${ads?`<div class="kpi-ads-split"><span class="kpi-split-pill org">🌿 Org ${fmtNum(ads.organic_glance_views||0)}</span><span class="kpi-split-pill ad">🎯 Ad ${fmtNum(ads.ad_glance_views||0)}</span></div>`:''}
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Conversion Rate</div>
+      <div class="kpi-value ${cvrLevel(d.conv)==='good'?'c-green':cvrLevel(d.conv)==='ok'?'c-amber':'c-red'}">${d.conv.toFixed(2)}%</div>
+      <div class="kpi-yoy">${d.conv>=10?'✅ Good (≥10%)':d.conv>=5?'⚠️ Average (5–9%)':'🔴 Low (<5%)'}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg OOS</div>
+      <div class="kpi-value ${oosLabel(d.avgOos)==='green'?'c-green':oosLabel(d.avgOos)==='amber'?'c-amber':'c-red'}">${d.avgOos.toFixed(1)}%</div>
+      <div class="kpi-yoy">${d.avgOos<=6?'✅ Good (≤6%)':d.avgOos<=9?'⚠️ Monitor (7–9%)':'🔴 High (≥10%)'} · Unfilled: ${Math.round(d.unfilled)}</div>
+    </div>
   `;
+
   const wrap=document.getElementById('table-wrap');
 
   if(tab==='revenue') {
@@ -465,6 +712,7 @@ function renderRCA(brandId,tab) {
         <td class="td-yoy">${fmtYoyText(r.revYoy)}</td>
         <td class="td-val">${Math.round(r.units).toLocaleString()}</td>
       </tr>`));
+
   } else if(tab==='traffic') {
     const m=buildAsinMap(rows,r=>({gv:r.glance_views||0,gvYoy:r.glance_views_yoy}));
     const top=Object.values(m).sort((a,b)=>b.gv-a.gv).slice(0,15);
@@ -478,92 +726,277 @@ function renderRCA(brandId,tab) {
         <td class="td-val">${r.gv.toLocaleString()}<div class="bar-bg"><div class="bar-fg" style="width:${(r.gv/maxG*100).toFixed(1)}%"></div></div></td>
         <td class="td-yoy">${fmtYoyText(r.gvYoy)}</td>
       </tr>`));
+
   } else if(tab==='conversion') {
     const m=buildAsinMap(rows,r=>({gv:r.glance_views||0,units:r.dispatched_units||r.ordered_units||0,rev:r.dispatched_revenue||r.ordered_revenue||0}));
     const top=Object.values(m).filter(r=>r.gv>50).map(r=>({...r,conv:r.gv>0?(r.units/r.gv)*100:0,asp:r.units>0?r.rev/r.units:0})).sort((a,b)=>a.conv-b.conv).slice(0,15);
-    wrap.innerHTML=`
-      <div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
-        <b style="color:var(--amber)">Root Cause Analysis:</b> ASINs sorted by lowest conversion first. High traffic + low conversion = content, price or review issue worth investigating.
-      </div>`+
-      buildTable(['#','ASIN','Product','Market','Conversion','ASP','Views','Units'],
-      top.map((r,i)=>`<tr>
-        <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
-        <td><div class="td-asin">${r.asin}</div></td>
-        <td><span class="td-name" title="${r.name}">${r.name}${r.conv<2&&r.gv>1000?'<span class="flag flag-low">Low Conv</span>':''}</span></td>
-        <td><span class="mp mp-${r.market}">${r.market}</span></td>
-        <td class="td-val" style="color:${r.conv<2?'var(--red)':r.conv<5?'var(--amber)':'var(--green)'};font-weight:700">${r.conv.toFixed(2)}%</td>
-        <td class="td-val">${fmtCur(r.asp)}</td>
-        <td class="td-val">${r.gv.toLocaleString()}</td>
-        <td class="td-val">${Math.round(r.units).toLocaleString()}</td>
-      </tr>`));
-  } else if(tab==='supply') {
-    const m=buildAsinMap(rows,r=>({oos:r.oos_pct||0,unfilled:r.unfilled_units||0,rev:r.dispatched_revenue||r.ordered_revenue||0}));
-    const top=Object.values(m).filter(r=>r.oos>0||r.unfilled>0).sort((a,b)=>b.unfilled-a.unfilled).slice(0,15);
-    wrap.innerHTML=buildTable(['#','ASIN','Product','Market','OOS %','Unfilled','Revenue at Risk'],
+    wrap.innerHTML=`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
+      <b style="color:var(--amber)">Thresholds:</b> ≥10% green ✅ · 5–9% amber ⚠️ · &lt;5% red 🔴 — sorted lowest first.
+    </div>`+
+    buildTable(['#','ASIN','Product','Market','Conversion','ASP','Views','Units'],
       top.map((r,i)=>`<tr>
         <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
         <td><div class="td-asin">${r.asin}</div></td>
         <td><span class="td-name" title="${r.name}">${r.name}</span></td>
         <td><span class="mp mp-${r.market}">${r.market}</span></td>
-        <td class="td-val"><span style="color:${r.oos>20?'var(--red)':r.oos>10?'var(--amber)':'var(--green)'};font-weight:700">${r.oos.toFixed(1)}%</span></td>
-        <td class="td-val" style="color:${r.unfilled>100?'var(--red)':r.unfilled>50?'var(--amber)':'var(--text)'};font-weight:700">${Math.round(r.unfilled).toLocaleString()}</td>
-        <td class="td-val" style="color:var(--red)">${r.oos>10?fmtCur(r.rev*(r.oos/100)):'—'}</td>
+        <td class="td-val"><span class="${cvrClass(r.conv)}">${r.conv.toFixed(2)}%</span></td>
+        <td class="td-val">${fmtCur(r.asp)}</td>
+        <td class="td-val">${r.gv.toLocaleString()}</td>
+        <td class="td-val">${Math.round(r.units).toLocaleString()}</td>
       </tr>`));
+
+  } else if(tab==='supply') {
+    const m=buildAsinMap(rows,r=>({oos:r.oos_pct||0,unfilled:r.unfilled_units||0,rev:r.dispatched_revenue||r.ordered_revenue||0}));
+    const top=Object.values(m).filter(r=>r.oos>0||r.unfilled>0).sort((a,b)=>b.unfilled-a.unfilled).slice(0,15);
+    wrap.innerHTML=`<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
+      <b style="color:var(--red)">OOS Thresholds:</b> ≤6% green ✅ · 7–9% amber ⚠️ · ≥10% red 🔴
+    </div>`+
+    buildTable(['#','ASIN','Product','Market','OOS %','Unfilled','Revenue at Risk'],
+      top.map((r,i)=>`<tr>
+        <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
+        <td><div class="td-asin">${r.asin}</div></td>
+        <td><span class="td-name" title="${r.name}">${r.name}</span></td>
+        <td><span class="mp mp-${r.market}">${r.market}</span></td>
+        <td class="td-val"><span class="${oosClass(r.oos)}">${r.oos.toFixed(1)}%</span></td>
+        <td class="td-val" style="color:${r.unfilled>100?'var(--red)':r.unfilled>50?'var(--amber)':'var(--text)'};font-weight:700">${Math.round(r.unfilled).toLocaleString()}</td>
+        <td class="td-val" style="color:var(--red)">${r.oos>=10?fmtCur(r.rev*(r.oos/100)):'—'}</td>
+      </tr>`));
+
+  } else if(tab==='ads') {
+    if(!ads||(!ads.ad_revenue&&!ads.ad_glance_views)) {
+      wrap.innerHTML='<div class="empty">📊 No ads data uploaded for this brand/period. Upload the Sponsored Products report via the Upload page.</div>';
+    } else {
+      const roas=ads.ad_spend>0?(ads.ad_revenue/ads.ad_spend).toFixed(2):null;
+      const ctr=ads.ad_impressions>0?((ads.ad_clicks/ads.ad_impressions)*100).toFixed(2):null;
+      const acos=ads.ad_revenue>0?((ads.ad_spend/ads.ad_revenue)*100).toFixed(1):null;
+      const orgRevPct=d.revenue>0?(((ads.organic_revenue||0)/d.revenue)*100).toFixed(0):null;
+      const adRevPct2=d.revenue>0?(((ads.ad_revenue||0)/d.revenue)*100).toFixed(0):null;
+      const orgGvPct=d.gviews>0?(((ads.organic_glance_views||0)/d.gviews)*100).toFixed(0):null;
+      const adGvPct2=d.gviews>0?(((ads.ad_glance_views||0)/d.gviews)*100).toFixed(0):null;
+
+      wrap.innerHTML=`
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+          <div style="background:var(--org-bg);border:1px solid var(--org-color);border-radius:12px;padding:16px;">
+            <div style="font-size:11px;font-weight:700;color:var(--org-color);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">🌿 Organic</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">Revenue</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--org-color)">${fmtCur(ads.organic_revenue||0)}</div><div style="font-size:10px;color:var(--text2)">${orgRevPct}% of total</div></div>
+              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">Glance Views</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--org-color)">${fmtNum(ads.organic_glance_views||0)}</div><div style="font-size:10px;color:var(--text2)">${orgGvPct}% of total</div></div>
+            </div>
+          </div>
+          <div style="background:var(--ad-bg);border:1px solid var(--ad-color);border-radius:12px;padding:16px;">
+            <div style="font-size:11px;font-weight:700;color:var(--ad-color);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">🎯 Amazon Ads</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">Ad Revenue</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--ad-color)">${fmtCur(ads.ad_revenue||0)}</div><div style="font-size:10px;color:var(--text2)">${adRevPct2}% of total</div></div>
+              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">Ad Spend</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--ad-color)">${fmtCur(ads.ad_spend||0)}</div><div style="font-size:10px;color:${parseFloat(acos)>30?'var(--red)':parseFloat(acos)>20?'var(--amber)':'var(--green)'}">ACoS: ${acos}%</div></div>
+              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">ROAS</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${parseFloat(roas)>=3?'var(--green)':parseFloat(roas)>=2?'var(--amber)':'var(--red)'}">${roas||'—'}x</div><div style="font-size:10px;color:var(--text2)">Ad traffic: ${fmtNum(ads.ad_glance_views||0)}</div></div>
+            </div>
+          </div>
+        </div>
+        <!-- Rev split bar -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Revenue Mix</div>
+          <div style="height:20px;border-radius:10px;overflow:hidden;display:flex;background:var(--border);">
+            <div style="width:${orgRevPct}%;background:var(--org-color);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;transition:width 0.5s">${orgRevPct}%</div>
+            <div style="flex:1;background:var(--ad-color);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white">${adRevPct2}%</div>
+          </div>
+          <div style="display:flex;gap:16px;margin-top:6px;font-size:10px;font-weight:600;color:var(--text2)">
+            <span><span class="dot-org"></span>Organic</span><span><span class="dot-ad"></span>Ad Attributed</span>
+          </div>
+        </div>
+        <!-- Traffic split bar -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Traffic Mix</div>
+          <div style="height:20px;border-radius:10px;overflow:hidden;display:flex;background:var(--border);">
+            <div style="width:${orgGvPct}%;background:var(--org-color);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;transition:width 0.5s">${orgGvPct}%</div>
+            <div style="flex:1;background:var(--ad-color);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white">${adGvPct2}%</div>
+          </div>
+        </div>`;
+    }
+
   } else if(tab==='adopp') {
     const m=buildAsinMap(rows,r=>({rev:r.dispatched_revenue||r.ordered_revenue||0,units:r.dispatched_units||r.ordered_units||0,gv:r.glance_views||0,oos:r.oos_pct||0}));
-    // Ad opportunity = high ASP + low conversion + decent traffic + in stock
-    const opps=Object.values(m).filter(r=>r.gv>50).map(r=>({
-      ...r,
-      asp:r.units>0?r.rev/r.units:0,
-      conv:r.gv>0?(r.units/r.gv)*100:0
-    })).filter(r=>r.asp>5&&r.oos<20).sort((a,b)=>(b.asp*b.gv)-(a.asp*a.gv)).slice(0,15);
-    wrap.innerHTML=`
-      <div style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
-        <b style="color:#4F46E5">💡 Ad Opportunity Logic:</b> ASINs with high ASP (price point justifies ad spend) + low conversion (something stopping the purchase) + decent traffic (demand exists) + in stock. These are prime candidates for Sponsored Products.
-      </div>`+
-      (opps.length===0?'<div class="empty">No strong ad opportunities identified for this brand with current data.</div>':
-      buildTable(['#','ASIN','Product','Market','ASP','Conv %','Views','OOS %','Score'],
+    const opps=Object.values(m).filter(r=>r.gv>50).map(r=>({...r,asp:r.units>0?r.rev/r.units:0,conv:r.gv>0?(r.units/r.gv)*100:0}))
+      .filter(r=>r.asp>5&&r.oos<10).sort((a,b)=>(b.asp*b.gv)-(a.asp*a.gv)).slice(0,15);
+    wrap.innerHTML=`<div style="background:var(--ad-bg);border:1px solid var(--ad-color);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
+      <b style="color:var(--ad-color)">💡 Ad Opportunity Logic:</b> High ASP + low CVR + decent traffic + in stock (OOS &lt;10%). Prime candidates for Sponsored Products.
+    </div>`+
+    (opps.length===0?'<div class="empty">No strong ad opportunities identified.</div>':
+    buildTable(['#','ASIN','Product','Market','ASP','CVR','Views','OOS','Score'],
       opps.map((r,i)=>{
         const score=Math.round((r.asp*r.gv/1000)*(1-(r.conv/8)));
         return`<tr>
           <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
           <td><div class="td-asin">${r.asin}</div></td>
-          <td><span class="td-name" title="${r.name}">${r.name}<span class="flag flag-ad">AD OPP</span></span></td>
+          <td><span class="td-name">${r.name}<span class="flag flag-ad">AD OPP</span></span></td>
           <td><span class="mp mp-${r.market}">${r.market}</span></td>
           <td class="td-val" style="color:var(--amber);font-weight:700">${fmtCur(r.asp)}</td>
-          <td class="td-val" style="color:${r.conv<3?'var(--red)':'var(--amber)'};font-weight:700">${r.conv.toFixed(2)}%</td>
+          <td class="td-val"><span class="${cvrClass(r.conv)}">${r.conv.toFixed(2)}%</span></td>
           <td class="td-val">${r.gv.toLocaleString()}</td>
-          <td class="td-val" style="color:${r.oos>10?'var(--amber)':'var(--green)'}">${r.oos.toFixed(1)}%</td>
-          <td class="td-val" style="color:#4F46E5;font-weight:700">${score}</td>
+          <td class="td-val"><span class="${oosClass(r.oos)}">${r.oos.toFixed(1)}%</span></td>
+          <td class="td-val" style="color:var(--ad-color);font-weight:700">${score}</td>
         </tr>`;
       })));
+
+  } else if(tab==='trends') {
+    renderTrendsTab(brandId,wrap);
   }
 }
 
-function buildAsinMap(rows, extractor) {
-  const m={};
-  const yoyKeys=['revYoy','gvYoy','oos']; // these should use last value not sum
-  rows.forEach(r=>{
-    const k=r.asin+'_'+r.market;
-    if(!m[k]) m[k]={asin:r.asin,name:r.product_title,market:r.market,...Object.fromEntries(Object.entries(extractor(r)).map(([k,v])=>[k,typeof v==='number'?0:null]))};
-    const vals=extractor(r);
-    Object.entries(vals).forEach(([key,val])=>{
-      if(val!==null&&val!==undefined){
-        if(yoyKeys.includes(key)) m[k][key]=val; // overwrite, don't sum
-        else m[k][key]=(m[k][key]||0)+val;
-      }
-    });
+// ─── TRENDS TAB ──────────────────────────────────────────────
+function renderTrendsTab(brandId, wrap) {
+  // Get all weeks with data for this brand
+  const byWeek={};
+  allRowsAllWeeks.filter(r=>r.brand_classified===brandId&&(currentMarket==='ALL'||r.market===currentMarket)).forEach(r=>{
+    if(!byWeek[r.week_start]) byWeek[r.week_start]={revenue:0,gviews:0,units:0,oos:[]};
+    byWeek[r.week_start].revenue+=(r.dispatched_revenue||r.ordered_revenue||0);
+    byWeek[r.week_start].gviews+=(r.glance_views||0);
+    byWeek[r.week_start].units+=(r.dispatched_units||r.ordered_units||0);
+    if(r.oos_pct!=null) byWeek[r.week_start].oos.push(r.oos_pct);
   });
-  return m;
+
+  // Aggregate by current period mode
+  const byPeriod={};
+  Object.entries(byWeek).forEach(([ws,d])=>{
+    const pk=periodKey(ws);
+    if(!byPeriod[pk]) byPeriod[pk]={revenue:0,gviews:0,units:0,oos:[],label:periodLabel(pk)};
+    byPeriod[pk].revenue+=d.revenue;
+    byPeriod[pk].gviews+=d.gviews;
+    byPeriod[pk].units+=d.units;
+    byPeriod[pk].oos.push(...d.oos);
+  });
+
+  const periods=Object.keys(byPeriod).sort().slice(-26); // last 26 periods
+  if(!periods.length){wrap.innerHTML='<div class="empty">Not enough historical data yet. Data builds up as you upload each week.</div>';return;}
+
+  const labels=periods.map(p=>byPeriod[p].label||p);
+  const revenues=periods.map(p=>byPeriod[p].revenue);
+  const gviews=periods.map(p=>byPeriod[p].gviews);
+  const convs=periods.map(p=>byPeriod[p].gviews>0?(byPeriod[p].units/byPeriod[p].gviews)*100:0);
+  const ooss=periods.map(p=>byPeriod[p].oos.length>0?byPeriod[p].oos.reduce((a,b)=>a+b,0)/byPeriod[p].oos.length:0);
+
+  wrap.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div style="background:var(--bg);border-radius:10px;border:1px solid var(--border);padding:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Revenue Trend</div>
+        <canvas id="c-rev" height="120"></canvas>
+      </div>
+      <div style="background:var(--bg);border-radius:10px;border:1px solid var(--border);padding:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Glance Views Trend</div>
+        <canvas id="c-gv" height="120"></canvas>
+      </div>
+      <div style="background:var(--bg);border-radius:10px;border:1px solid var(--border);padding:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Conversion Rate %</div>
+        <canvas id="c-cvr" height="120"></canvas>
+      </div>
+      <div style="background:var(--bg);border-radius:10px;border:1px solid var(--border);padding:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">OOS % (avg)</div>
+        <canvas id="c-oos" height="120"></canvas>
+      </div>
+    </div>
+    <div class="pivot-table-wrap">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Period Summary Table</div>
+      <table class="pivot-table">
+        <thead><tr><th>${periodMode.charAt(0).toUpperCase()+periodMode.slice(1)}</th><th class="r">Revenue</th><th class="r">Glance Views</th><th class="r">CVR %</th><th class="r">Avg OOS %</th></tr></thead>
+        <tbody>
+          ${periods.map(p=>{
+            const pd=byPeriod[p];
+            const conv=pd.gviews>0?(pd.units/pd.gviews)*100:0;
+            const oos=pd.oos.length>0?pd.oos.reduce((a,b)=>a+b,0)/pd.oos.length:0;
+            return`<tr>
+              <td style="font-weight:600">${pd.label||p}</td>
+              <td class="td-val">${fmtCur(pd.revenue)}</td>
+              <td class="td-val">${fmtNum(pd.gviews)}</td>
+              <td class="td-val"><span class="${cvrClass(conv)}">${conv.toFixed(2)}%</span></td>
+              <td class="td-val"><span class="${oosClass(oos)}">${oos.toFixed(1)}%</span></td>
+            </tr>`;
+          }).join('')}
+          <tr>
+            <td>TOTAL / AVG</td>
+            <td class="td-val">${fmtCur(revenues.reduce((a,b)=>a+b,0))}</td>
+            <td class="td-val">${fmtNum(gviews.reduce((a,b)=>a+b,0))}</td>
+            <td class="td-val">${(convs.reduce((a,b)=>a+b,0)/convs.length).toFixed(2)}%</td>
+            <td class="td-val">${(ooss.reduce((a,b)=>a+b,0)/ooss.length).toFixed(1)}%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+
+  // Draw sparkline charts
+  requestAnimationFrame(()=>{
+    drawLineChart('c-rev', labels, revenues, '#009CDE', v=>fmtCur(v));
+    drawLineChart('c-gv', labels, gviews, '#00B388', v=>fmtNum(v));
+    drawLineChart('c-cvr', labels, convs, '#F5A623', v=>v.toFixed(1)+'%', [5,10]);
+    drawLineChart('c-oos', labels, ooss, '#E8423F', v=>v.toFixed(1)+'%', [6,10]);
+  });
 }
 
+function drawLineChart(canvasId, labels, data, color, fmt, thresholds) {
+  const canvas=document.getElementById(canvasId);
+  if(!canvas) return;
+  const dpr=window.devicePixelRatio||1;
+  const w=canvas.clientWidth||canvas.offsetWidth||300;
+  const h=parseInt(canvas.getAttribute('height'))||120;
+  canvas.width=w*dpr; canvas.height=h*dpr;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const pad={t:10,r:10,b:30,l:50};
+  const cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+  if(!data.length) return;
+  const min=Math.min(...data)*0.9, max=Math.max(...data)*1.1;
+  const range=max-min||1;
+  const toX=(i)=>pad.l+i*(cw/(data.length-1||1));
+  const toY=(v)=>pad.t+ch-(((v-min)/range)*ch);
+
+  // Threshold zones
+  if(thresholds&&thresholds.length===2){
+    const y1=toY(thresholds[0]), y2=toY(thresholds[1]);
+    ctx.fillStyle='rgba(232,66,63,0.06)'; ctx.fillRect(pad.l,pad.t,cw,Math.max(0,toY(min)-toY(thresholds[0])));
+    ctx.fillStyle='rgba(245,166,35,0.06)'; ctx.fillRect(pad.l,Math.min(y1,y2),cw,Math.abs(y1-y2));
+    ctx.fillStyle='rgba(0,179,136,0.06)'; ctx.fillRect(pad.l,pad.t,cw,Math.max(0,toY(thresholds[1])-pad.t));
+  }
+
+  // Grid lines
+  ctx.strokeStyle='rgba(208,234,245,0.8)'; ctx.lineWidth=1;
+  [0,0.25,0.5,0.75,1].forEach(t=>{
+    const y=pad.t+t*ch;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+cw,y); ctx.stroke();
+    ctx.fillStyle='#5A8DA0'; ctx.font='9px Inter,sans-serif'; ctx.textAlign='right';
+    ctx.fillText(fmt(min+(1-t)*range),pad.l-4,y+3);
+  });
+
+  // Area fill
+  ctx.beginPath(); ctx.moveTo(toX(0),toY(data[0]));
+  data.forEach((_,i)=>{if(i>0)ctx.lineTo(toX(i),toY(data[i]));});
+  ctx.lineTo(toX(data.length-1),h-pad.b); ctx.lineTo(toX(0),h-pad.b); ctx.closePath();
+  const grad=ctx.createLinearGradient(0,pad.t,0,h-pad.b);
+  grad.addColorStop(0,color+'33'); grad.addColorStop(1,color+'00');
+  ctx.fillStyle=grad; ctx.fill();
+
+  // Line
+  ctx.beginPath(); ctx.moveTo(toX(0),toY(data[0]));
+  data.forEach((_,i)=>{if(i>0)ctx.lineTo(toX(i),toY(data[i]));});
+  ctx.strokeStyle=color; ctx.lineWidth=2; ctx.stroke();
+
+  // Dots
+  data.forEach((v,i)=>{
+    ctx.beginPath(); ctx.arc(toX(i),toY(v),3,0,Math.PI*2);
+    ctx.fillStyle=color; ctx.fill();
+  });
+
+  // X labels (show every Nth)
+  const step=Math.ceil(labels.length/6);
+  ctx.fillStyle='#5A8DA0'; ctx.font='9px Inter,sans-serif'; ctx.textAlign='center';
+  labels.forEach((l,i)=>{if(i%step===0)ctx.fillText(l.substring(0,8),toX(i),h-pad.b+12);});
+}
+
+// ─── SUPPLY ALERTS ────────────────────────────────────────────
 function renderSupplyAlerts() {
   let rows=allRows;
   if(currentMarket!=='ALL') rows=rows.filter(r=>r.market===currentMarket);
   const seen=new Set(); const alerts=[];
   rows.forEach(r=>{
     const oos=r.oos_pct||0; const uf=r.unfilled_units||0;
-    if((oos>10||uf>50)&&r.asin){
+    if((oos>=10||uf>50)&&r.asin){  // updated to >=10 for red threshold
       const k=r.asin+'_'+r.market;
       if(!seen.has(k)){seen.add(k);alerts.push({asin:r.asin,name:r.product_title,market:r.market,oos,uf});}
     }
@@ -576,10 +1009,27 @@ function renderSupplyAlerts() {
       <div class="si-asin">${a.asin} <span class="mp mp-${a.market}">${a.market}</span></div>
       <div class="si-name" title="${a.name}">${a.name}</div>
       <div class="si-stats">
-        <div class="si-stat"><b style="color:${a.oos>20?'var(--red)':'var(--amber)'}">${a.oos.toFixed(1)}%</b> OOS</div>
+        <div class="si-stat"><b class="${oosClass(a.oos)}">${a.oos.toFixed(1)}%</b> OOS</div>
         <div class="si-stat"><b style="color:${a.uf>100?'var(--red)':'var(--amber)'}">${Math.round(a.uf)}</b> unfilled</div>
       </div>
     </div>`).join('');
+}
+
+function buildAsinMap(rows, extractor) {
+  const m={};
+  const noSumKeys=['revYoy','gvYoy','oos'];
+  rows.forEach(r=>{
+    const k=r.asin+'_'+r.market;
+    if(!m[k]) m[k]={asin:r.asin,name:r.product_title,market:r.market,...Object.fromEntries(Object.entries(extractor(r)).map(([k,v])=>[k,typeof v==='number'?0:null]))};
+    const vals=extractor(r);
+    Object.entries(vals).forEach(([key,val])=>{
+      if(val!==null&&val!==undefined){
+        if(noSumKeys.includes(key)) m[k][key]=val;
+        else m[k][key]=(m[k][key]||0)+val;
+      }
+    });
+  });
+  return m;
 }
 
 function buildTable(headers,rows){
