@@ -200,6 +200,40 @@
       </div>
     </div>
 
+
+    <!-- QUARTERLY LOYALTY -->
+    <div class="week-card" style="border-color:var(--amber);">
+      <div class="card-title" style="color:var(--amber);">Quarterly Loyalty Data — Upload Once Per Quarter</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">Upload the GB Repeat Purchase Behaviour report (Brand view). This data persists until you replace it — upload in Jan, Apr, Jul, Oct.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:start;margin-bottom:16px;">
+        <div class="input-group">
+          <label class="input-label">Quarter</label>
+          <select class="date-input" id="quarter-select" style="cursor:pointer;">
+            <option value="Q1-2026">Q1 2026 (Jan-Mar)</option>
+            <option value="Q2-2026" selected>Q2 2026 (Apr-Jun)</option>
+            <option value="Q3-2026">Q3 2026 (Jul-Sep)</option>
+            <option value="Q4-2026">Q4 2026 (Oct-Dec)</option>
+            <option value="Q1-2027">Q1 2027 (Jan-Mar)</option>
+          </select>
+        </div>
+        <div class="upload-card" id="card-loyalty" onclick="document.getElementById('file-loyalty').click()"
+          ondragover="dOver(event,'card-loyalty')" ondragleave="dLeave('card-loyalty')" ondrop="dDrop(event,'loyalty')"
+          style="border-color:var(--amber);background:var(--amber-bg);">
+          <div class="uc-icon">🔄</div>
+          <div class="uc-title">Repeat Purchase Report</div>
+          <div class="uc-sub" id="lbl-loyalty">GB Brand View CSV<br>Quarterly cadence</div>
+          <div class="uc-check">✅</div>
+          <input type="file" id="file-loyalty" accept=".csv,.xlsx" onchange="onFile(event,'loyalty')">
+        </div>
+        <button class="process-btn" id="loyalty-btn" onclick="uploadLoyalty()" disabled style="padding:12px 20px;font-size:13px;">
+          Upload Loyalty Data
+        </button>
+      </div>
+      <div class="log-area" id="loyalty-log" style="height:100px;">
+        <span class="log-line">Upload the repeat purchase CSV to add loyalty metrics to the dashboard.</span>
+      </div>
+    </div>
+
     <!-- HISTORY -->
     <div class="history-card">
       <div class="card-title">Upload History</div>
@@ -626,6 +660,115 @@ async function deleteWeek(weekStart) {
   });
   log(`Deleted data for week ${weekStart}`, 'info');
   loadHistory();
+}
+
+
+// ─── LOYALTY UPLOAD ──────────────────────────────────────────
+const BRAND_MAP_LOYALTY = {
+  DISNEY_KIDS: ['spidey and his amazing friends','iron man and his awesome friends','iron man and friends','spidey and his amazing','hasbro spidey'],
+  MARVEL: ['marvel','avengers','hasbro avengers','spider-man','spiderman','x-men','the eternals','marvel legends','marvel classic','hasbro marvel'],
+  STAR_WARS: ['star wars','hasbro star wars'],
+  MONOPOLY: ['monopoly','hasbro monopoly'],
+  GAMES: ['hasbro gaming','hasbro games','avalon hill','clue','hasbro indiana jones'],
+  PLAY_DOH: ['play-doh','play doh','playdoh','hasbro play-doh'],
+  PEPPA_PIG: ['peppa pig','peppa'],
+  TRANSFORMERS: ['transformers','hasbro transformers'],
+  BEYBLADE: ['beyblade','hasbro beyblade'],
+  NERF: ['nerf','hasbro nerf','super soaker','supersoaker']
+};
+
+function classifyLoyaltyBrand(brandName) {
+  const b = (brandName||'').toLowerCase().trim();
+  for (const [id, keys] of Object.entries(BRAND_MAP_LOYALTY)) {
+    if (keys.some(k => b.includes(k))) return id;
+  }
+  return 'OTHER';
+}
+
+function logLoyalty(msg, type='') {
+  const area = document.getElementById('loyalty-log');
+  const line = document.createElement('span');
+  line.className = 'log-line ' + type;
+  line.textContent = new Date().toLocaleTimeString('en-GB') + ' → ' + msg;
+  area.appendChild(line);
+  area.scrollTop = area.scrollHeight;
+}
+
+async function uploadLoyalty() {
+  const quarter = document.getElementById('quarter-select').value;
+  const file = files.loyalty;
+  if (!file) { alert('Please select the repeat purchase file first.'); return; }
+
+  document.getElementById('loyalty-btn').disabled = true;
+  document.getElementById('loyalty-log').innerHTML = '';
+  logLoyalty('Reading repeat purchase file...', 'info');
+
+  try {
+    const raw = await parseVCFile(file);
+    logLoyalty(`Parsed ${raw.length} brand rows`, 'ok');
+
+    // Find correct column keys
+    const sampleKeys = raw.length > 0 ? Object.keys(raw[0]) : [];
+    const totalCustKey = sampleKeys.find(k => k.toLowerCase().includes('unique customer'));
+    const repeatCustKey = sampleKeys.find(k => k.toLowerCase().includes('repeat customer count: count'));
+    const repeatSalesKey = sampleKeys.find(k => k.toLowerCase().includes('repeat ordered product sales: sales'));
+    const brandKey = sampleKeys.find(k => k.toLowerCase() === 'brand') || 'Brand';
+
+    // Aggregate by our brand groups
+    const agg = {};
+    raw.forEach(r => {
+      const brandId = classifyLoyaltyBrand(r[brandKey]);
+      if (brandId === 'OTHER') return;
+      const totalCust = parseFloat(String(r[totalCustKey]||'0').replace(/[^0-9.]/g,'')) || 0;
+      const repeatCust = parseFloat(String(r[repeatCustKey]||'0').replace(/[^0-9.]/g,'')) || 0;
+      const repeatSales = parseFloat(String(r[repeatSalesKey]||'0').replace(/[^0-9.]/g,'')) || 0;
+      if (!agg[brandId]) agg[brandId] = {total_customers:0, repeat_customers:0, repeat_sales:0};
+      agg[brandId].total_customers += totalCust;
+      agg[brandId].repeat_customers += repeatCust;
+      agg[brandId].repeat_sales += repeatSales;
+    });
+
+    // Build rows
+    const rows = Object.entries(agg).map(([brand_classified, d]) => ({
+      brand_classified,
+      repeat_rate: d.total_customers > 0 ? d.repeat_customers / d.total_customers : 0,
+      repeat_customers: Math.round(d.repeat_customers),
+      total_customers: Math.round(d.total_customers),
+      repeat_sales: d.repeat_sales,
+      quarter
+    }));
+
+    logLoyalty(`Built ${rows.length} brand loyalty rows`, 'ok');
+
+    // Delete existing quarter data
+    await fetch(`${SUPABASE_URL}/rest/v1/brand_health_loyalty?quarter=eq.${quarter}`, {
+      method: 'DELETE',
+      headers: {'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`}
+    });
+
+    // Insert new
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/brand_health_loyalty`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(rows)
+    });
+
+    if (!res.ok) throw new Error('Upload failed: ' + await res.text());
+
+    logLoyalty(`✅ Done! ${rows.length} brands uploaded for ${quarter}`, 'ok');
+    rows.forEach(r => {
+      logLoyalty(`  ${r.brand_classified}: ${(r.repeat_rate*100).toFixed(1)}% repeat rate (${r.repeat_customers}/${r.total_customers} customers)`);
+    });
+
+  } catch(err) {
+    logLoyalty('❌ Error: ' + err.message, 'err');
+  }
+  document.getElementById('loyalty-btn').disabled = false;
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
