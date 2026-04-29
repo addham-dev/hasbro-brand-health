@@ -340,7 +340,7 @@ function getSentiment(d) {
 const SC={happy:{emoji:'😊',label:'Happy',cls:'happy'},sad:{emoji:'😐',label:'Mixed',cls:'sad'},cry:{emoji:'😢',label:'Needs Attention',cls:'cry'}};
 
 function isAdOpportunity(d) {
-  return d.asp>8&&d.conv<10&&d.gviews>500&&d.avgOos<20;
+  return d.asp>0&&d.gviews>100;
 }
 
 // ─── BUILD DASHBOARD ─────────────────────────────────────────
@@ -384,8 +384,14 @@ function renderBrandCards() {
     const s=getSentiment(d);
     const sc=SC[s];
     const color=BRAND_COLORS[id];
-    const supplyClass=d.avgOos>20||d.unfilled>200?'show-red':d.avgOos>10||d.unfilled>50?'show-amber':'';
-    const supplyText=d.avgOos>10?`⚠️ OOS ${d.avgOos.toFixed(0)}%`:d.unfilled>50?`⚠️ ${Math.round(d.unfilled).toLocaleString()} unfilled`:'';
+    // Count root cause issues
+    let issueCount = 0;
+    if(d.avgOos>10||d.unfilled>50) issueCount++;
+    if(d.conv<5&&d.gviews>1000) issueCount++;
+    if(d.revenueYoy!==null&&d.revenueYoy<0) issueCount++;
+    if(d.gviewsYoy!==null&&d.gviewsYoy<0) issueCount++;
+    const supplyClass=issueCount>1?'show-red':issueCount===1?'show-amber':'';
+    const supplyText=issueCount>0?`⚠️ Root Cause (${issueCount} issue${issueCount>1?'s':''})`:'';
     const adOpp=isAdOpportunity(d);
 
     const card=document.createElement('div');
