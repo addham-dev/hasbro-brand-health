@@ -547,20 +547,22 @@ function aggregateBrand(brandId) {
 
 // Updated sentiment logic using new thresholds
 function getSentiment(d) {
-  const revDown = d.revenueYoy !== null && d.revenueYoy < -0.05; // >5% decline
-  const revUp   = d.revenueYoy !== null && d.revenueYoy > 0.02;  // >2% growth
+  const revDown = d.revenueYoy !== null && d.revenueYoy < -0.02;
+  const revUp   = d.revenueYoy !== null && d.revenueYoy > 0.02;
+  const gvDown  = d.gviewsYoy  !== null && d.gviewsYoy  < -0.02;
+  const gvUp    = d.gviewsYoy  !== null && d.gviewsYoy  > 0.02;
   const cvrBad  = cvrLevel(d.conv) === 'bad';   // <5%
   const oosBad  = oosLabel(d.avgOos) === 'red'; // >=10%
 
-  // CRY: only genuinely bad combinations
-  if (d.avgOos > 20) return 'cry';              // severe OOS alone is enough
-  if (oosBad && cvrBad) return 'cry';           // bad supply + bad CVR
-  if (revDown && cvrBad && oosBad) return 'cry'; // all three bad
+  // CRY: severe OOS alone, or OOS+CVR both red, or both revenue AND traffic declining
+  if (d.avgOos > 20) return 'cry';
+  if (oosBad && cvrBad) return 'cry';
+  if (revDown && gvDown) return 'cry';
 
-  // HAPPY: revenue growing, CVR not bad, OOS not red
-  if (revUp && !cvrBad && !oosBad) return 'happy';
+  // HAPPY: revenue up, GV up, CVR not bad, OOS not red
+  if (revUp && gvUp && !cvrBad && !oosBad) return 'happy';
 
-  // Everything else is mixed
+  // Mixed: everything else
   return 'sad';
 }
 
@@ -797,13 +799,10 @@ function renderRCA(brandId,tab) {
     } else {
       const roas=ads.ad_spend>0?(ads.ad_revenue/ads.ad_spend).toFixed(2):null;
       const blendedRoas=ads.ad_spend>0?(d.revenue/ads.ad_spend).toFixed(1):null;
-      const ctr=ads.ad_impressions>0?((ads.ad_clicks/ads.ad_impressions)*100).toFixed(2):null;
       const acos=ads.ad_revenue>0?((ads.ad_spend/ads.ad_revenue)*100).toFixed(1):null;
       const spendPct=d.revenue>0?((ads.ad_spend/d.revenue)*100).toFixed(1):null;
       const orgRevPct=d.revenue>0?(((ads.organic_revenue||0)/d.revenue)*100).toFixed(0):null;
       const adRevPct2=d.revenue>0?(((ads.ad_revenue||0)/d.revenue)*100).toFixed(0):null;
-      const orgGvPct=d.gviews>0?(((ads.organic_glance_views||0)/d.gviews)*100).toFixed(0):null;
-      const adGvPct2=d.gviews>0?(((ads.ad_glance_views||0)/d.gviews)*100).toFixed(0):null;
       const roasNum=parseFloat(roas)||0;
 
       // Auto interpretation
@@ -816,7 +815,7 @@ function renderRCA(brandId,tab) {
       else if(roasOk&&!coverageLow) interpretation=`Strong ROAS of ${roas}x across ${adRevPct2}% ad-attributed revenue. Good balance of organic and paid — monitor ACoS as coverage scales.`;
       else interpretation=`Ad spend is ${spendPct}% of total revenue with ${adRevPct2}% attributed to ads. Review campaign efficiency before scaling further.`;
 
-      // ASIN coverage from quarterly plan
+      // ASIN coverage
       const cov=adsCoverageData[brandId]||null;
       const mkts=currentMarket==='ALL'?['GB','DE','FR','IT','ES']:[currentMarket];
       let covTotal=0,covSP=0,covSB=0;
@@ -839,45 +838,40 @@ function renderRCA(brandId,tab) {
         '<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">📋 No quarterly ads plan uploaded yet. Upload the EMEA AMZ Ads .xlsx via the Upload page to see ASIN coverage metrics.</div>';
 
       wrap.innerHTML=`
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
-          <div style="background:var(--org-bg);border:1px solid var(--org-color);border-radius:12px;padding:16px;">
-            <div style="font-size:11px;font-weight:700;color:var(--org-color);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">🌿 Organic</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">Revenue</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--org-color)">${fmtCur(ads.organic_revenue||0)}</div><div style="font-size:10px;color:var(--text2)">${orgRevPct}% of total</div></div>
-              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">Glance Views</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--org-color)">${fmtNum(ads.organic_glance_views||0)}</div><div style="font-size:10px;color:var(--text2)">${orgGvPct}% of total</div></div>
-            </div>
-          </div>
-          <div style="background:var(--ad-bg);border:1px solid var(--ad-color);border-radius:12px;padding:16px;">
-            <div style="font-size:11px;font-weight:700;color:var(--ad-color);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">🎯 Amazon Ads</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">Ad Revenue</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--ad-color)">${fmtCur(ads.ad_revenue||0)}</div><div style="font-size:10px;color:var(--text2)">${adRevPct2}% of total</div></div>
-              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">Ad Spend</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--ad-color)">${fmtCur(ads.ad_spend||0)}</div><div style="font-size:10px;color:${parseFloat(acos)>30?'var(--red)':parseFloat(acos)>20?'var(--amber)':'var(--green)'}">ACoS: ${acos}%</div></div>
-            </div>
-            <div style="border-top:1px solid rgba(79,70,229,0.2);padding-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:2px">True ROAS <span style="font-size:9px;color:var(--text3)">ad rev ÷ spend</span></div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${roasNum>=4?'var(--green)':roasNum>=2?'var(--amber)':'var(--red)'}">${roas||'—'}x</div><div style="font-size:9px;color:var(--text3)">Advertised ASINs only</div></div>
-              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:2px">Blended ROAS <span style="font-size:9px;color:var(--text3)">total rev ÷ spend</span></div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text)">${blendedRoas||'—'}x</div><div style="font-size:9px;color:var(--text3)">Organic carrying ${orgRevPct}%</div></div>
-            </div>
-          </div>
-        </div>
+        <!-- LEAD: Revenue Mix bar -->
         <div style="margin-bottom:20px;">
-          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Revenue Mix</div>
-          <div style="height:18px;border-radius:9px;overflow:hidden;display:flex;background:var(--border);">
-            <div style="width:${orgRevPct}%;background:var(--org-color);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white">${orgRevPct}% organic</div>
-            <div style="flex:1;background:var(--ad-color);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white">${adRevPct2}% ads</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Revenue Mix — Organic vs Ad Attributed</div>
+          <div style="height:28px;border-radius:14px;overflow:hidden;display:flex;background:var(--border);">
+            <div style="width:${orgRevPct}%;background:var(--org-color);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white">${orgRevPct}% organic · ${fmtCur(ads.organic_revenue||0)}</div>
+            <div style="flex:1;background:var(--ad-color);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white">${adRevPct2}% ads · ${fmtCur(ads.ad_revenue||0)}</div>
           </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:6px;">If ad spend reduced to zero, <b style="color:var(--red)">${fmtCur(ads.ad_revenue||0)}</b> (${adRevPct2}% of revenue) would be at risk.</div>
         </div>
+
+        <!-- Spend Efficiency -->
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;">
-          <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Spend efficiency vs portfolio coverage</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Spend Efficiency vs Portfolio Coverage</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
             <div style="background:white;border-radius:8px;padding:10px 12px;border:1px solid var(--border);"><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px">% revenue advertised</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:${parseInt(adRevPct2)<20?'var(--amber)':parseInt(adRevPct2)<40?'var(--green)':'var(--blue)'}">${adRevPct2}%</div><div style="font-size:10px;color:var(--text3);margin-top:2px">${parseInt(adRevPct2)<20?'Small slice of portfolio':parseInt(adRevPct2)<40?'Growing coverage':'Strong coverage'}</div></div>
             <div style="background:white;border-radius:8px;padding:10px 12px;border:1px solid var(--border);"><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px">Spend as % of total rev</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:${parseFloat(spendPct)<3?'var(--green)':parseFloat(spendPct)<8?'var(--amber)':'var(--red)'}">${spendPct}%</div><div style="font-size:10px;color:var(--text3);margin-top:2px">${parseFloat(spendPct)<3?'Significant headroom':parseFloat(spendPct)<8?'Moderate investment':'High investment'}</div></div>
             <div style="background:white;border-radius:8px;padding:10px 12px;border:1px solid var(--border);"><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px">Untapped catalogue</div><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:${parseInt(orgRevPct)>70?'var(--red)':parseInt(orgRevPct)>50?'var(--amber)':'var(--green)'}">${orgRevPct}%</div><div style="font-size:10px;color:var(--text3);margin-top:2px">Revenue without ad support</div></div>
           </div>
         </div>
+
+        <!-- ROAS + Spend metrics -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+          <div style="background:var(--bg);border-radius:10px;padding:12px;border:1px solid var(--border);"><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px">True ROAS<div style="font-size:9px;font-weight:400;color:var(--text3)">ad rev ÷ spend</div></div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:${roasNum>=4?'var(--green)':roasNum>=2?'var(--amber)':'var(--red)'}">${roas||'—'}x</div></div>
+          <div style="background:var(--bg);border-radius:10px;padding:12px;border:1px solid var(--border);"><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px">Blended ROAS<div style="font-size:9px;font-weight:400;color:var(--text3)">total rev ÷ spend</div></div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text)">${blendedRoas||'—'}x</div></div>
+          <div style="background:var(--bg);border-radius:10px;padding:12px;border:1px solid var(--border);"><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px">Ad Spend</div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--ad-color)">${fmtCur(ads.ad_spend||0)}</div></div>
+          <div style="background:var(--bg);border-radius:10px;padding:12px;border:1px solid var(--border);"><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px">ACoS</div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:${parseFloat(acos)>30?'var(--red)':parseFloat(acos)>20?'var(--amber)':'var(--green)'}">${acos||'—'}%</div></div>
+        </div>
+
+        <!-- Interpretation -->
         <div style="background:var(--blue-light);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:24px;">
           <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📖 Interpretation</div>
           <div style="font-size:12px;color:var(--text);line-height:1.6">${interpretation}</div>
         </div>
+
         ${coverageHtml}`;
     }
 
