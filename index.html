@@ -362,7 +362,7 @@ async function init() {
     const [weeksRes,loyaltyRes,adsRes]=await Promise.all([
       sbFetch('/rest/v1/brand_health_weeks?select=*&order=week_start.desc'),
       sbFetch('/rest/v1/brand_health_loyalty?select=*&order=uploaded_at.desc'),
-      sbFetch('/rest/v1/brand_health_ads?select=*&order=week_start.desc&limit=10000')
+      sbFetch('/rest/v1/brand_health_ads?select=week_start,brand_classified,market,ad_revenue,ad_spend,ad_impressions,ad_clicks,ad_glance_views,organic_revenue,organic_glance_views&order=week_start.desc&limit=10000')
     ]);
     allWeeks=weeksRes;
 
@@ -428,10 +428,21 @@ async function loadPeriod(periodVal) {
     // Single week — fetch full detail
     const res=await sbFetch(`/rest/v1/brand_health_snapshots?week_start=eq.${weekStarts[0]}&select=*&limit=20000`);
     allRows=res;
-    // Build ads lookup for this week
+    // Build ads lookup for this week using || key format
     adsData={};
     Object.entries(adsDataAllWeeks).forEach(([k,v])=>{
-      if(k.startsWith(weekStarts[0]+'_')) adsData[v.brand_classified]=v;
+      const [ws,bid,mkt]=k.split('||');
+      if(ws!==weekStarts[0]) return;
+      if(!adsData[bid]) adsData[bid]={};
+      const mk=mkt||'ALL';
+      if(!adsData[bid][mk]) adsData[bid][mk]={ad_revenue:0,ad_spend:0,ad_impressions:0,ad_clicks:0,organic_revenue:0,organic_glance_views:0,ad_glance_views:0};
+      adsData[bid][mk].ad_revenue+=(v.ad_revenue||0);
+      adsData[bid][mk].ad_spend+=(v.ad_spend||0);
+      adsData[bid][mk].ad_impressions+=(v.ad_impressions||0);
+      adsData[bid][mk].ad_clicks+=(v.ad_clicks||0);
+      adsData[bid][mk].organic_revenue+=(v.organic_revenue||0);
+      adsData[bid][mk].organic_glance_views+=(v.organic_glance_views||0);
+      adsData[bid][mk].ad_glance_views+=(v.ad_glance_views||0);
     });
   } else {
     // Multi-week (month/quarter/year) — aggregate from allRowsAllWeeks
@@ -511,29 +522,27 @@ function aggregateBrand(brandId) {
         ads.ad_glance_views+=(a.ad_glance_views||0);
       }
     });
-    if(ads.ad_revenue===0&&ads.ad_glance_views===0) ads=null;
+    if(ads.ad_revenue===0&&ads.ad_spend===0) ads=null;
   }
   return{revenue,revenueYoy:revYoyD>0?revYoyN/revYoyD:null,units,asp,conv,gviews,gviewsYoy:gvYoyD>0?gvYoyN/gvYoyD:null,unfilled,avgOos,repeatRate,ltv,loyaltyQuarter:loyalty?.quarter,ads};
 }
 
 // Updated sentiment logic using new thresholds
 function getSentiment(d) {
-  const revUp=d.revenueYoy!==null&&d.revenueYoy>0;
-  const revDown=d.revenueYoy!==null&&d.revenueYoy<0;
-  const cvrBad=cvrLevel(d.conv)==='bad'; // <5%
-  const cvrOk=cvrLevel(d.conv)==='ok';   // 5-9%
-  const oosBad=oosLabel(d.avgOos)==='red';    // >=10%
-  const oosAmber=oosLabel(d.avgOos)==='amber'; // 7-9%
-  const supplyBad=oosBad||d.unfilled>200;
-  const supplyAmber=oosAmber||d.unfilled>50;
+  const revDown = d.revenueYoy !== null && d.revenueYoy < -0.05; // >5% decline
+  const revUp   = d.revenueYoy !== null && d.revenueYoy > 0.02;  // >2% growth
+  const cvrBad  = cvrLevel(d.conv) === 'bad';   // <5%
+  const oosBad  = oosLabel(d.avgOos) === 'red'; // >=10%
 
-  // CRY: revenue down AND (bad CVR OR bad supply)
-  if(revDown&&(cvrBad||supplyBad)) return 'cry';
-  // CRY: multiple red signals even without revenue trend
-  if(cvrBad&&supplyBad) return 'cry';
-  // HAPPY: revenue up, CVR good or ok, supply OK or amber
-  if(revUp&&!cvrBad&&!supplyBad) return 'happy';
-  // Otherwise mixed
+  // CRY: only genuinely bad combinations
+  if (d.avgOos > 20) return 'cry';              // severe OOS alone is enough
+  if (oosBad && cvrBad) return 'cry';           // bad supply + bad CVR
+  if (revDown && cvrBad && oosBad) return 'cry'; // all three bad
+
+  // HAPPY: revenue growing, CVR not bad, OOS not red
+  if (revUp && !cvrBad && !oosBad) return 'happy';
+
+  // Everything else is mixed
   return 'sad';
 }
 
@@ -577,20 +586,20 @@ function renderBrandCards() {
     const sc=SC[s];
     const color=BRAND_COLORS[id];
 
-    // Issue count using new thresholds
+    // Issue count — what's genuinely wrong at brand level
     let issueCount=0;
-    if(oosLabel(d.avgOos)!=='green'||d.unfilled>50) issueCount++;
-    if(cvrLevel(d.conv)==='bad') issueCount++;
-    if(cvrLevel(d.conv)==='ok') issueCount+=0.5;
-    if(d.revenueYoy!==null&&d.revenueYoy<0) issueCount++;
-    if(d.gviewsYoy!==null&&d.gviewsYoy<0) issueCount++;
+    if(oosLabel(d.avgOos)==='red')   issueCount++;      // avg OOS >=10%
+    if(oosLabel(d.avgOos)==='amber') issueCount+=0.5;   // avg OOS 7-9%
+    if(cvrLevel(d.conv)==='bad')     issueCount++;      // CVR <5%
+    if(cvrLevel(d.conv)==='ok')      issueCount+=0.5;   // CVR 5-9%
+    if(d.revenueYoy!==null&&d.revenueYoy<-0.05)  issueCount++;   // rev down >5%
+    if(d.gviewsYoy!==null&&d.gviewsYoy<-0.1)     issueCount+=0.5; // traffic down >10%
 
     const issueInt=Math.ceil(issueCount);
-    const supplyClass=issueInt>1?'show-red':issueInt===1?'show-amber':'';
-    const supplyText=issueInt>0?`⚠️ Root Cause (${issueInt} issue${issueInt>1?'s':''})`:'';
-
+    const supplyClass=issueCount>=2?'show-red':issueCount>=1?'show-amber':'';
+    const supplyText=issueCount>=1?`⚠️ Root Cause (${issueInt} issue${issueInt>1?'s':''})`:'';
     const ads=d.ads;
-    const hasAds=ads&&(ads.ad_revenue>0||ads.ad_glance_views>0);
+    const hasAds=ads!=null&&(ads.ad_spend>0||ads.ad_revenue>0);
     const adRevPct=hasAds&&d.revenue>0?((ads.ad_revenue/d.revenue)*100).toFixed(0):null;
     const adGvPct=hasAds&&d.gviews>0?((ads.ad_glance_views/d.gviews)*100).toFixed(0):null;
 
@@ -627,8 +636,8 @@ function renderBrandCards() {
         <div class="bm-row"><span class="bm-label">ASP</span><span class="bm-right"><span class="bm-value">${fmtCur(d.asp)}</span></span></div>
         <div class="bm-row"><span class="bm-label">OOS</span><span class="bm-right"><span class="bm-value ${oosClass(d.avgOos)}">${d.avgOos.toFixed(1)}%</span></span></div>
         <div class="brand-divider"></div>
-        <div class="bm-row"><span class="bm-label">Repeat Rate</span><span class="bm-right"><span class="bm-value">${d.repeatRate!==null?(d.repeatRate*100).toFixed(1)+'%':'—'}</span></span></div>
-        <div class="bm-row"><span class="bm-label">Est. LTV</span><span class="bm-right"><span class="ltv-badge" style="${d.ltv?'':'opacity:0.4'}">${d.ltv?fmtCur(d.ltv):'—'}</span></span></div>
+        <div class="bm-row"><span class="bm-label">Repeat Rate</span><span class="bm-right"><span class="bm-value">${d.repeatRate!==null?(d.repeatRate*100).toFixed(1)+'%':'<span style="color:var(--text3);font-size:9px">No Q data</span>'}</span></span></div>
+        <div class="bm-row"><span class="bm-label">Est. LTV</span><span class="bm-right"><span class="ltv-badge" style="${d.ltv?'':'opacity:0.35'}">${d.ltv?fmtCur(d.ltv):'—'}</span></span></div>
       </div>
       ${supplyClass?`<div class="supply-alert ${supplyClass}">${supplyText}</div>`:''}
     `;
