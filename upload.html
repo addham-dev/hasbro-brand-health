@@ -15,6 +15,8 @@
       --green:#00B388; --green-bg:#E5FFF6;
       --red:#E8423F; --red-bg:#FFF0F0;
       --amber:#F5A623; --amber-bg:#FFF8EC;
+      --purple:#9B59B6; --purple-bg:#F5EEF8;
+      --ad-color:#4F46E5; --ad-bg:#EEF2FF;
       --shadow:0 2px 16px rgba(0,156,222,0.08);
     }
     *{margin:0;padding:0;box-sizing:border-box;}
@@ -27,71 +29,69 @@
     .logo-sub{font-size:10px;color:rgba(255,255,255,0.6);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;}
     .admin-badge{background:rgba(255,255,255,0.15);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:white;letter-spacing:1px;}
 
-    /* LOGIN */
     #login-section{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 64px);}
     .login-box{background:white;border-radius:16px;padding:40px;width:360px;box-shadow:var(--shadow);border:2px solid var(--border);text-align:center;}
     .login-icon{font-size:48px;margin-bottom:16px;}
-    .login-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;}
+    .login-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;}
     .login-sub{font-size:13px;color:var(--text2);margin-bottom:24px;}
-    .login-input{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:12px;transition:border-color 0.2s;}
+    .login-input{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;outline:none;margin-bottom:12px;transition:border-color 0.2s;}
     .login-input:focus{border-color:var(--blue);}
-    .login-btn{width:100%;background:var(--blue);color:white;border:none;border-radius:8px;padding:12px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+    .login-btn{width:100%;background:var(--blue);color:white;border:none;border-radius:8px;padding:12px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
     .login-btn:hover{background:var(--blue-dark);}
     .login-error{color:var(--red);font-size:12px;margin-top:8px;display:none;}
 
-    /* MAIN UPLOAD */
     #main-section{display:none;}
     main{padding:32px 40px;max-width:1000px;margin:0 auto;display:grid;gap:24px;}
-
-    .page-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:var(--text);}
+    .page-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;}
     .page-sub{font-size:14px;color:var(--text2);margin-top:4px;}
 
-    /* WEEK SELECTOR */
-    .week-card{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);border:2px solid var(--border);}
+    .section-card{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);border:2px solid var(--border);}
+    .section-card.amber-border{border-color:var(--amber);}
+    .section-card.ad-border{border-color:var(--ad-color);}
     .card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;}
+    .card-title.amber{color:var(--amber);}
+    .card-title.ad{color:var(--ad-color);}
+
     .week-inputs{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;}
     .input-group{display:flex;flex-direction:column;gap:6px;}
     .input-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;}
-    .date-input{padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:13px;color:var(--text);outline:none;transition:border-color 0.2s;}
+    .date-input{padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;font-size:13px;outline:none;transition:border-color 0.2s;}
     .date-input:focus{border-color:var(--blue);}
 
-    /* UPLOAD CARDS */
     .upload-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-    .upload-card{background:white;border:2px dashed var(--border);border-radius:14px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;}
+    .upload-card-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+    .upload-card{background:white;border:2px dashed var(--border);border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;}
     .upload-card:hover{border-color:var(--blue);background:var(--blue-light);}
     .upload-card.loaded{border-color:var(--green);border-style:solid;background:var(--green-bg);}
-    .upload-card.error{border-color:var(--red);border-style:solid;background:var(--red-bg);}
-    .uc-icon{font-size:32px;margin-bottom:10px;}
-    .uc-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
-    .uc-sub{font-size:11px;color:var(--text2);line-height:1.5;}
+    .upload-card.ad-style{border-color:rgba(79,70,229,0.3);background:var(--ad-bg);}
+    .upload-card.ad-style:hover{border-color:var(--ad-color);}
+    .upload-card.ad-style.loaded{border-color:var(--green);border-style:solid;background:var(--green-bg);}
+    .uc-icon{font-size:28px;margin-bottom:8px;}
+    .uc-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px;}
+    .uc-sub{font-size:10px;color:var(--text2);line-height:1.5;}
     .upload-card.loaded .uc-sub{color:var(--green);font-weight:600;}
-    .upload-card.error .uc-sub{color:var(--red);font-weight:600;}
-    .uc-check{position:absolute;top:10px;right:10px;font-size:16px;display:none;}
+    .uc-check{position:absolute;top:8px;right:8px;font-size:14px;display:none;}
     .upload-card.loaded .uc-check{display:block;}
     input[type="file"]{display:none;}
 
-    /* PROCESS */
-    .process-card{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);border:2px solid var(--border);}
     .process-btn{background:var(--blue);color:white;border:none;border-radius:10px;padding:14px 32px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(0,156,222,0.3);}
-    .process-btn:hover{background:var(--blue-dark);transform:translateY(-1px);}
+    .process-btn:hover:not(:disabled){background:var(--blue-dark);transform:translateY(-1px);}
     .process-btn:disabled{background:var(--text3);cursor:not-allowed;transform:none;box-shadow:none;}
+    .ad-btn{background:var(--ad-color);box-shadow:0 4px 12px rgba(79,70,229,0.3);}
+    .ad-btn:hover:not(:disabled){background:#4338CA;}
 
-    /* LOG */
-    .log-area{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);height:200px;overflow-y:auto;margin-top:16px;line-height:1.8;}
+    .log-area{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);height:180px;overflow-y:auto;margin-top:16px;line-height:1.8;}
     .log-line{display:block;}
     .log-line.ok{color:var(--green);}
     .log-line.err{color:var(--red);}
     .log-line.info{color:var(--blue);}
 
-    /* HISTORY */
-    .history-card{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);border:2px solid var(--border);}
     .history-table{width:100%;border-collapse:collapse;margin-top:12px;}
     .history-table th{text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;padding:8px 12px;border-bottom:2px solid var(--border);}
     .history-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;font-family:'DM Mono',monospace;}
     .history-table tr:last-child td{border-bottom:none;}
     .del-btn{background:var(--red-bg);color:var(--red);border:1px solid var(--red);border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:700;}
 
-    /* OVERLAY */
     .overlay{display:none;position:fixed;inset:0;background:rgba(0,58,84,0.88);z-index:1000;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
     .overlay.on{display:flex;}
     .overlay-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:white;}
@@ -100,12 +100,15 @@
     .overlay-bar::after{content:'';display:block;height:100%;width:40%;background:var(--blue);border-radius:2px;animation:lb 1.2s ease infinite;}
     @keyframes lb{0%{transform:translateX(-150%)}100%{transform:translateX(400%)}}
     .overlay-progress{font-family:'DM Mono',monospace;font-size:13px;color:rgba(255,255,255,0.8);}
+
+    .note-box{background:var(--blue-light);border:1px solid var(--blue);border-radius:8px;padding:12px 16px;font-size:12px;color:var(--text2);margin-bottom:16px;}
+    .note-box.ad-note{background:var(--ad-bg);border-color:var(--ad-color);}
   </style>
 </head>
 <body>
 
 <div class="overlay" id="overlay">
-  <div class="overlay-title">Uploading to Supabase...</div>
+  <div class="overlay-title" id="overlay-title">Uploading to Supabase...</div>
   <div class="overlay-sub" id="overlay-sub">Processing files</div>
   <div class="overlay-bar"></div>
   <div class="overlay-progress" id="overlay-progress">0 / 0 rows</div>
@@ -139,11 +142,11 @@
   <main>
     <div>
       <div class="page-title">Weekly Data Upload</div>
-      <div class="page-sub">Upload the three Vendor Central reports to update the Brand Health Dashboard for all users.</div>
+      <div class="page-sub">Upload Vendor Central reports to update the Brand Health Dashboard. Weekly snapshots are cumulative — all historical weeks are preserved for trend analysis.</div>
     </div>
 
     <!-- WEEK -->
-    <div class="week-card">
+    <div class="section-card">
       <div class="card-title">Reporting Week</div>
       <div class="week-inputs">
         <div class="input-group">
@@ -158,9 +161,10 @@
       </div>
     </div>
 
-    <!-- FILE UPLOADS -->
-    <div class="week-card">
-      <div class="card-title">Report Files</div>
+    <!-- WEEKLY REPORTS -->
+    <div class="section-card">
+      <div class="card-title">Weekly Vendor Central Reports</div>
+      <div class="note-box">Upload all three reports for the same week. Each upload replaces any existing data for that week — re-uploading is safe.</div>
       <div class="upload-card-grid">
         <div class="upload-card" id="card-sales" onclick="document.getElementById('file-sales').click()"
           ondragover="dOver(event,'card-sales')" ondragleave="dLeave('card-sales')" ondrop="dDrop(event,'sales')">
@@ -189,21 +193,52 @@
       </div>
     </div>
 
-    <!-- PROCESS -->
-    <div class="process-card">
-      <div class="card-title">Process &amp; Upload</div>
-      <button class="process-btn" id="process-btn" onclick="processAndUpload()" disabled>
-        🚀 Process &amp; Push to Dashboard
-      </button>
-      <div class="log-area" id="log-area">
-        <span class="log-line">Ready. Upload files and click Process.</span>
+    <!-- ADS REPORTS -->
+    <div class="section-card ad-border">
+      <div class="card-title ad">🎯 Weekly Ads Report — Executive Summary</div>
+      <div class="note-box ad-note">
+        Upload the <b>Executive Summary (Toys and Games)</b> Excel report from the Advertising Console.<br><br>
+        The parser reads the <b>"Performance Detail by Platform &amp; Brand"</b> sheet, combines AMS + DSP revenue and clicks per brand per market, and averages the current week with the previous week to account for the <b>14-day attribution window</b>.<br><br>
+        <b>Clicks = Glance Views</b> for the ads traffic split. Upload <b>two consecutive weeks</b> if you want the averaged attribution figure, or just the current week for raw numbers.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div class="upload-card ad-style" id="card-sp" onclick="document.getElementById('file-sp').click()"
+          ondragover="dOver(event,'card-sp')" ondragleave="dLeave('card-sp')" ondrop="dDrop(event,'sp')">
+          <div class="uc-icon">📊</div>
+          <div class="uc-title">This Week's Report</div>
+          <div class="uc-sub" id="lbl-sp">Executive Summary .xlsx<br>Current reporting week</div>
+          <div class="uc-check">✅</div>
+          <input type="file" id="file-sp" accept=".csv,.xlsx" onchange="onFile(event,'sp')">
+        </div>
+        <div class="upload-card ad-style" id="card-sb" onclick="document.getElementById('file-sb').click()"
+          ondragover="dOver(event,'card-sb')" ondragleave="dLeave('card-sb')" ondrop="dDrop(event,'sb')">
+          <div class="uc-icon">📅</div>
+          <div class="uc-title">Previous Week's Report</div>
+          <div class="uc-sub" id="lbl-sb">Executive Summary .xlsx<br>Used for 14-day attribution average</div>
+          <div class="uc-check">✅</div>
+          <input type="file" id="file-sb" accept=".csv,.xlsx" onchange="onFile(event,'sb')">
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <button class="process-btn ad-btn" id="ads-btn" onclick="processAndUploadAds()" disabled>
+          🎯 Process &amp; Upload Ads Data
+        </button>
+        <div class="log-area" id="ads-log"><span class="log-line">Upload this week's Executive Summary (previous week optional) then click Process.</span></div>
       </div>
     </div>
 
+    <!-- PROCESS WEEKLY -->
+    <div class="section-card">
+      <div class="card-title">Process &amp; Upload Weekly Reports</div>
+      <button class="process-btn" id="process-btn" onclick="processAndUpload()" disabled>
+        🚀 Process &amp; Push to Dashboard
+      </button>
+      <div class="log-area" id="log-area"><span class="log-line">Ready. Upload all three report files then click Process.</span></div>
+    </div>
 
     <!-- QUARTERLY LOYALTY -->
-    <div class="week-card" style="border-color:var(--amber);">
-      <div class="card-title" style="color:var(--amber);">Quarterly Loyalty Data — Upload Once Per Quarter</div>
+    <div class="section-card amber-border">
+      <div class="card-title amber">Quarterly Loyalty Data — Upload Once Per Quarter</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">Upload the GB Repeat Purchase Behaviour report (Brand view). This data persists until you replace it — upload in Jan, Apr, Jul, Oct.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:start;margin-bottom:16px;">
         <div class="input-group">
@@ -229,33 +264,28 @@
           Upload Loyalty Data
         </button>
       </div>
-      <div class="log-area" id="loyalty-log" style="height:100px;">
-        <span class="log-line">Upload the repeat purchase CSV to add loyalty metrics to the dashboard.</span>
-      </div>
+      <div class="log-area" id="loyalty-log" style="height:90px;"><span class="log-line">Upload the repeat purchase CSV to add loyalty metrics.</span></div>
     </div>
 
     <!-- HISTORY -->
-    <div class="history-card">
+    <div class="section-card">
       <div class="card-title">Upload History</div>
       <table class="history-table">
-        <thead><tr><th>Week</th><th>Uploaded At</th><th>Rows</th><th></th></tr></thead>
-        <tbody id="history-tbody"><tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Loading...</td></tr></tbody>
+        <thead><tr><th>Week</th><th>Uploaded At</th><th>Rows</th><th>Ads</th><th></th></tr></thead>
+        <tbody id="history-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">Loading...</td></tr></tbody>
       </table>
     </div>
   </main>
 </div>
 
 <script>
-// ─── CONFIG ──────────────────────────────────────────────────
 const SUPABASE_URL = 'https://rycqfwzgvpzwhphgclpb.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_CbKFhpN2dWI_UXhwGkclqw_AMPSprs4';
-// Simple password — change this to something only you know
 const ADMIN_PASSWORD = 'hasbro2026';
-
 const EU5 = ['GB','DE','FR','IT','ES'];
-const YOY_CAP = 2.0; // Cap at 200% — excludes new products with tiny prior year base
+const YOY_CAP = 2.0;
 
-let files = { sales:null, traffic:null, inventory:null };
+let files = { sales:null, traffic:null, inventory:null, sp:null, sb:null, sd:null, adtraffic:null, loyalty:null };
 
 // ─── LOGIN ────────────────────────────────────────────────────
 function checkPassword() {
@@ -271,14 +301,12 @@ function checkPassword() {
   }
 }
 
-// ─── WEEK ─────────────────────────────────────────────────────
 function setCurrentWeek() {
   const now = new Date();
   const day = now.getDay();
   const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(now.setDate(diff));
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
+  const monday = new Date(new Date().setDate(diff));
+  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
   document.getElementById('week-start').value = monday.toISOString().split('T')[0];
   document.getElementById('week-end').value = sunday.toISOString().split('T')[0];
 }
@@ -289,69 +317,58 @@ function dLeave(id){document.getElementById(id).style.borderColor='';}
 function dDrop(e,type){e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f,type);}
 function onFile(e,type){if(e.target.files[0])loadFile(e.target.files[0],type);}
 
-function loadFile(f,type) {
+function loadFile(f, type) {
   files[type] = f;
-  document.getElementById('card-'+type).classList.add('loaded');
-  document.getElementById('lbl-'+type).textContent = '✓ '+f.name;
+  const card = document.getElementById('card-'+type);
+  if (card) { card.classList.add('loaded'); }
+  const lbl = document.getElementById('lbl-'+type);
+  if (lbl) lbl.textContent = '✓ '+f.name;
   checkReady();
 }
 
 function checkReady() {
   document.getElementById('process-btn').disabled = !(files.sales && files.traffic && files.inventory);
+  document.getElementById('ads-btn').disabled = !files.sp; // this week's report is required; prev week optional
   if (files.loyalty) document.getElementById('loyalty-btn').disabled = false;
 }
 
-// ─── BRAND RULES ─────────────────────────────────────────────
+// ─── BRAND CLASSIFICATION ─────────────────────────────────────
 const BRANDS = [
-  { id:'DISNEY_KIDS', label:'Disney Kids',
-    titleKeys:['spidey and his amazing friends','spidey and amazing friends','iron man and his awesome friends','iron man and friends','spidey and his'],
-    brandKeys:['hasbro spidey','iron man and his awesome','hasbro iron man and his','spidey and his amazing'] },
-  { id:'MARVEL', label:'Marvel / Spider-Man',
-    titleKeys:['marvel','spider-man','spiderman','avengers','black widow','captain america','iron man','thor ','hulk','x-men','eternals','shang chi','daredevil','dr. strange','dr strange','ghost rider'],
-    brandKeys:['marvel','hasbro marvel','hasbro mavel','avengers','hasbro avengers','spider-man','spiderman','hasbro marvel avengers','marvel avengers','marvel legends','marvel spider-man','marvel classic','black widow','shang chi','the eternals','overwatch'] },
-  { id:'STAR_WARS', label:'Star Wars',
-    titleKeys:['star wars','mandalorian','grogu','jedi','sith','darth','clone wars','boba fett','lightsaber','stormtrooper','scout trooper','bb-8','han solo'],
-    brandKeys:['star wars','hasbro star wars','hasbro star wars the black series','star wars han solo movie'] },
-  { id:'MONOPOLY', label:'Monopoly',
-    titleKeys:['monopoly'],
-    brandKeys:['monopoly','hasbro monopoly'] },
-  { id:'GAMES', label:'Games',
-    titleKeys:['guess who','game of life','operation ','trivial pursuit','yahtzee','buckaroo','mousetrap','mouse trap','battleship','cluedo','clue ','boggle','connect 4','connect4','jenga','twister','looping louie','hungry hungry','cranium','taboo','pictionary','heroquest','dungeons & dragons','dungeons and dragons','avalon hill'],
-    brandKeys:['hasbro gaming','hasbro games','hasbro spiele','games (excl. monopoly)','clue','twister','dungeons & dragons','hasbro dungeons & dragons','avalon hill','ghostbusters','hasbro ghostbusters','hasbro indiana jones'] },
-  { id:'PLAY_DOH', label:'Play-Doh',
-    titleKeys:['play-doh','play doh','playdoh','pate a modeler','pâte à modeler','knete','plastilina'],
-    brandKeys:['play-doh','play doh','playdoh','hasbro play-doh','hasbro pt','play doh'] },
-  { id:'PEPPA_PIG', label:'Peppa Pig',
-    titleKeys:['peppa pig','peppa'],
-    brandKeys:['peppa pig'] },
-  { id:'TRANSFORMERS', label:'Transformers',
-    titleKeys:['transformers','optimus prime','megatron','autobot','decepticon'],
-    brandKeys:['transformers','hasbro transformers','transfromers'] },
-  { id:'BEYBLADE', label:'Beyblade',
-    titleKeys:['beyblade','bey blade'],
-    brandKeys:['beyblade','hasbro beyblade'] },
-  { id:'NERF', label:'Nerf',
-    titleKeys:['nerf','super soaker','supersoaker'],
-    brandKeys:['nerf','hasbro nerf','super soaker','supersoaker'] },
-  { id:'OTHER', label:'Other', titleKeys:[], brandKeys:[] }
+  { id:'DISNEY_KIDS', titleKeys:['spidey and his amazing friends','spidey and amazing friends','iron man and his awesome friends','iron man and friends','spidey and his'], brandKeys:['hasbro spidey','iron man and his awesome','hasbro iron man and his','spidey and his amazing'] },
+  { id:'MARVEL', titleKeys:['marvel','spider-man','spiderman','avengers','black widow','captain america','iron man','thor ','hulk','x-men','eternals','shang chi','daredevil','dr. strange','dr strange','ghost rider'], brandKeys:['marvel','hasbro marvel','avengers','hasbro avengers','spider-man','spiderman','hasbro marvel avengers','marvel avengers','marvel legends','marvel spider-man','marvel classic','black widow','shang chi','the eternals','overwatch'] },
+  { id:'STAR_WARS', titleKeys:['star wars','mandalorian','grogu','jedi','sith','darth','clone wars','boba fett','lightsaber','stormtrooper','scout trooper','bb-8','han solo'], brandKeys:['star wars','hasbro star wars','hasbro star wars the black series','star wars han solo movie'] },
+  { id:'MONOPOLY', titleKeys:['monopoly'], brandKeys:['monopoly','hasbro monopoly'] },
+  { id:'GAMES', titleKeys:['guess who','game of life','operation ','trivial pursuit','yahtzee','buckaroo','mousetrap','mouse trap','battleship','cluedo','clue ','boggle','connect 4','connect4','jenga','twister','looping louie','hungry hungry','cranium','taboo','pictionary','heroquest','dungeons & dragons','dungeons and dragons','avalon hill'], brandKeys:['hasbro gaming','hasbro games','hasbro spiele','games (excl. monopoly)','clue','twister','dungeons & dragons','hasbro dungeons & dragons','avalon hill','ghostbusters','hasbro ghostbusters','hasbro indiana jones'] },
+  { id:'PLAY_DOH', titleKeys:['play-doh','play doh','playdoh','pate a modeler','pâte à modeler','knete','plastilina'], brandKeys:['play-doh','play doh','playdoh','hasbro play-doh','hasbro pt','play doh'] },
+  { id:'PEPPA_PIG', titleKeys:['peppa pig','peppa'], brandKeys:['peppa pig'] },
+  { id:'TRANSFORMERS', titleKeys:['transformers','optimus prime','megatron','autobot','decepticon'], brandKeys:['transformers','hasbro transformers','transfromers'] },
+  { id:'BEYBLADE', titleKeys:['beyblade','bey blade'], brandKeys:['beyblade','hasbro beyblade'] },
+  { id:'NERF', titleKeys:['nerf','super soaker','supersoaker'], brandKeys:['nerf','hasbro nerf','super soaker','supersoaker'] },
+  { id:'OTHER', titleKeys:[], brandKeys:[] }
 ];
 
 function classifyBrand(title, brandCol) {
-  const t = (title||'').toLowerCase();
-  const b = (brandCol||'').toLowerCase().trim();
-  const dk = BRANDS[0];
-  if (dk.titleKeys.some(k=>t.includes(k))||dk.brandKeys.some(k=>b===k||b.includes(k))) return dk.id;
-  for (let i=1;i<BRANDS.length-1;i++) {
+  const t=(title||'').toLowerCase(), b=(brandCol||'').toLowerCase().trim();
+  const dk=BRANDS[0];
+  if(dk.titleKeys.some(k=>t.includes(k))||dk.brandKeys.some(k=>b===k||b.includes(k))) return dk.id;
+  for(let i=1;i<BRANDS.length-1;i++){
     const br=BRANDS[i];
-    if (br.titleKeys.some(k=>t.includes(k))||br.brandKeys.some(k=>b===k||b.includes(k))) return br.id;
+    if(br.titleKeys.some(k=>t.includes(k))||br.brandKeys.some(k=>b===k||b.includes(k))) return br.id;
+  }
+  return 'OTHER';
+}
+
+// classify from brand name only (for ads reports)
+function classifyBrandName(brandName) {
+  const b=(brandName||'').toLowerCase().trim();
+  for(const br of BRANDS.slice(0,-1)){
+    if(br.brandKeys.some(k=>b===k||b.includes(k))||br.titleKeys.some(k=>b.includes(k))) return br.id;
   }
   return 'OTHER';
 }
 
 // ─── PARSING ─────────────────────────────────────────────────
-function normaliseKey(s) {
-  return String(s).trim().replace(/\u2013|\u2014|\u2212/g,'–').replace(/\s+/g,' ');
-}
+function normaliseKey(s){return String(s).trim().replace(/\u2013|\u2014|\u2212/g,'–').replace(/\s+/g,' ');}
 
 function parseVCFile(file) {
   return new Promise(resolve => {
@@ -363,7 +380,7 @@ function parseVCFile(file) {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const raw = XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
         let hi = raw.findIndex(r=>r.some(c=>String(c).trim()==='ASIN'));
-        if (hi===-1) hi=1;
+        if(hi===-1) hi=1;
         const headers = raw[hi].map(h=>normaliseKey(h));
         const rows = raw.slice(hi+1).filter(r=>r.some(c=>c!=='')).map(r=>{
           const o={};headers.forEach((h,i)=>{o[h]=(r[i]!==undefined&&r[i]!==null)?r[i]:'';});return o;
@@ -376,27 +393,18 @@ function parseVCFile(file) {
       reader.onload = e => {
         let text = e.target.result.replace(/^\uFEFF/,'');
         const lines = text.split('\n');
-        // Find header row — the one that starts with ASIN
         let hi = -1;
-        for (let i=0; i<Math.min(lines.length,10); i++) {
-          const t = lines[i].trim().replace(/^\uFEFF/,'');
-          if (t.startsWith('ASIN,') || t === 'ASIN') { hi = i; break; }
+        for(let i=0;i<Math.min(lines.length,10);i++){
+          const t=lines[i].trim().replace(/^\uFEFF/,'');
+          if(t.startsWith('ASIN,')||t==='ASIN'){hi=i;break;}
         }
-        if (hi === -1) hi = 1;
-        const csvText = lines.slice(hi).join('\n');
-        const result = Papa.parse(csvText, {header:true, skipEmptyLines:true, dynamicTyping:false});
-        // Find actual ASIN key (handles BOM/whitespace variants)
-        const fields = result.meta.fields || [];
-        const asinKey = fields.find(f => f.trim().replace(/^\uFEFF/,'') === 'ASIN') || 'ASIN';
-        const rows = result.data
-          .filter(r => r[asinKey] && String(r[asinKey]).trim().length > 5)
-          .map(r => {
-            const o = {};
-            Object.keys(r).forEach(k => { o[normaliseKey(k.replace(/^\uFEFF/,''))] = r[k]; });
-            return o;
-          });
-        console.log('CSV parsed:', rows.length, 'rows, hi=', hi, 'asinKey=', asinKey);
-        if (rows.length > 0) console.log('Sample keys:', Object.keys(rows[0]).slice(0,6));
+        if(hi===-1) hi=1;
+        const result = Papa.parse(lines.slice(hi).join('\n'),{header:true,skipEmptyLines:true,dynamicTyping:false});
+        const fields = result.meta.fields||[];
+        const asinKey = fields.find(f=>f.trim().replace(/^\uFEFF/,'')==='ASIN')||'ASIN';
+        const rows = result.data.filter(r=>r[asinKey]&&String(r[asinKey]).trim().length>5).map(r=>{
+          const o={};Object.keys(r).forEach(k=>{o[normaliseKey(k.replace(/^\uFEFF/,''))]=r[k];});return o;
+        });
         resolve(rows);
       };
       reader.readAsText(file,'UTF-8');
@@ -404,416 +412,509 @@ function parseVCFile(file) {
   });
 }
 
-function cleanNum(v) {
-  if (v===null||v===undefined||v==='') return null;
-  if (typeof v==='number') return isNaN(v)?null:v;
-  // Strip ALL non-numeric characters except dot and minus
-  // This handles €, £, $, commas, spaces and any other currency symbols
-  const s = String(v).replace(/[^0-9.\-]/g,'').trim();
-  if (s===''||s==='-') return null;
-  const n = parseFloat(s);
-  return isNaN(n)?null:n;
+// Generic CSV/XLSX parser (no ASIN requirement, for ads reports)
+function parseGenericFile(file) {
+  return new Promise(resolve => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext==='xlsx') {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const wb = XLSX.read(e.target.result,{type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
+        // Find first non-empty row as header
+        let hi = raw.findIndex(r=>r.some(c=>String(c).trim().length>0));
+        if(hi===-1) hi=0;
+        const headers = raw[hi].map(h=>normaliseKey(String(h)));
+        const rows = raw.slice(hi+1).filter(r=>r.some(c=>c!=='')).map(r=>{
+          const o={};headers.forEach((h,i)=>{o[h]=(r[i]!==undefined&&r[i]!==null)?r[i]:'';});return o;
+        });
+        resolve(rows);
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const text = e.target.result.replace(/^\uFEFF/,'');
+        const result = Papa.parse(text,{header:true,skipEmptyLines:true,dynamicTyping:false});
+        const rows = result.data.map(r=>{
+          const o={};Object.keys(r).forEach(k=>{o[normaliseKey(k.replace(/^\uFEFF/,''))]=r[k];});return o;
+        });
+        resolve(rows);
+      };
+      reader.readAsText(file,'UTF-8');
+    }
+  });
 }
 
-function parseYoy(v, isPercentStr) {
-  if (v===null||v===undefined||v===''||v==='-') return null;
+function cleanNum(v){
+  if(v===null||v===undefined||v==='') return null;
+  if(typeof v==='number') return isNaN(v)?null:v;
+  const s=String(v).replace(/[^0-9.\-]/g,'').trim();
+  if(s===''||s==='-') return null;
+  const n=parseFloat(s);
+  return isNaN(n)?null:n;
+}
+function parseYoy(v,isPercentStr){
+  if(v===null||v===undefined||v===''||v==='-') return null;
   let n;
-  if (isPercentStr) {
-    const s = String(v).replace(/,/g,'').replace(/%/g,'').trim();
-    if (s===''||s==='nan') return null;
-    n = parseFloat(s)/100;
-  } else {
-    n = typeof v==='number'?v:parseFloat(String(v).replace(/,/g,'').trim());
-  }
-  if (isNaN(n)) return null;
-  // Exclude new products (no prior year = -100%) and extreme values
-  if (n <= -0.99) return null;
-  if (Math.abs(n)>YOY_CAP) return null;
+  if(isPercentStr){const s=String(v).replace(/,/g,'').replace(/%/g,'').trim();if(s===''||s==='nan')return null;n=parseFloat(s)/100;}
+  else{n=typeof v==='number'?v:parseFloat(String(v).replace(/,/g,'').trim());}
+  if(isNaN(n)) return null;
+  if(n<=-0.99) return null;
+  if(Math.abs(n)>YOY_CAP) return null;
   return n;
 }
-
-function cleanRevenueStr(v) {
-  // Strip non-ASCII characters (€, £, $) and commas robustly
-  if (v===null||v===undefined||v==='') return null;
-  if (typeof v==='number') return isNaN(v)?null:v;
-  // Remove any character that isn't a digit, dot, minus or comma
-  const s = String(v).replace(/[^0-9.,\-]/g,'').replace(/,/g,'').trim();
-  if (s===''||s==='-') return null;
-  const n = parseFloat(s);
-  return isNaN(n)?null:n;
-}
-
-function col(row, name) {
-  if (row[name]!==undefined) return row[name];
-  const norm = name.replace(/[-\u2013\u2014\u2212]/g,'–').toLowerCase();
-  for (const k of Object.keys(row)) {
-    if (k.replace(/[-\u2013\u2014\u2212]/g,'–').toLowerCase()===norm) return row[k];
-  }
+function col(row,name){
+  if(row[name]!==undefined) return row[name];
+  const norm=name.replace(/[-\u2013\u2014\u2212]/g,'–').toLowerCase();
+  for(const k of Object.keys(row)){if(k.replace(/[-\u2013\u2014\u2212]/g,'–').toLowerCase()===norm)return row[k];}
   return undefined;
 }
 
 // ─── LOGGING ─────────────────────────────────────────────────
-function log(msg, type='') {
-  const area = document.getElementById('log-area');
-  const line = document.createElement('span');
-  line.className = 'log-line '+type;
-  line.textContent = new Date().toLocaleTimeString('en-GB')+' → '+msg;
+function log(msg,type='',areaId='log-area'){
+  const area=document.getElementById(areaId);
+  const line=document.createElement('span');
+  line.className='log-line '+type;
+  line.textContent=new Date().toLocaleTimeString('en-GB')+' → '+msg;
   area.appendChild(line);
-  area.scrollTop = area.scrollHeight;
+  area.scrollTop=area.scrollHeight;
 }
 
-// ─── MAIN PROCESS ─────────────────────────────────────────────
+// ─── MAIN PROCESS ────────────────────────────────────────────
 async function processAndUpload() {
-  const weekStart = document.getElementById('week-start').value;
-  const weekEnd = document.getElementById('week-end').value;
-
-  if (!weekStart || !weekEnd) {
-    alert('Please set the reporting week dates first.');
-    return;
-  }
+  const weekStart=document.getElementById('week-start').value;
+  const weekEnd=document.getElementById('week-end').value;
+  if(!weekStart||!weekEnd){alert('Please set the reporting week dates first.');return;}
 
   document.getElementById('overlay').classList.add('on');
-  document.getElementById('log-area').innerHTML = '';
-  log('Starting process...', 'info');
+  document.getElementById('log-area').innerHTML='';
+  log('Starting process...','info');
 
   try {
-    // Parse files
-    document.getElementById('overlay-sub').textContent = 'Reading Sales report...';
+    document.getElementById('overlay-sub').textContent='Reading Sales report...';
     log('Reading Sales report...');
-    await sleep(30);
-    const salesRaw = await parseVCFile(files.sales);
-    log(`✓ Sales: ${salesRaw.length} total rows`, 'ok');
+    const salesRaw=await parseVCFile(files.sales);
+    log(`✓ Sales: ${salesRaw.length} total rows`,'ok');
 
-    document.getElementById('overlay-sub').textContent = 'Reading Traffic report...';
+    document.getElementById('overlay-sub').textContent='Reading Traffic report...';
     log('Reading Traffic report...');
-    await sleep(30);
-    const trafficRaw = await parseVCFile(files.traffic);
-    log(`✓ Traffic: ${trafficRaw.length} total rows`, 'ok');
+    const trafficRaw=await parseVCFile(files.traffic);
+    log(`✓ Traffic: ${trafficRaw.length} total rows`,'ok');
 
-    document.getElementById('overlay-sub').textContent = 'Reading Inventory report...';
+    document.getElementById('overlay-sub').textContent='Reading Inventory report...';
     log('Reading Inventory report...');
-    await sleep(30);
-    const invRaw = await parseVCFile(files.inventory);
-    log(`✓ Inventory: ${invRaw.length} total rows`, 'ok');
+    const invRaw=await parseVCFile(files.inventory);
+    log(`✓ Inventory: ${invRaw.length} total rows`,'ok');
 
-    // Filter EU5
-    const sales = salesRaw.filter(r=>EU5.includes(String(col(r,'Store code')||'').trim().toUpperCase()));
-    const traffic = trafficRaw.filter(r=>EU5.includes(String(col(r,'Store code')||'').trim().toUpperCase()));
-    const inv = invRaw.filter(r=>EU5.includes(String(col(r,'Store code')||'').trim().toUpperCase()));
-    log(`EU5 filter: ${sales.length} sales, ${traffic.length} traffic, ${inv.length} inventory`, 'info');
+    const sales=salesRaw.filter(r=>EU5.includes(String(col(r,'Store code')||'').trim().toUpperCase()));
+    const traffic=trafficRaw.filter(r=>EU5.includes(String(col(r,'Store code')||'').trim().toUpperCase()));
+    const inv=invRaw.filter(r=>EU5.includes(String(col(r,'Store code')||'').trim().toUpperCase()));
+    log(`EU5 filter: ${sales.length} sales, ${traffic.length} traffic, ${inv.length} inventory`,'info');
 
-    // Build traffic lookup: ASIN+market → {gviews, gviewsYoy}
-    document.getElementById('overlay-sub').textContent = 'Joining data...';
-    log('Joining traffic data...');
-    const trafficMap = {};
+    const trafficMap={};
     traffic.forEach(r=>{
-      const k = String(r['ASIN']).trim()+'_'+String(col(r,'Store code')||'').trim().toUpperCase();
-      if (!trafficMap[k]) trafficMap[k] = {gviews:0, gviewsYoy:null};
-      trafficMap[k].gviews += cleanNum(col(r,'Featured offer page views'))||0;
-      const yoy = parseYoy(col(r,'Featured offer page views – Same Period Last Year (%)'),true);
-      if (yoy!==null) trafficMap[k].gviewsYoy = yoy;
+      const k=String(r['ASIN']).trim()+'_'+String(col(r,'Store code')||'').trim().toUpperCase();
+      if(!trafficMap[k]) trafficMap[k]={gviews:0,gviewsYoy:null};
+      trafficMap[k].gviews+=cleanNum(col(r,'Featured offer page views'))||0;
+      const yoy=parseYoy(col(r,'Featured offer page views – Same Period Last Year (%)'),true);
+      if(yoy!==null) trafficMap[k].gviewsYoy=yoy;
     });
 
-    // Build inventory lookup
-    const invMap = {};
+    const invMap={};
     inv.forEach(r=>{
-      const k = String(r['ASIN']).trim()+'_'+String(col(r,'Store code')||'').trim().toUpperCase();
-      if (!invMap[k]) invMap[k] = {oos:0, unfilled:0};
-      invMap[k].oos = cleanNum(col(r,'Sourceable product OOS %'))||0;
-      invMap[k].unfilled += cleanNum(col(r,'Unfilled Customer Ordered Units'))||0;
+      const k=String(r['ASIN']).trim()+'_'+String(col(r,'Store code')||'').trim().toUpperCase();
+      if(!invMap[k]) invMap[k]={oos:0,unfilled:0};
+      invMap[k].oos=cleanNum(col(r,'Sourceable product OOS %'))||0;
+      invMap[k].unfilled+=cleanNum(col(r,'Unfilled Customer Ordered Units'))||0;
     });
 
-    // Build final rows from sales
     log('Classifying brands & building rows...');
-    const rows = [];
+    const rows=[];
     sales.forEach(r=>{
-      const asin = String(r['ASIN']).trim();
-      const market = String(col(r,'Store code')||'').trim().toUpperCase();
-      const k = asin+'_'+market;
-      const t = trafficMap[k]||{gviews:0,gviewsYoy:null};
-      const iv = invMap[k]||{oos:0,unfilled:0};
-
-      const dispRev = cleanNum(col(r,'Dispatched revenue'));
-      const ordRev = cleanNum(col(r,'Ordered revenue'));
-      const dispUnits = cleanNum(col(r,'Dispatched units'));
-      const ordUnits = cleanNum(col(r,'Ordered units'));
-      const revYoy = parseYoy(col(r,'Dispatched Revenue – Same Period Last Year (%)'),true)
-                  ?? parseYoy(col(r,'Ordered Revenue – Same Period Last Year (%)'),true);
-      const unitsYoy = parseYoy(col(r,'Dispatched Units – Same Period Last Year (%)'),true)
-                    ?? parseYoy(col(r,'Ordered Units – Same Period Last Year (%)'),true);
-
+      const asin=String(r['ASIN']).trim();
+      const market=String(col(r,'Store code')||'').trim().toUpperCase();
+      const k=asin+'_'+market;
+      const t=trafficMap[k]||{gviews:0,gviewsYoy:null};
+      const iv=invMap[k]||{oos:0,unfilled:0};
+      const dispRev=cleanNum(col(r,'Dispatched revenue'));
+      const ordRev=cleanNum(col(r,'Ordered revenue'));
+      const dispUnits=cleanNum(col(r,'Dispatched units'));
+      const ordUnits=cleanNum(col(r,'Ordered units'));
+      const revYoy=parseYoy(col(r,'Dispatched Revenue – Same Period Last Year (%)'),true)??parseYoy(col(r,'Ordered Revenue – Same Period Last Year (%)'),true);
+      const unitsYoy=parseYoy(col(r,'Dispatched Units – Same Period Last Year (%)'),true)??parseYoy(col(r,'Ordered Units – Same Period Last Year (%)'),true);
       rows.push({
-        week_start: weekStart,
-        asin,
-        product_title: String(col(r,'Product title')||'').trim().substring(0,500),
-        brand_raw: String(col(r,'Brand')||'').trim(),
-        brand_classified: classifyBrand(col(r,'Product title'), col(r,'Brand')),
+        week_start:weekStart,asin,
+        product_title:String(col(r,'Product title')||'').trim().substring(0,500),
+        brand_raw:String(col(r,'Brand')||'').trim(),
+        brand_classified:classifyBrand(col(r,'Product title'),col(r,'Brand')),
         market,
-        dispatched_revenue: dispRev,
-        ordered_revenue: ordRev,
-        dispatched_units: dispUnits ? Math.round(dispUnits) : null,
-        ordered_units: ordUnits ? Math.round(ordUnits) : null,
-        revenue_yoy: revYoy,
-        units_yoy: unitsYoy,
-        glance_views: t.gviews ? Math.round(t.gviews) : null,
-        glance_views_yoy: t.gviewsYoy,
-        oos_pct: iv.oos,
-        unfilled_units: Math.round(iv.unfilled)
+        dispatched_revenue:dispRev,ordered_revenue:ordRev,
+        dispatched_units:dispUnits?Math.round(dispUnits):null,
+        ordered_units:ordUnits?Math.round(ordUnits):null,
+        revenue_yoy:revYoy,units_yoy:unitsYoy,
+        glance_views:t.gviews?Math.round(t.gviews):null,
+        glance_views_yoy:t.gviewsYoy,
+        oos_pct:iv.oos,
+        unfilled_units:Math.round(iv.unfilled)
       });
     });
-    log(`✓ Built ${rows.length} rows`, 'ok');
+    log(`✓ Built ${rows.length} rows`,'ok');
 
-    // Delete existing data for this week
-    document.getElementById('overlay-sub').textContent = 'Clearing existing week data...';
+    document.getElementById('overlay-sub').textContent='Clearing existing week data...';
     log(`Clearing existing data for week ${weekStart}...`);
-    const delRes = await fetch(`${SUPABASE_URL}/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}`, {
-      method:'DELETE',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
-    });
-    if (!delRes.ok) throw new Error('Failed to clear existing data: '+delRes.status);
-    log('✓ Cleared existing data', 'ok');
+    await sbDelete(`/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}`);
+    log('✓ Cleared','ok');
 
-    // Upload in batches of 500
-    document.getElementById('overlay-sub').textContent = 'Uploading to Supabase...';
-    const BATCH = 500;
-    let uploaded = 0;
-    for (let i=0; i<rows.length; i+=BATCH) {
-      const batch = rows.slice(i, i+BATCH);
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/brand_health_snapshots`, {
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'apikey':SUPABASE_KEY,
-          'Authorization':`Bearer ${SUPABASE_KEY}`,
-          'Prefer':'return=minimal'
-        },
-        body: JSON.stringify(batch)
-      });
-      if (!res.ok) {
-        const err = await res.text();
-        throw new Error(`Upload failed at row ${i}: ${err}`);
-      }
-      uploaded += batch.length;
-      document.getElementById('overlay-progress').textContent = `${uploaded} / ${rows.length} rows`;
+    document.getElementById('overlay-sub').textContent='Uploading to Supabase...';
+    const BATCH=500;let uploaded=0;
+    for(let i=0;i<rows.length;i+=BATCH){
+      const batch=rows.slice(i,i+BATCH);
+      await sbPost('/rest/v1/brand_health_snapshots',batch);
+      uploaded+=batch.length;
+      document.getElementById('overlay-progress').textContent=`${uploaded} / ${rows.length} rows`;
       log(`Uploaded ${uploaded}/${rows.length} rows...`);
     }
 
-    // Record week
-    await fetch(`${SUPABASE_URL}/rest/v1/brand_health_weeks`, {
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'apikey':SUPABASE_KEY,
-        'Authorization':`Bearer ${SUPABASE_KEY}`,
-        'Prefer':'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({
-        week_start: weekStart,
-        week_label: formatDate(weekStart)+' – '+formatDate(weekEnd)
-      })
+    await sbPost('/rest/v1/brand_health_weeks',{week_start:weekStart,week_label:formatDate(weekStart)+' – '+formatDate(weekEnd)},{prefer:'resolution=merge-duplicates'});
+    document.getElementById('overlay').classList.remove('on');
+    log(`✅ Done! ${rows.length} rows uploaded for week ${weekStart}`,'ok');
+    loadHistory();
+  } catch(err){
+    document.getElementById('overlay').classList.remove('on');
+    log('❌ Error: '+err.message,'err');
+    console.error(err);
+  }
+}
+
+// ─── ADS BRAND CLASSIFICATION ────────────────────────────────
+// Maps the advertising console brand names to our brand_classified IDs.
+// Collector's Corner is split by Free Form (Marvel / Star Wars).
+// DSP brand names like "Gaming", "PlayDoh Always On", "Hasbro Gaming Brand Week" are also handled.
+const ADS_BRAND_MAP = [
+  // Disney Kids / Spidey
+  { id:'DISNEY_KIDS', match: b => /spidey|iron man and his awesome|iron man and friends|disney kids/i.test(b) },
+  // Collector's Corner Marvel → MARVEL
+  // Collector's Corner Star Wars → STAR_WARS
+  // (handled separately using Free Form column)
+  // Monopoly
+  { id:'MONOPOLY', match: b => /^monopoly$/i.test(b.trim()) },
+  // Games — catches "Hasbro Gaming", "Gaming" (DSP), "Hasbro Gaming Brand Week", board/video sub-types
+  { id:'GAMES', match: b => /hasbro gaming|^gaming$|hasbro gaming brand week/i.test(b) },
+  // Play-Doh — catches "PlayDoh", "PlayDoh Always On"
+  { id:'PLAY_DOH', match: b => /playdoh|play-doh|play doh/i.test(b) },
+  // Peppa Pig
+  { id:'PEPPA_PIG', match: b => /peppa/i.test(b) },
+  // Transformers
+  { id:'TRANSFORMERS', match: b => /transformers/i.test(b) },
+  // Beyblade
+  { id:'BEYBLADE', match: b => /beyblade|bey blade/i.test(b) },
+  // Nerf
+  { id:'NERF', match: b => /nerf|super soaker/i.test(b) },
+  // Marvel (direct)
+  { id:'MARVEL', match: b => /^marvel$/i.test(b.trim()) },
+  // Star Wars (direct)
+  { id:'STAR_WARS', match: b => /star wars/i.test(b) },
+];
+
+// Country name → market code
+const COUNTRY_MAP = {
+  'united kingdom':'GB','uk':'GB',
+  'germany':'DE','deutschland':'DE',
+  'france':'FR',
+  'italy':'IT','italia':'IT',
+  'spain':'ES','españa':'ES'
+};
+
+function classifyAdsBrand(brandName, freeForm) {
+  const b = (brandName||'').trim();
+  const ff = (freeForm||'').trim().toLowerCase();
+
+  // Collector's Corner — split by Free Form
+  if (/collector'?s corner/i.test(b)) {
+    if (/marvel|spider|avengers/i.test(ff)) return 'MARVEL';
+    if (/star wars/i.test(ff)) return 'STAR_WARS';
+    return 'MARVEL'; // default Collector's Corner to Marvel
+  }
+
+  for (const rule of ADS_BRAND_MAP) {
+    if (rule.match(b)) return rule.id;
+  }
+  return null; // null = skip this row
+}
+
+function countryToMarket(country) {
+  return COUNTRY_MAP[(country||'').toLowerCase().trim()] || null;
+}
+
+// ─── PARSE EXECUTIVE SUMMARY XLSX ────────────────────────────
+// Reads the "Performance Detail by Platform & Brand" sheet.
+// Returns array of { brand_classified, market, ad_revenue, ad_spend, ad_impressions, ad_clicks }
+async function parseExecSummary(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type:'array', cellText:false });
+
+        // Find the Performance Detail sheet (partial name match)
+        const sheetName = wb.SheetNames.find(n => /performance detail/i.test(n));
+        if (!sheetName) throw new Error('Could not find "Performance Detail by Platform & Brand" sheet. Sheets found: '+wb.SheetNames.join(', '));
+
+        const ws = wb.Sheets[sheetName];
+        const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', raw:true });
+
+        // Find header row
+        let hi = raw.findIndex(r => r.some(c => String(c).trim() === 'Platform'));
+        if (hi === -1) hi = 0;
+        const headers = raw[hi].map(h => String(h).trim());
+
+        const rows = raw.slice(hi+1)
+          .filter(r => r.some(c => c !== '' && c !== null))
+          .map(r => {
+            const o = {};
+            headers.forEach((h, i) => { o[h] = (r[i] !== undefined && r[i] !== null) ? r[i] : ''; });
+            return o;
+          })
+          .filter(r => String(r['Platform']).trim() !== '' && String(r['Platform']).trim() !== 'Totals');
+
+        const results = [];
+        rows.forEach(r => {
+          const country = String(r['Marketing Geography']||r['Country']||'').trim();
+          const market = countryToMarket(country);
+          if (!market) return; // skip non-EU5
+
+          const brandId = classifyAdsBrand(r['Brand'], r['Free Form']);
+          if (!brandId) return;
+
+          const revenue = parseFloat(String(r['Nominal POS']||r['Sales']||0).replace(/[^0-9.\-]/g,'')) || 0;
+          const spend   = parseFloat(String(r['Spend']||0).replace(/[^0-9.\-]/g,'')) || 0;
+          const impr    = parseFloat(String(r['Impressions']||0).replace(/[^0-9.\-]/g,'')) || 0;
+          const clicks  = parseFloat(String(r['Clicks']||0).replace(/[^0-9.\-]/g,'')) || 0;
+
+          results.push({ brand_classified:brandId, market, ad_revenue:revenue, ad_spend:spend, ad_impressions:impr, ad_clicks:clicks });
+        });
+
+        resolve(results);
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// Aggregate rows into { brand+market → totals }
+function aggregateAdsRows(rows) {
+  const agg = {};
+  rows.forEach(r => {
+    const k = r.brand_classified+'_'+r.market;
+    if (!agg[k]) agg[k] = { brand_classified:r.brand_classified, market:r.market, ad_revenue:0, ad_spend:0, ad_impressions:0, ad_clicks:0 };
+    agg[k].ad_revenue    += r.ad_revenue;
+    agg[k].ad_spend      += r.ad_spend;
+    agg[k].ad_impressions+= r.ad_impressions;
+    agg[k].ad_clicks     += r.ad_clicks;
+  });
+  return Object.values(agg);
+}
+
+// ─── ADS UPLOAD ──────────────────────────────────────────────
+async function processAndUploadAds() {
+  const weekStart = document.getElementById('week-start').value;
+  if (!weekStart) { alert('Please set the week start date first.'); return; }
+
+  document.getElementById('ads-log').innerHTML = '';
+  logA('Starting ads processing...', 'info');
+
+  try {
+    // Parse this week
+    logA('Reading this week\'s Executive Summary...', 'info');
+    const thisWeekRows = await parseExecSummary(files.sp);
+    logA(`✓ This week: ${thisWeekRows.length} brand-market rows parsed`, 'ok');
+
+    // Parse previous week (optional — for 14-day attribution averaging)
+    let prevWeekRows = [];
+    if (files.sb) {
+      logA('Reading previous week\'s Executive Summary...', 'info');
+      prevWeekRows = await parseExecSummary(files.sb);
+      logA(`✓ Previous week: ${prevWeekRows.length} rows parsed`, 'ok');
+    } else {
+      logA('No previous week uploaded — using this week only (no attribution averaging)', 'info');
+    }
+
+    // Aggregate each week separately
+    const thisAgg = aggregateAdsRows(thisWeekRows);
+    const prevAgg = aggregateAdsRows(prevWeekRows);
+
+    // Build lookup for prev week
+    const prevMap = {};
+    prevAgg.forEach(r => { prevMap[r.brand_classified+'_'+r.market] = r; });
+
+    // Average revenue across the two weeks (14-day attribution window)
+    // Spend, impressions, clicks = current week only (not attributed)
+    const combined = thisAgg.map(r => {
+      const k = r.brand_classified+'_'+r.market;
+      const prev = prevMap[k];
+      const avgRevenue = prev
+        ? (r.ad_revenue + prev.ad_revenue) / 2
+        : r.ad_revenue;
+      return {
+        ...r,
+        ad_revenue: avgRevenue
+        // clicks (= glance views), spend, impressions stay as current week
+      };
     });
 
-    document.getElementById('overlay').classList.remove('on');
-    log(`✅ Done! ${rows.length} rows uploaded for week ${weekStart}`, 'ok');
-    log('Dashboard will now show updated data.', 'ok');
+    // Log summary per brand (collapsed across markets)
+    const brandSummary = {};
+    combined.forEach(r => {
+      if (!brandSummary[r.brand_classified]) brandSummary[r.brand_classified] = { rev:0, spend:0, clicks:0 };
+      brandSummary[r.brand_classified].rev   += r.ad_revenue;
+      brandSummary[r.brand_classified].spend += r.ad_spend;
+      brandSummary[r.brand_classified].clicks+= r.ad_clicks;
+    });
+    Object.entries(brandSummary).forEach(([bid, s]) => {
+      const roas = s.spend > 0 ? (s.rev/s.spend).toFixed(2) : '—';
+      logA(`  ${bid}: rev=€${s.rev.toFixed(0)} spend=€${s.spend.toFixed(0)} ROAS=${roas} clicks=${Math.round(s.clicks)}`, 'ok');
+    });
+
+    // Fetch weekly VC totals to compute organic split
+    logA('Fetching VC weekly totals for organic split...', 'info');
+    const vcRows = await sbFetch(`/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}&select=brand_classified,market,dispatched_revenue,ordered_revenue,glance_views`);
+
+    const vcMap = {};
+    vcRows.forEach(r => {
+      const k = r.brand_classified+'_'+r.market;
+      if (!vcMap[k]) vcMap[k] = { revenue:0, gviews:0 };
+      vcMap[k].revenue += (r.dispatched_revenue||r.ordered_revenue||0);
+      vcMap[k].gviews  += (r.glance_views||0);
+    });
+
+    // Build final rows — per brand+market
+    // Clicks = ad glance views (as specified)
+    const finalRows = combined.map(r => {
+      const k = r.brand_classified+'_'+r.market;
+      const vc = vcMap[k] || { revenue:0, gviews:0 };
+      return {
+        week_start:            weekStart,
+        brand_classified:      r.brand_classified,
+        market:                r.market,
+        ad_revenue:            Math.round(r.ad_revenue * 100) / 100,
+        ad_spend:              Math.round(r.ad_spend * 100) / 100,
+        ad_impressions:        Math.round(r.ad_impressions),
+        ad_clicks:             Math.round(r.ad_clicks),
+        ad_glance_views:       Math.round(r.ad_clicks), // Clicks = Glance Views
+        organic_revenue:       Math.max(0, Math.round((vc.revenue - r.ad_revenue) * 100) / 100),
+        organic_glance_views:  Math.max(0, Math.round(vc.gviews - r.ad_clicks))
+      };
+    });
+
+    logA(`✓ Built ${finalRows.length} brand-market rows`, 'ok');
+
+    // Delete existing and insert
+    await sbDelete(`/rest/v1/brand_health_ads?week_start=eq.${weekStart}`);
+    await sbPost('/rest/v1/brand_health_ads', finalRows);
+    logA(`✅ Done! ${finalRows.length} rows uploaded for week ${weekStart}`, 'ok');
+    if (files.sb) logA(`  Revenue averaged across current + previous week (14-day attribution)`, 'ok');
     loadHistory();
 
   } catch(err) {
-    document.getElementById('overlay').classList.remove('on');
-    log('❌ Error: '+err.message, 'err');
+    logA('❌ Error: '+err.message, 'err');
     console.error(err);
   }
 }
 
-function formatDate(d) {
-  const parts = d.split('-');
-  return parts[2]+'/'+parts[1]+'/'+parts[0];
+function logA(msg,type=''){log(msg,type,'ads-log');}
+
+// ─── LOYALTY ─────────────────────────────────────────────────
+function parseLoyaltyFile(file){
+  return new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      let text=e.target.result.replace(/^\uFEFF/,'');
+      const lines=text.split('\n');
+      let hi=-1;
+      for(let i=0;i<Math.min(lines.length,10);i++){
+        const t=lines[i].trim().replace(/^\uFEFF/,'');
+        if(t.startsWith('Brand,')||t.startsWith('"Brand"')){hi=i;break;}
+      }
+      if(hi===-1) hi=1;
+      const result=Papa.parse(lines.slice(hi).join('\n'),{header:true,skipEmptyLines:true,dynamicTyping:false});
+      resolve(result.data.filter(r=>(r['Brand']||'').trim().length>0));
+    };
+    reader.readAsText(file,'UTF-8');
+  });
+}
+
+async function uploadLoyalty(){
+  const quarter=document.getElementById('quarter-select').value;
+  if(!files.loyalty){alert('Please select the repeat purchase file.');return;}
+  document.getElementById('loyalty-btn').disabled=true;
+  document.getElementById('loyalty-log').innerHTML='';
+  log('Reading repeat purchase file...','info','loyalty-log');
+  try{
+    const raw=await parseLoyaltyFile(files.loyalty);
+    log(`✓ Parsed ${raw.length} rows`,'ok','loyalty-log');
+    const TOTAL_CUST='Unique Customer Count',REPEAT_CUST='Repeat Customer Count: Count',REPEAT_SALES='Repeat Ordered Product Sales: Sales';
+    const BRAND_MAP={DISNEY_KIDS:['spidey and his amazing friends','iron man and his awesome friends','hasbro spidey'],MARVEL:['marvel','avengers','hasbro avengers','spider-man','spiderman','x-men','the eternals','marvel legends','hasbro marvel'],STAR_WARS:['star wars','hasbro star wars'],MONOPOLY:['monopoly','hasbro monopoly'],GAMES:['hasbro gaming','hasbro games','avalon hill','clue','hasbro indiana jones'],PLAY_DOH:['play-doh','play doh','playdoh','hasbro play-doh'],PEPPA_PIG:['peppa pig','peppa'],TRANSFORMERS:['transformers','hasbro transformers'],BEYBLADE:['beyblade','hasbro beyblade'],NERF:['nerf','hasbro nerf','super soaker','supersoaker']};
+    function clf(n){const b=(n||'').toLowerCase().trim();for(const[id,keys]of Object.entries(BRAND_MAP)){if(keys.some(k=>b.includes(k)))return id;}return'OTHER';}
+    const agg={};
+    raw.forEach(r=>{
+      const bid=clf(r['Brand']);if(bid==='OTHER')return;
+      const tc=parseFloat((r[TOTAL_CUST]||'0').replace(/[^0-9.]/g,''))||0;
+      const rc=parseFloat((r[REPEAT_CUST]||'0').replace(/[^0-9.]/g,''))||0;
+      const rs=parseFloat((r[REPEAT_SALES]||'0').replace(/[^0-9.]/g,''))||0;
+      if(!agg[bid])agg[bid]={tc:0,rc:0,rs:0};
+      agg[bid].tc+=tc;agg[bid].rc+=rc;agg[bid].rs+=rs;
+    });
+    const rows=Object.entries(agg).map(([brand_classified,d])=>({brand_classified,repeat_rate:d.tc>0?d.rc/d.tc:0,repeat_customers:Math.round(d.rc),total_customers:Math.round(d.tc),repeat_sales:d.rs,quarter}));
+    log(`✓ ${rows.length} brands built`,'ok','loyalty-log');
+    if(!rows.length) throw new Error('No matching brands found');
+    await sbDelete(`/rest/v1/brand_health_loyalty?quarter=eq.${quarter}`);
+    await sbPost('/rest/v1/brand_health_loyalty',rows);
+    log(`✅ Done! ${rows.length} brands uploaded for ${quarter}`,'ok','loyalty-log');
+  }catch(err){log('❌ Error: '+err.message,'err','loyalty-log');console.error(err);}
+  document.getElementById('loyalty-btn').disabled=false;
 }
 
 // ─── HISTORY ─────────────────────────────────────────────────
-async function loadHistory() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/brand_health_weeks?select=*&order=week_start.desc&limit=10`, {
-    headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
-  });
-  const weeks = await res.json();
-  const tbody = document.getElementById('history-tbody');
-  if (!weeks.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">No uploads yet</td></tr>';
-    return;
-  }
-  tbody.innerHTML = weeks.map(w=>`
-    <tr>
-      <td>${w.week_label||w.week_start}</td>
-      <td>${new Date(w.uploaded_at).toLocaleString('en-GB')}</td>
-      <td>—</td>
-      <td><button class="del-btn" onclick="deleteWeek('${w.week_start}')">Delete</button></td>
-    </tr>
-  `).join('');
+async function loadHistory(){
+  const [weeks,adsWeeks]=await Promise.all([
+    sbFetch('/rest/v1/brand_health_weeks?select=*&order=week_start.desc&limit=10'),
+    sbFetch('/rest/v1/brand_health_ads?select=week_start&order=week_start.desc&limit=200')
+  ]);
+  const adsSet=new Set(adsWeeks.map(r=>r.week_start));
+  const tbody=document.getElementById('history-tbody');
+  if(!weeks.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">No uploads yet</td></tr>';return;}
+  tbody.innerHTML=weeks.map(w=>`<tr>
+    <td>${w.week_label||w.week_start}</td>
+    <td>${new Date(w.uploaded_at||w.created_at).toLocaleString('en-GB')}</td>
+    <td>—</td>
+    <td>${adsSet.has(w.week_start)?'<span style="color:var(--ad-color);font-weight:700">✅ Ads</span>':'<span style="color:var(--text3);font-size:11px">No ads</span>'}</td>
+    <td><button class="del-btn" onclick="deleteWeek('${w.week_start}')">Delete</button></td>
+  </tr>`).join('');
 }
 
-async function deleteWeek(weekStart) {
-  if (!confirm(`Delete all data for week ${weekStart}?`)) return;
-  await fetch(`${SUPABASE_URL}/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}`,{
-    method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
-  });
-  await fetch(`${SUPABASE_URL}/rest/v1/brand_health_weeks?week_start=eq.${weekStart}`,{
-    method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
-  });
-  log(`Deleted data for week ${weekStart}`, 'info');
+async function deleteWeek(weekStart){
+  if(!confirm(`Delete all data for week ${weekStart}? This cannot be undone.`)) return;
+  await Promise.all([
+    sbDelete(`/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}`),
+    sbDelete(`/rest/v1/brand_health_ads?week_start=eq.${weekStart}`),
+    sbDelete(`/rest/v1/brand_health_weeks?week_start=eq.${weekStart}`)
+  ]);
+  log(`Deleted data for week ${weekStart}`,'info');
   loadHistory();
 }
 
-
-// ─── LOYALTY UPLOAD ──────────────────────────────────────────
-const BRAND_MAP_LOYALTY = {
-  DISNEY_KIDS: ['spidey and his amazing friends','iron man and his awesome friends','iron man and friends','spidey and his amazing','hasbro spidey'],
-  MARVEL: ['marvel','avengers','hasbro avengers','spider-man','spiderman','x-men','the eternals','marvel legends','marvel classic','hasbro marvel'],
-  STAR_WARS: ['star wars','hasbro star wars'],
-  MONOPOLY: ['monopoly','hasbro monopoly'],
-  GAMES: ['hasbro gaming','hasbro games','avalon hill','clue','hasbro indiana jones'],
-  PLAY_DOH: ['play-doh','play doh','playdoh','hasbro play-doh'],
-  PEPPA_PIG: ['peppa pig','peppa'],
-  TRANSFORMERS: ['transformers','hasbro transformers'],
-  BEYBLADE: ['beyblade','hasbro beyblade'],
-  NERF: ['nerf','hasbro nerf','super soaker','supersoaker']
-};
-
-function classifyLoyaltyBrand(brandName) {
-  const b = (brandName||'').toLowerCase().trim();
-  for (const [id, keys] of Object.entries(BRAND_MAP_LOYALTY)) {
-    if (keys.some(k => b.includes(k))) return id;
-  }
-  return 'OTHER';
+// ─── SUPABASE HELPERS ─────────────────────────────────────────
+function sbFetch(path){return fetch(SUPABASE_URL+path,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(r=>r.json());}
+async function sbDelete(path){const r=await fetch(SUPABASE_URL+path,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});if(!r.ok)throw new Error('Delete failed: '+r.status);}
+async function sbPost(path,body,opts={}){
+  const r=await fetch(SUPABASE_URL+path,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':opts.prefer||'return=minimal'},body:JSON.stringify(body)});
+  if(!r.ok){const e=await r.text();throw new Error('Upload failed: '+e);}
 }
 
-function logLoyalty(msg, type='') {
-  const area = document.getElementById('loyalty-log');
-  const line = document.createElement('span');
-  line.className = 'log-line ' + type;
-  line.textContent = new Date().toLocaleTimeString('en-GB') + ' → ' + msg;
-  area.appendChild(line);
-  area.scrollTop = area.scrollHeight;
-}
-
-
-// Dedicated parser for loyalty CSV (starts with Brand, not ASIN)
-function parseLoyaltyFile(file) {
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      let text = e.target.result.replace(/^\uFEFF/, '');
-      const lines = text.split('\n');
-      let hi = -1;
-      for (let i = 0; i < Math.min(lines.length, 10); i++) {
-        const t = lines[i].trim().replace(/^\uFEFF/, '');
-        if (t.startsWith('Brand,') || t.startsWith('"Brand"')) { hi = i; break; }
-      }
-      if (hi === -1) hi = 1;
-      const result = Papa.parse(lines.slice(hi).join('\n'), {
-        header: true, skipEmptyLines: true, dynamicTyping: false
-      });
-      resolve(result.data.filter(r => (r['Brand']||'').trim().length > 0));
-    };
-    reader.readAsText(file, 'UTF-8');
-  });
-}
-
-async function uploadLoyalty() {
-  const quarter = document.getElementById('quarter-select').value;
-  const file = files.loyalty;
-  if (!file) { alert('Please select the repeat purchase file first.'); return; }
-
-  document.getElementById('loyalty-btn').disabled = true;
-  document.getElementById('loyalty-log').innerHTML = '';
-  logLoyalty('Reading repeat purchase file...', 'info');
-
-  try {
-    const raw = await parseLoyaltyFile(file);
-    logLoyalty(`✓ Parsed ${raw.length} rows from CSV`, 'ok');
-    if (raw.length === 0) throw new Error('No rows found — check this is the GB Repeat Purchase Behaviour Brand View CSV');
-
-    // Exact column names from Amazon export
-    const TOTAL_CUST = 'Unique Customer Count';
-    const REPEAT_CUST = 'Repeat Customer Count: Count';
-    const REPEAT_SALES = 'Repeat Ordered Product Sales: Sales';
-
-    // Brand classification map
-    const BRAND_MAP = {
-      DISNEY_KIDS: ['spidey and his amazing friends','iron man and his awesome friends','iron man and friends','spidey and his amazing','hasbro spidey'],
-      MARVEL: ['marvel','avengers','hasbro avengers','spider-man','spiderman','x-men','the eternals','marvel legends','marvel classic','hasbro marvel'],
-      STAR_WARS: ['star wars','hasbro star wars'],
-      MONOPOLY: ['monopoly','hasbro monopoly'],
-      GAMES: ['hasbro gaming','hasbro games','avalon hill','clue','hasbro indiana jones'],
-      PLAY_DOH: ['play-doh','play doh','playdoh','hasbro play-doh'],
-      PEPPA_PIG: ['peppa pig','peppa'],
-      TRANSFORMERS: ['transformers','hasbro transformers'],
-      BEYBLADE: ['beyblade','hasbro beyblade'],
-      NERF: ['nerf','hasbro nerf','super soaker','supersoaker']
-    };
-
-    function classifyBrand(name) {
-      const b = (name||'').toLowerCase().trim();
-      for (const [id, keys] of Object.entries(BRAND_MAP)) {
-        if (keys.some(k => b.includes(k))) return id;
-      }
-      return 'OTHER';
-    }
-
-    // Aggregate by brand group
-    const agg = {};
-    raw.forEach(r => {
-      const brandId = classifyBrand(r['Brand']);
-      if (brandId === 'OTHER') return;
-      const tc = parseFloat((r[TOTAL_CUST]||'0').replace(/[^0-9.]/g,'')) || 0;
-      const rc = parseFloat((r[REPEAT_CUST]||'0').replace(/[^0-9.]/g,'')) || 0;
-      const rs = parseFloat((r[REPEAT_SALES]||'0').replace(/[^0-9.]/g,'')) || 0;
-      if (!agg[brandId]) agg[brandId] = {tc:0, rc:0, rs:0};
-      agg[brandId].tc += tc;
-      agg[brandId].rc += rc;
-      agg[brandId].rs += rs;
-    });
-
-    const rows = Object.entries(agg).map(([brand_classified, d]) => ({
-      brand_classified,
-      repeat_rate: d.tc > 0 ? d.rc / d.tc : 0,
-      repeat_customers: Math.round(d.rc),
-      total_customers: Math.round(d.tc),
-      repeat_sales: d.rs,
-      quarter
-    }));
-
-    logLoyalty(`✓ Built ${rows.length} brand rows`, 'ok');
-    rows.forEach(r => logLoyalty(`  ${r.brand_classified}: ${(r.repeat_rate*100).toFixed(1)}% (${r.repeat_customers}/${r.total_customers})`));
-
-    if (rows.length === 0) throw new Error('No matching brands found after classification');
-
-    // Delete existing and insert
-    await fetch(`${SUPABASE_URL}/rest/v1/brand_health_loyalty?quarter=eq.${quarter}`, {
-      method: 'DELETE',
-      headers: {'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`}
-    });
-
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/brand_health_loyalty`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify(rows)
-    });
-
-    if (!res.ok) throw new Error('Supabase error: ' + await res.text());
-    logLoyalty(`✅ Done! ${rows.length} brands uploaded for ${quarter}`, 'ok');
-
-  } catch(err) {
-    logLoyalty('❌ Error: ' + err.message, 'err');
-    console.error(err);
-  }
-  document.getElementById('loyalty-btn').disabled = false;
-}
-
+function formatDate(d){const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 </script>
 </body>
