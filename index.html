@@ -316,7 +316,8 @@ const BRAND_ORDER=['DISNEY_KIDS','MARVEL','STAR_WARS','MONOPOLY','GAMES','PLAY_D
 
 let currency='eur',currentMarket='ALL',currentSort='revenue',selectedBrand=null,currentTab='revenue';
 let allRows=[],loyaltyData={},adsData={},allWeeks=[],allRowsAllWeeks=[],adsDataAllWeeks={};
-let periodMode='week'; // 'week','month','quarter','year'
+let adsCoverageData={}; // brand_classified → { GB:{total,sp,sb}, DE:…, … }
+let periodMode='week';
 let currentPeriod=null;
 
 // ─── THRESHOLD HELPERS ────────────────────────────────────────
@@ -359,16 +360,24 @@ function periodLabel(key){
 // ─── INIT ─────────────────────────────────────────────────────
 async function init() {
   try {
-    const [weeksRes,loyaltyRes,adsRes]=await Promise.all([
+    const [weeksRes,loyaltyRes,adsRes,coverageRes]=await Promise.all([
       sbFetch('/rest/v1/brand_health_weeks?select=*&order=week_start.desc'),
       sbFetch('/rest/v1/brand_health_loyalty?select=*&order=uploaded_at.desc'),
-      sbFetch('/rest/v1/brand_health_ads?select=week_start,brand_classified,market,ad_revenue,ad_spend,ad_impressions,ad_clicks,ad_glance_views,organic_revenue,organic_glance_views&order=week_start.desc&limit=10000')
+      sbFetch('/rest/v1/brand_health_ads?select=week_start,brand_classified,market,ad_revenue,ad_spend,ad_impressions,ad_clicks,ad_glance_views,organic_revenue,organic_glance_views&order=week_start.desc&limit=10000'),
+      sbFetch('/rest/v1/brand_health_ads_coverage?select=*').catch(()=>[])
     ]);
     allWeeks=weeksRes;
 
     // Build loyalty lookup
     loyaltyData={};
     loyaltyRes.forEach(r=>{if(!loyaltyData[r.brand_classified])loyaltyData[r.brand_classified]=r;});
+
+    // Build ads coverage lookup: brand_classified → { market → {total,sp,sb} }
+    adsCoverageData={};
+    coverageRes.forEach(r=>{
+      if(!adsCoverageData[r.brand_classified]) adsCoverageData[r.brand_classified]={};
+      adsCoverageData[r.brand_classified][r.market]={total:r.total_asins,sp:r.sp_asins,sb:r.sb_asins};
+    });
 
     // Build ads lookup keyed by week_start+brand+market using row fields directly
     adsDataAllWeeks={};
@@ -711,12 +720,12 @@ function renderRCA(brandId,tab) {
     const m=buildAsinMap(rows,r=>({rev:r.dispatched_revenue||r.ordered_revenue||0,revYoy:r.revenue_yoy,units:r.dispatched_units||r.ordered_units||0}));
     const top=Object.values(m).sort((a,b)=>b.rev-a.rev).slice(0,15);
     const maxR=top[0]?.rev||1;
-    wrap.innerHTML=buildTable(['#','ASIN','Product','Market','Revenue','YoY','Units'],
+    wrap.innerHTML=buildTable(['#','ASIN','Product','Markets','Revenue','YoY','Units'],
       top.map((r,i)=>`<tr>
         <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
         <td><div class="td-asin">${r.asin}</div></td>
         <td><span class="td-name" title="${r.name}">${r.name}</span></td>
-        <td><span class="mp mp-${r.market}">${r.market}</span></td>
+        <td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>
         <td class="td-val">${fmtCur(r.rev)}<div class="bar-bg"><div class="bar-fg" style="width:${(r.rev/maxR*100).toFixed(1)}%"></div></div></td>
         <td class="td-yoy">${fmtYoyText(r.revYoy)}</td>
         <td class="td-val">${Math.round(r.units).toLocaleString()}</td>
@@ -726,12 +735,12 @@ function renderRCA(brandId,tab) {
     const m=buildAsinMap(rows,r=>({gv:r.glance_views||0,gvYoy:r.glance_views_yoy}));
     const top=Object.values(m).sort((a,b)=>b.gv-a.gv).slice(0,15);
     const maxG=top[0]?.gv||1;
-    wrap.innerHTML=buildTable(['#','ASIN','Product','Market','Glance Views','YoY'],
+    wrap.innerHTML=buildTable(['#','ASIN','Product','Markets','Glance Views','YoY'],
       top.map((r,i)=>`<tr>
         <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
         <td><div class="td-asin">${r.asin}</div></td>
         <td><span class="td-name" title="${r.name}">${r.name}</span></td>
-        <td><span class="mp mp-${r.market}">${r.market}</span></td>
+        <td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>
         <td class="td-val">${r.gv.toLocaleString()}<div class="bar-bg"><div class="bar-fg" style="width:${(r.gv/maxG*100).toFixed(1)}%"></div></div></td>
         <td class="td-yoy">${fmtYoyText(r.gvYoy)}</td>
       </tr>`));
@@ -742,12 +751,12 @@ function renderRCA(brandId,tab) {
     wrap.innerHTML=`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
       <b style="color:var(--amber)">Thresholds:</b> ≥10% green ✅ · 5–9% amber ⚠️ · &lt;5% red 🔴 — sorted lowest first.
     </div>`+
-    buildTable(['#','ASIN','Product','Market','Conversion','ASP','Views','Units'],
+    buildTable(['#','ASIN','Product','Markets','Conversion','ASP','Views','Units'],
       top.map((r,i)=>`<tr>
         <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
         <td><div class="td-asin">${r.asin}</div></td>
         <td><span class="td-name" title="${r.name}">${r.name}</span></td>
-        <td><span class="mp mp-${r.market}">${r.market}</span></td>
+        <td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>
         <td class="td-val"><span class="${cvrClass(r.conv)}">${r.conv.toFixed(2)}%</span></td>
         <td class="td-val">${fmtCur(r.asp)}</td>
         <td class="td-val">${r.gv.toLocaleString()}</td>
@@ -760,20 +769,20 @@ function renderRCA(brandId,tab) {
     wrap.innerHTML=`<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
       <b style="color:var(--red)">OOS Thresholds:</b> ≤6% green ✅ · 7–9% amber ⚠️ · ≥10% red 🔴
     </div>`+
-    buildTable(['#','ASIN','Product','Market','OOS %','Unfilled','Revenue at Risk'],
+    buildTable(['#','ASIN','Product','Markets','OOS %','Unfilled','Revenue at Risk'],
       top.map((r,i)=>`<tr>
         <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
         <td><div class="td-asin">${r.asin}</div></td>
         <td><span class="td-name" title="${r.name}">${r.name}</span></td>
-        <td><span class="mp mp-${r.market}">${r.market}</span></td>
+        <td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>
         <td class="td-val"><span class="${oosClass(r.oos)}">${r.oos.toFixed(1)}%</span></td>
         <td class="td-val" style="color:${r.unfilled>100?'var(--red)':r.unfilled>50?'var(--amber)':'var(--text)'};font-weight:700">${Math.round(r.unfilled).toLocaleString()}</td>
         <td class="td-val" style="color:var(--red)">${r.oos>=10?fmtCur(r.rev*(r.oos/100)):'—'}</td>
       </tr>`));
 
   } else if(tab==='ads') {
-    if(!ads||(!ads.ad_revenue&&!ads.ad_glance_views)) {
-      wrap.innerHTML='<div class="empty">📊 No ads data uploaded for this brand/period. Upload the Sponsored Products report via the Upload page.</div>';
+    if(!ads||(!ads.ad_revenue&&!ads.ad_spend)) {
+      wrap.innerHTML='<div class="empty">📊 No ads data uploaded for this brand/period. Upload the Executive Summary via the Upload page.</div>';
     } else {
       const roas=ads.ad_spend>0?(ads.ad_revenue/ads.ad_spend).toFixed(2):null;
       const ctr=ads.ad_impressions>0?((ads.ad_clicks/ads.ad_impressions)*100).toFixed(2):null;
@@ -782,6 +791,61 @@ function renderRCA(brandId,tab) {
       const adRevPct2=d.revenue>0?(((ads.ad_revenue||0)/d.revenue)*100).toFixed(0):null;
       const orgGvPct=d.gviews>0?(((ads.organic_glance_views||0)/d.gviews)*100).toFixed(0):null;
       const adGvPct2=d.gviews>0?(((ads.ad_glance_views||0)/d.gviews)*100).toFixed(0):null;
+
+      // ASIN coverage from quarterly plan
+      const cov=adsCoverageData[brandId]||null;
+      const mkts=currentMarket==='ALL'?['GB','DE','FR','IT','ES']:[currentMarket];
+      let covTotal=0,covSP=0,covSB=0;
+      if(cov){
+        mkts.forEach(mk=>{
+          const m=cov[mk];
+          if(m){covTotal+=m.total;covSP+=m.sp;covSB+=m.sb;}
+        });
+      }
+      const covSpPct=covTotal>0?((covSP/covTotal)*100).toFixed(0):null;
+      const covSbPct=covTotal>0?((covSB/covTotal)*100).toFixed(0):null;
+      const uncoveredSP=covTotal>0?covTotal-covSP:null;
+
+      const coverageHtml=cov?`
+        <div style="margin-bottom:24px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">📋 Catalogue Coverage — Q2 2026 Ads Plan</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+            <div style="background:var(--bg);border-radius:10px;padding:12px;border:1px solid var(--border);">
+              <div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px">Total Catalogue ASINs</div>
+              <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--text)">${covTotal.toLocaleString()}</div>
+            </div>
+            <div style="background:var(--ad-bg);border-radius:10px;padding:12px;border:1px solid var(--ad-color);">
+              <div style="font-size:10px;color:var(--ad-color);font-weight:600;margin-bottom:4px">Sponsored Products</div>
+              <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--ad-color)">${covSP.toLocaleString()}</div>
+              <div style="font-size:10px;color:var(--text2)">${covSpPct}% of catalogue</div>
+            </div>
+            <div style="background:var(--purple-bg);border-radius:10px;padding:12px;border:1px solid var(--purple);">
+              <div style="font-size:10px;color:var(--purple);font-weight:600;margin-bottom:4px">Sponsored Brands</div>
+              <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--purple)">${covSB.toLocaleString()}</div>
+              <div style="font-size:10px;color:var(--text2)">${covSbPct}% of catalogue</div>
+            </div>
+            <div style="background:var(--red-bg);border-radius:10px;padding:12px;border:1px solid var(--red);">
+              <div style="font-size:10px;color:var(--red);font-weight:600;margin-bottom:4px">Not SP Advertised</div>
+              <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--red)">${uncoveredSP.toLocaleString()}</div>
+              <div style="font-size:10px;color:var(--text2)">${(100-parseInt(covSpPct))}% of catalogue</div>
+            </div>
+          </div>
+          ${currentMarket==='ALL'?`
+          <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">SP Coverage by Market</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            ${['GB','DE','FR','IT','ES'].map(mk=>{
+              const m=cov[mk];if(!m)return'';
+              const pct=m.total>0?Math.round(m.sp/m.total*100):0;
+              const col=pct>=70?'var(--green)':pct>=40?'var(--amber)':'var(--red)';
+              return`<div style="background:white;border:2px solid ${col};border-radius:8px;padding:8px 14px;text-align:center;">
+                <div style="font-size:10px;font-weight:700;color:var(--text2)">${mk}</div>
+                <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${col}">${pct}%</div>
+                <div style="font-size:9px;color:var(--text3)">${m.sp}/${m.total}</div>
+              </div>`;
+            }).join('')}
+          </div>`:''}
+        </div>`:
+        '<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">📋 No quarterly ads plan uploaded yet. Upload the EMEA AMZ Ads .xlsx via the Upload page to see ASIN coverage metrics.</div>';
 
       wrap.innerHTML=`
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
@@ -797,11 +861,10 @@ function renderRCA(brandId,tab) {
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
               <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">Ad Revenue</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--ad-color)">${fmtCur(ads.ad_revenue||0)}</div><div style="font-size:10px;color:var(--text2)">${adRevPct2}% of total</div></div>
               <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">Ad Spend</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--ad-color)">${fmtCur(ads.ad_spend||0)}</div><div style="font-size:10px;color:${parseFloat(acos)>30?'var(--red)':parseFloat(acos)>20?'var(--amber)':'var(--green)'}">ACoS: ${acos}%</div></div>
-              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">ROAS</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${parseFloat(roas)>=3?'var(--green)':parseFloat(roas)>=2?'var(--amber)':'var(--red)'}">${roas||'—'}x</div><div style="font-size:10px;color:var(--text2)">Ad traffic: ${fmtNum(ads.ad_glance_views||0)}</div></div>
+              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">ROAS</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${parseFloat(roas)>=3?'var(--green)':parseFloat(roas)>=2?'var(--amber)':'var(--red)'}">${roas||'—'}x</div><div style="font-size:10px;color:var(--text2)">CTR: ${ctr||'—'}%</div></div>
             </div>
           </div>
         </div>
-        <!-- Rev split bar -->
         <div style="margin-bottom:20px;">
           <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Revenue Mix</div>
           <div style="height:20px;border-radius:10px;overflow:hidden;display:flex;background:var(--border);">
@@ -812,14 +875,14 @@ function renderRCA(brandId,tab) {
             <span><span class="dot-org"></span>Organic</span><span><span class="dot-ad"></span>Ad Attributed</span>
           </div>
         </div>
-        <!-- Traffic split bar -->
-        <div>
-          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Traffic Mix</div>
+        <div style="margin-bottom:24px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Traffic Mix (Clicks as Glance Views)</div>
           <div style="height:20px;border-radius:10px;overflow:hidden;display:flex;background:var(--border);">
             <div style="width:${orgGvPct}%;background:var(--org-color);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;transition:width 0.5s">${orgGvPct}%</div>
             <div style="flex:1;background:var(--ad-color);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white">${adGvPct2}%</div>
           </div>
-        </div>`;
+        </div>
+        ${coverageHtml}`;
     }
 
   } else if(tab==='adopp') {
@@ -830,14 +893,14 @@ function renderRCA(brandId,tab) {
       <b style="color:var(--ad-color)">💡 Ad Opportunity Logic:</b> High ASP + low CVR + decent traffic + in stock (OOS &lt;10%). Prime candidates for Sponsored Products.
     </div>`+
     (opps.length===0?'<div class="empty">No strong ad opportunities identified.</div>':
-    buildTable(['#','ASIN','Product','Market','ASP','CVR','Views','OOS','Score'],
+    buildTable(['#','ASIN','Product','Markets','ASP','CVR','Views','OOS','Score'],
       opps.map((r,i)=>{
         const score=Math.round((r.asp*r.gv/1000)*(1-(r.conv/8)));
         return`<tr>
           <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
           <td><div class="td-asin">${r.asin}</div></td>
           <td><span class="td-name">${r.name}<span class="flag flag-ad">AD OPP</span></span></td>
-          <td><span class="mp mp-${r.market}">${r.market}</span></td>
+          <td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>
           <td class="td-val" style="color:var(--amber);font-weight:700">${fmtCur(r.asp)}</td>
           <td class="td-val"><span class="${cvrClass(r.conv)}">${r.conv.toFixed(2)}%</span></td>
           <td class="td-val">${r.gv.toLocaleString()}</td>
@@ -1005,9 +1068,17 @@ function renderSupplyAlerts() {
   const seen=new Set(); const alerts=[];
   rows.forEach(r=>{
     const oos=r.oos_pct||0; const uf=r.unfilled_units||0;
-    if((oos>=10||uf>50)&&r.asin){  // updated to >=10 for red threshold
-      const k=r.asin+'_'+r.market;
-      if(!seen.has(k)){seen.add(k);alerts.push({asin:r.asin,name:r.product_title,market:r.market,oos,uf});}
+    if((oos>=10||uf>50)&&r.asin){
+      // In ALL view, de-dupe by ASIN only; in market view, by ASIN+market
+      const k=currentMarket==='ALL'?r.asin:r.asin+'_'+r.market;
+      if(!seen.has(k)){
+        seen.add(k);
+        alerts.push({asin:r.asin,name:r.product_title,market:r.market,oos,uf});
+      } else if(currentMarket==='ALL') {
+        // Accumulate unfilled across markets for same ASIN
+        const existing=alerts.find(a=>a.asin===r.asin);
+        if(existing) existing.uf+=uf;
+      }
     }
   });
   alerts.sort((a,b)=>b.uf-a.uf);
@@ -1015,7 +1086,7 @@ function renderSupplyAlerts() {
   if(!alerts.length){g.innerHTML='<div class="empty">✅ No supply gap alerts this week</div>';return;}
   g.innerHTML=alerts.slice(0,16).map(a=>`
     <div class="supply-item">
-      <div class="si-asin">${a.asin} <span class="mp mp-${a.market}">${a.market}</span></div>
+      <div class="si-asin">${a.asin} ${currentMarket==='ALL'?'<span style="font-size:9px;color:var(--text3)">EU5</span>':`<span class="mp mp-${a.market}">${a.market}</span>`}</div>
       <div class="si-name" title="${a.name}">${a.name}</div>
       <div class="si-stats">
         <div class="si-stat"><b class="${oosClass(a.oos)}">${a.oos.toFixed(1)}%</b> OOS</div>
@@ -1025,18 +1096,42 @@ function renderSupplyAlerts() {
 }
 
 function buildAsinMap(rows, extractor) {
-  const m={};
-  const noSumKeys=['revYoy','gvYoy','oos'];
-  rows.forEach(r=>{
-    const k=r.asin+'_'+r.market;
-    if(!m[k]) m[k]={asin:r.asin,name:r.product_title,market:r.market,...Object.fromEntries(Object.entries(extractor(r)).map(([k,v])=>[k,typeof v==='number'?0:null]))};
-    const vals=extractor(r);
-    Object.entries(vals).forEach(([key,val])=>{
-      if(val!==null&&val!==undefined){
-        if(noSumKeys.includes(key)) m[k][key]=val;
-        else m[k][key]=(m[k][key]||0)+val;
+  const useMarket = currentMarket !== 'ALL';
+  const m = {};
+  const noSumKeys = ['revYoy','gvYoy','oos'];
+
+  rows.forEach(r => {
+    const k = useMarket ? r.asin + '_' + r.market : r.asin;
+    if (!m[k]) {
+      m[k] = {
+        asin: r.asin,
+        name: r.product_title,
+        market: useMarket ? r.market : 'EU5',
+        markets: new Set(),
+        ...Object.fromEntries(Object.entries(extractor(r)).map(([key, v]) => [key, typeof v === 'number' ? 0 : null]))
+      };
+    }
+    m[k].markets.add(r.market);
+    // Prefer longest title
+    if (!useMarket && r.product_title && r.product_title.length > (m[k].name||'').length) {
+      m[k].name = r.product_title;
+    }
+    const vals = extractor(r);
+    Object.entries(vals).forEach(([key, val]) => {
+      if (val !== null && val !== undefined) {
+        if (noSumKeys.includes(key)) {
+          if (m[k][key] === null) m[k][key] = val;
+          else m[k][key] = (m[k][key] + val) / 2;
+        } else {
+          m[k][key] = (m[k][key] || 0) + val;
+        }
       }
     });
+  });
+  // Convert markets Set to sorted string
+  Object.values(m).forEach(row => {
+    row.marketsStr = useMarket ? row.market : [...row.markets].sort().join(' ');
+    delete row.markets;
   });
   return m;
 }
