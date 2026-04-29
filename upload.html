@@ -260,6 +260,37 @@
       <div class="log-area" id="loyalty-log" style="height:90px;"><span class="log-line">Upload the repeat purchase CSV to add loyalty metrics.</span></div>
     </div>
 
+    <!-- QUARTERLY ADS PLAN -->
+    <div class="section-card" style="border-color:var(--ad-color);">
+      <div class="card-title" style="color:var(--ad-color);">📋 Quarterly Ads Plan — ASIN Coverage</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">Upload the EMEA AMZ Ads quarterly Excel file (one sheet per market: UK/DE/FR/IT/ES). Reads "Sponsored Product" ☑ and "Sponsored Brand" ☑ columns to calculate what % of the catalogue is being advertised per brand per market.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:start;margin-bottom:16px;">
+        <div class="input-group">
+          <label class="input-label">Quarter</label>
+          <select class="date-input" id="coverage-quarter-select" style="cursor:pointer;">
+            <option value="Q1-2026">Q1 2026 (Jan-Mar)</option>
+            <option value="Q2-2026" selected>Q2 2026 (Apr-Jun)</option>
+            <option value="Q3-2026">Q3 2026 (Jul-Sep)</option>
+            <option value="Q4-2026">Q4 2026 (Oct-Dec)</option>
+            <option value="Q1-2027">Q1 2027 (Jan-Mar)</option>
+          </select>
+        </div>
+        <div class="upload-card ad-style" id="card-coverage" onclick="document.getElementById('file-coverage').click()"
+          ondragover="dOver(event,'card-coverage')" ondragleave="dLeave('card-coverage')" ondrop="dDrop(event,'coverage')"
+          style="border-color:var(--ad-color);background:var(--ad-bg);">
+          <div class="uc-icon">📋</div>
+          <div class="uc-title">EMEA AMZ Ads Plan</div>
+          <div class="uc-sub" id="lbl-coverage">EMEA_AMZ_ads_Q?.xlsx<br>UK/DE/FR/IT/ES sheets</div>
+          <div class="uc-check">✅</div>
+          <input type="file" id="file-coverage" accept=".xlsx" onchange="onFile(event,'coverage')">
+        </div>
+        <button class="process-btn" id="coverage-btn" onclick="uploadCoverage()" disabled style="padding:12px 20px;font-size:13px;background:var(--ad-color);box-shadow:0 4px 12px rgba(79,70,229,0.3);">
+          Upload Coverage Data
+        </button>
+      </div>
+      <div class="log-area" id="coverage-log" style="height:120px;"><span class="log-line">Upload the EMEA AMZ Ads quarterly Excel file to populate ASIN coverage metrics.</span></div>
+    </div>
+
     <!-- HISTORY -->
     <div class="section-card">
       <div class="card-title">Upload History</div>
@@ -278,7 +309,7 @@ const ADMIN_PASSWORD = 'hasbro2026';
 const EU5 = ['GB','DE','FR','IT','ES'];
 const YOY_CAP = 2.0;
 
-let files = { sales:null, traffic:null, inventory:null, sp:null, sb:null, sd:null, adtraffic:null, loyalty:null };
+let files = { sales:null, traffic:null, inventory:null, sp:null, loyalty:null, coverage:null };
 
 // ─── LOGIN ────────────────────────────────────────────────────
 function checkPassword() {
@@ -321,8 +352,9 @@ function loadFile(f, type) {
 
 function checkReady() {
   document.getElementById('process-btn').disabled = !(files.sales && files.traffic && files.inventory);
-  document.getElementById('ads-btn').disabled = !files.sp; // this week's report is required; prev week optional
+  document.getElementById('ads-btn').disabled = !files.sp;
   if (files.loyalty) document.getElementById('loyalty-btn').disabled = false;
+  if (files.coverage) document.getElementById('coverage-btn').disabled = false;
 }
 
 // ─── BRAND CLASSIFICATION ─────────────────────────────────────
@@ -863,6 +895,105 @@ async function deleteWeek(weekStart){
   log(`Deleted data for week ${weekStart}`,'info');
   loadHistory();
 }
+
+// ─── ADS PLAN COVERAGE ───────────────────────────────────────
+async function uploadCoverage() {
+  const quarter = document.getElementById('coverage-quarter-select').value;
+  if (!files.coverage) { alert('Please select the EMEA AMZ Ads file.'); return; }
+  document.getElementById('coverage-btn').disabled = true;
+  document.getElementById('coverage-log').innerHTML = '';
+  logC('Reading EMEA AMZ Ads file...', 'info');
+
+  try {
+    const XLSX_LIB = window.XLSX;
+    const data = await files.coverage.arrayBuffer();
+    const wb = XLSX_LIB.read(data, { type:'array' });
+
+    const MARKET_SHEET = { UK:'GB', DE:'DE', FR:'FR', IT:'IT', ES:'ES' };
+    const rows = [];
+
+    for (const [sheetName, market] of Object.entries(MARKET_SHEET)) {
+      const ws = wb.Sheets[sheetName];
+      if (!ws) { logC(`⚠️ Sheet "${sheetName}" not found — skipping`, 'err'); continue; }
+
+      const raw = XLSX_LIB.utils.sheet_to_json(ws, { header:1, defval:'' });
+      if (raw.length < 2) continue;
+
+      const headers = raw[0].map(h => String(h).trim());
+      const brandCol    = headers.indexOf('brand');
+      const spCol       = headers.indexOf('Sponsored Product');
+      const sbCol       = headers.indexOf('Sponsored Brand');
+      const asinCol     = headers.indexOf('ASIN');
+
+      if (brandCol === -1 || spCol === -1 || asinCol === -1) {
+        logC(`⚠️ ${sheetName}: missing expected columns. Found: ${headers.filter(h=>h).join(', ')}`, 'err');
+        continue;
+      }
+
+      // Aggregate per brand
+      const brandAgg = {};
+      raw.slice(1).forEach(r => {
+        const asin = String(r[asinCol]||'').trim();
+        if (!asin || asin.length < 5) return;
+        const brand = String(r[brandCol]||'').trim().toUpperCase();
+        if (!brand) return;
+        const sp = String(r[spCol]||'').includes('☑');
+        const sb = sbCol >= 0 ? String(r[sbCol]||'').includes('☑') : false;
+
+        // Map brand column values to brand_classified IDs
+        const bid = mapAdsPlanBrand(brand);
+        if (!bid) return;
+
+        if (!brandAgg[bid]) brandAgg[bid] = { total:0, sp:0, sb:0 };
+        brandAgg[bid].total++;
+        if (sp) brandAgg[bid].sp++;
+        if (sb) brandAgg[bid].sb++;
+      });
+
+      Object.entries(brandAgg).forEach(([brand_classified, counts]) => {
+        rows.push({ quarter, brand_classified, market, ...counts });
+        logC(`  ${market} ${brand_classified}: ${counts.sp}/${counts.total} SP (${Math.round(counts.sp/counts.total*100)}%) ${counts.sb} SB`, 'ok');
+      });
+    }
+
+    if (!rows.length) throw new Error('No data extracted — check brand column values match expected names');
+
+    // Delete existing for this quarter and insert
+    await sbDelete(`/rest/v1/brand_health_ads_coverage?quarter=eq.${quarter}`);
+    await sbPost('/rest/v1/brand_health_ads_coverage', rows);
+    logC(`✅ Done! ${rows.length} brand-market rows uploaded for ${quarter}`, 'ok');
+
+  } catch(err) {
+    logC('❌ Error: ' + err.message, 'err');
+    console.error(err);
+  }
+  document.getElementById('coverage-btn').disabled = false;
+}
+
+function mapAdsPlanBrand(brand) {
+  // brand column values from the EMEA sheet → brand_classified IDs
+  const map = {
+    'MARVEL':'MARVEL', 'AVENGERS':'MARVEL',
+    'STAR WARS':'STAR_WARS', 'STARWARS':'STAR_WARS',
+    'MONOPOLY':'MONOPOLY',
+    'GAMES':'GAMES', 'HASBRO GAMING':'GAMES',
+    'PLAY-DOH':'PLAY_DOH', 'PLAYDOH':'PLAY_DOH', 'PLAY DOH':'PLAY_DOH',
+    'PEPPA PIG':'PEPPA_PIG', 'PEPPA':'PEPPA_PIG',
+    'TRANSFORMERS':'TRANSFORMERS',
+    'BEYBLADE':'BEYBLADE',
+    'NERF':'NERF',
+    'SPIDEY':'DISNEY_KIDS', 'DISNEY KIDS':'DISNEY_KIDS',
+  };
+  // Direct match first
+  if (map[brand]) return map[brand];
+  // Partial match
+  for (const [key, val] of Object.entries(map)) {
+    if (brand.includes(key)) return val;
+  }
+  return null; // skip unknowns
+}
+
+function logC(msg, type='') { log(msg, type, 'coverage-log'); }
 
 // ─── SUPABASE HELPERS ─────────────────────────────────────────
 function sbFetch(path){return fetch(SUPABASE_URL+path,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(r=>r.json());}
