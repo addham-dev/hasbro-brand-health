@@ -641,6 +641,7 @@ function renderBrandCards() {
           ${hasAds?`
           <div class="bm-sub-row"><span class="bm-sub-label"><span class="dot-org"></span>Organic</span><span class="bm-sub-value">${fmtCur(ads.organic_revenue||0)}</span></div>
           <div class="bm-sub-row"><span class="bm-sub-label"><span class="dot-ad"></span>Ad Attributed</span><span class="bm-sub-value">${fmtCur(ads.ad_revenue||0)} <span style="color:var(--ad-color);font-size:9px">${adRevPct}%</span></span></div>
+          <div class="bm-sub-row"><span class="bm-sub-label" style="color:var(--ad-color)">◆ ROAS</span><span class="bm-sub-value" style="color:${ads.ad_spend>0?(ads.ad_revenue/ads.ad_spend)>=4?'var(--green)':(ads.ad_revenue/ads.ad_spend)>=2?'var(--amber)':'var(--red)':'var(--text3)'};font-weight:700">${ads.ad_spend>0?(ads.ad_revenue/ads.ad_spend).toFixed(2)+'x':'—'}</span></div>
           `:'<div class="bm-sub-row"><span class="bm-sub-label" style="color:var(--text3)">No ads data uploaded</span></div>'}
         </div>
         <div class="bm-expand-row" onclick="toggleExpand(event,'gv-${id}')">
@@ -873,7 +874,7 @@ function renderRCA(brandId,tab) {
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
               <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">Ad Revenue</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--ad-color)">${fmtCur(ads.ad_revenue||0)}</div><div style="font-size:10px;color:var(--text2)">${adRevPct2}% of total</div></div>
               <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">Ad Spend</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--ad-color)">${fmtCur(ads.ad_spend||0)}</div><div style="font-size:10px;color:${parseFloat(acos)>30?'var(--red)':parseFloat(acos)>20?'var(--amber)':'var(--green)'}">ACoS: ${acos}%</div></div>
-              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">ROAS</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${parseFloat(roas)>=3?'var(--green)':parseFloat(roas)>=2?'var(--amber)':'var(--red)'}">${roas||'—'}x</div><div style="font-size:10px;color:var(--text2)">CTR: ${ctr||'—'}%</div></div>
+              <div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:3px">ROAS</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${parseFloat(roas)>=4?'var(--green)':parseFloat(roas)>=2?'var(--amber)':'var(--red)'}">${roas||'—'}x</div><div style="font-size:10px;color:var(--text2)">CTR: ${ctr||'—'}%</div></div>
             </div>
           </div>
         </div>
