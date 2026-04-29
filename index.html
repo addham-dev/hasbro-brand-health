@@ -462,6 +462,8 @@ async function loadPeriod(periodVal) {
       adsData[bid][mk].organic_glance_views+=(v.organic_glance_views||0);
       adsData[bid][mk].ad_glance_views+=(v.ad_glance_views||0);
     });
+    console.log('adsData keys:', Object.keys(adsData));
+    console.log('adsDataAllWeeks sample:', Object.entries(adsDataAllWeeks).slice(0,3).map(([k,v])=>({k,brand:v.brand_classified,market:v.market,spend:v.ad_spend})));
   } else {
     // Multi-week (month/quarter/year) — aggregate from allRowsAllWeeks
     allRows=allRowsAllWeeks.filter(r=>weekStarts.includes(r.week_start));
