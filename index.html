@@ -288,6 +288,7 @@
         <button class="rca-tab" onclick="setTab('supply',this)">Supply &amp; OOS</button>
         <button class="rca-tab" onclick="setTab('ads',this)">Ads</button>
         <button class="rca-tab" onclick="setTab('adopp',this)">Ad Opportunities</button>
+        <button class="rca-tab" onclick="setTab('search',this)">🔍 Search Terms</button>
         <button class="rca-tab" onclick="setTab('trends',this)">Trends</button>
       </div>
     </div>
@@ -298,8 +299,11 @@
   </div>
   <div class="supply-panel">
     <div class="supply-header">
-      <div class="supply-title">⚠️ Supply Gap Alerts</div>
-      <span style="font-size:11px;color:var(--text2);font-weight:600;">OOS &gt; 10% or Unfilled &gt; 50</span>
+      <div class="supply-title" id="supply-title">⚠️ Supply Gap Alerts</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button id="supply-reset-btn" onclick="resetSupplyFilter()" style="display:none;padding:4px 10px;border-radius:5px;border:1px solid var(--red);background:var(--red-bg);color:var(--red);font-size:10px;font-weight:700;cursor:pointer;">Show All Brands</button>
+        <span style="font-size:11px;color:var(--text2);font-weight:600;">OOS &gt; 10% or Unfilled &gt; 50</span>
+      </div>
     </div>
     <div class="supply-items" id="supply-items"></div>
   </div>
@@ -372,6 +376,12 @@ async function init() {
       const cr=await sbFetch('/rest/v1/brand_health_ads_coverage?select=*');
       if(Array.isArray(cr)) coverageRes=cr;
     } catch(e){ /* table not created yet */ }
+
+    // Search terms fetch
+    try {
+      const sr=await sbFetch('/rest/v1/brand_health_search_terms?select=*&order=week_start.desc,rank.asc&limit=5000');
+      if(Array.isArray(sr)) searchTermsData=sr;
+    } catch(e){ searchTermsData=[]; }
 
     allWeeks=weeksRes;
 
@@ -760,67 +770,81 @@ function renderRCA(brandId,tab) {
 
   if(tab==='revenue') {
     const m=buildAsinMap(rows,r=>({rev:r.dispatched_revenue||r.ordered_revenue||0,revYoy:r.revenue_yoy,units:r.dispatched_units||r.ordered_units||0}));
-    const top=Object.values(m).sort((a,b)=>b.rev-a.rev).slice(0,15);
-    const maxR=top[0]?.rev||1;
-    wrap.innerHTML=buildTable(['#','ASIN','Product','Markets','Revenue','YoY','Units'],
-      top.map((r,i)=>`<tr>
-        <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
-        <td><div class="td-asin">${r.asin}</div></td>
-        <td><span class="td-name" title="${r.name}">${r.name}</span></td>
-        <td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>
-        <td class="td-val">${fmtCur(r.rev)}<div class="bar-bg"><div class="bar-fg" style="width:${(r.rev/maxR*100).toFixed(1)}%"></div></div></td>
-        <td class="td-yoy">${fmtYoyText(r.revYoy)}</td>
-        <td class="td-val">${Math.round(r.units).toLocaleString()}</td>
-      </tr>`));
+    const allRows2=Object.values(m).sort((a,b)=>b.rev-a.rev).slice(0,30);
+    const maxR=allRows2[0]?.rev||1;
+    wrap.innerHTML=buildSortableTable(
+      [{k:'#',label:'#'},{k:'asin',label:'ASIN'},{k:'name',label:'Product'},{k:'markets',label:'Markets'},{k:'rev',label:'Revenue',r:true,def:true,dir:'desc'},{k:'revYoy',label:'YoY',r:true},{k:'units',label:'Units',r:true}],
+      allRows2,'rev','desc',
+      r=>[
+        `<td style="color:var(--text3);font-size:11px">${allRows2.indexOf(r)<9?'0'+(allRows2.indexOf(r)+1):allRows2.indexOf(r)+1}</td>`,
+        `<td><div class="td-asin">${r.asin}</div></td>`,
+        `<td><span class="td-name" title="${r.name}">${r.name}</span></td>`,
+        `<td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>`,
+        `<td class="td-val">${fmtCur(r.rev)}<div class="bar-bg"><div class="bar-fg" style="width:${(r.rev/maxR*100).toFixed(1)}%"></div></div></td>`,
+        `<td class="td-yoy">${fmtYoyText(r.revYoy)}</td>`,
+        `<td class="td-val">${Math.round(r.units).toLocaleString()}</td>`
+      ].join(''),
+      tab);
 
   } else if(tab==='traffic') {
     const m=buildAsinMap(rows,r=>({gv:r.glance_views||0,gvYoy:r.glance_views_yoy}));
-    const top=Object.values(m).sort((a,b)=>b.gv-a.gv).slice(0,15);
-    const maxG=top[0]?.gv||1;
-    wrap.innerHTML=buildTable(['#','ASIN','Product','Markets','Glance Views','YoY'],
-      top.map((r,i)=>`<tr>
-        <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
-        <td><div class="td-asin">${r.asin}</div></td>
-        <td><span class="td-name" title="${r.name}">${r.name}</span></td>
-        <td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>
-        <td class="td-val">${r.gv.toLocaleString()}<div class="bar-bg"><div class="bar-fg" style="width:${(r.gv/maxG*100).toFixed(1)}%"></div></div></td>
-        <td class="td-yoy">${fmtYoyText(r.gvYoy)}</td>
-      </tr>`));
+    const allRows2=Object.values(m).sort((a,b)=>b.gv-a.gv).slice(0,30);
+    const maxG=allRows2[0]?.gv||1;
+    wrap.innerHTML=buildSortableTable(
+      [{k:'#',label:'#'},{k:'asin',label:'ASIN'},{k:'name',label:'Product'},{k:'markets',label:'Markets'},{k:'gv',label:'Glance Views',r:true,def:true,dir:'desc'},{k:'gvYoy',label:'YoY',r:true}],
+      allRows2,'gv','desc',
+      r=>[
+        `<td style="color:var(--text3);font-size:11px">${allRows2.indexOf(r)<9?'0'+(allRows2.indexOf(r)+1):allRows2.indexOf(r)+1}</td>`,
+        `<td><div class="td-asin">${r.asin}</div></td>`,
+        `<td><span class="td-name" title="${r.name}">${r.name}</span></td>`,
+        `<td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>`,
+        `<td class="td-val">${r.gv.toLocaleString()}<div class="bar-bg"><div class="bar-fg" style="width:${(r.gv/maxG*100).toFixed(1)}%"></div></div></td>`,
+        `<td class="td-yoy">${fmtYoyText(r.gvYoy)}</td>`
+      ].join(''),
+      tab);
 
   } else if(tab==='conversion') {
     const m=buildAsinMap(rows,r=>({gv:r.glance_views||0,units:r.dispatched_units||r.ordered_units||0,rev:r.dispatched_revenue||r.ordered_revenue||0}));
-    const top=Object.values(m).filter(r=>r.gv>50).map(r=>({...r,conv:r.gv>0?(r.units/r.gv)*100:0,asp:r.units>0?r.rev/r.units:0})).sort((a,b)=>a.conv-b.conv).slice(0,15);
+    const allRows2=Object.values(m).filter(r=>r.gv>50).map(r=>({...r,conv:r.gv>0?(r.units/r.gv)*100:0,asp:r.units>0?r.rev/r.units:0})).sort((a,b)=>a.conv-b.conv).slice(0,30);
     wrap.innerHTML=`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
-      <b style="color:var(--amber)">Thresholds:</b> ≥10% green ✅ · 5–9% amber ⚠️ · &lt;5% red 🔴 — sorted lowest first.
+      <b style="color:var(--amber)">Thresholds:</b> ≥10% green ✅ · 5–9% amber ⚠️ · &lt;5% red 🔴 — sorted lowest CVR first.
     </div>`+
-    buildTable(['#','ASIN','Product','Markets','Conversion','ASP','Views','Units'],
-      top.map((r,i)=>`<tr>
-        <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
-        <td><div class="td-asin">${r.asin}</div></td>
-        <td><span class="td-name" title="${r.name}">${r.name}</span></td>
-        <td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>
-        <td class="td-val"><span class="${cvrClass(r.conv)}">${r.conv.toFixed(2)}%</span></td>
-        <td class="td-val">${fmtCur(r.asp)}</td>
-        <td class="td-val">${r.gv.toLocaleString()}</td>
-        <td class="td-val">${Math.round(r.units).toLocaleString()}</td>
-      </tr>`));
+    buildSortableTable(
+      [{k:'#',label:'#'},{k:'asin',label:'ASIN'},{k:'name',label:'Product'},{k:'markets',label:'Markets'},{k:'conv',label:'CVR %',r:true,def:true,dir:'asc'},{k:'asp',label:'ASP',r:true},{k:'gv',label:'Views',r:true},{k:'units',label:'Units',r:true}],
+      allRows2,'conv','asc',
+      r=>[
+        `<td style="color:var(--text3);font-size:11px">${allRows2.indexOf(r)<9?'0'+(allRows2.indexOf(r)+1):allRows2.indexOf(r)+1}</td>`,
+        `<td><div class="td-asin">${r.asin}</div></td>`,
+        `<td><span class="td-name" title="${r.name}">${r.name}</span></td>`,
+        `<td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>`,
+        `<td class="td-val"><span class="${cvrClass(r.conv)}">${r.conv.toFixed(2)}%</span></td>`,
+        `<td class="td-val">${fmtCur(r.asp)}</td>`,
+        `<td class="td-val">${r.gv.toLocaleString()}</td>`,
+        `<td class="td-val">${Math.round(r.units).toLocaleString()}</td>`
+      ].join(''),
+      tab);
 
   } else if(tab==='supply') {
     const m=buildAsinMap(rows,r=>({oos:r.oos_pct||0,unfilled:r.unfilled_units||0,rev:r.dispatched_revenue||r.ordered_revenue||0}));
-    const top=Object.values(m).filter(r=>r.oos>0||r.unfilled>0).sort((a,b)=>b.unfilled-a.unfilled).slice(0,15);
+    const riskCalc=r=>r.oos>=10?r.rev*(r.oos/100):0;
+    const allRows2=Object.values(m).filter(r=>r.oos>0||r.unfilled>0).map(r=>({...r,risk:riskCalc(r)})).sort((a,b)=>b.risk-a.risk||b.unfilled-a.unfilled).slice(0,30);
     wrap.innerHTML=`<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
-      <b style="color:var(--red)">OOS Thresholds:</b> ≤6% green ✅ · 7–9% amber ⚠️ · ≥10% red 🔴
+      <b style="color:var(--red)">OOS Thresholds:</b> ≤6% green ✅ · 7–9% amber ⚠️ · ≥10% red 🔴 — sorted by revenue at risk.
     </div>`+
-    buildTable(['#','ASIN','Product','Markets','OOS %','Unfilled','Revenue at Risk'],
-      top.map((r,i)=>`<tr>
-        <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
-        <td><div class="td-asin">${r.asin}</div></td>
-        <td><span class="td-name" title="${r.name}">${r.name}</span></td>
-        <td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>
-        <td class="td-val"><span class="${oosClass(r.oos)}">${r.oos.toFixed(1)}%</span></td>
-        <td class="td-val" style="color:${r.unfilled>100?'var(--red)':r.unfilled>50?'var(--amber)':'var(--text)'};font-weight:700">${Math.round(r.unfilled).toLocaleString()}</td>
-        <td class="td-val" style="color:var(--red)">${r.oos>=10?fmtCur(r.rev*(r.oos/100)):'—'}</td>
-      </tr>`));
+    buildSortableTable(
+      [{k:'#',label:'#'},{k:'asin',label:'ASIN'},{k:'name',label:'Product'},{k:'markets',label:'Markets'},{k:'oos',label:'OOS %',r:true},{k:'unfilled',label:'Unfilled',r:true},{k:'rev',label:'Revenue',r:true},{k:'risk',label:'Rev at Risk',r:true,def:true,dir:'desc'}],
+      allRows2,'risk','desc',
+      r=>[
+        `<td style="color:var(--text3);font-size:11px">${allRows2.indexOf(r)<9?'0'+(allRows2.indexOf(r)+1):allRows2.indexOf(r)+1}</td>`,
+        `<td><div class="td-asin">${r.asin}</div></td>`,
+        `<td><span class="td-name" title="${r.name}">${r.name}</span></td>`,
+        `<td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>`,
+        `<td class="td-val"><span class="${oosClass(r.oos)}">${r.oos.toFixed(1)}%</span></td>`,
+        `<td class="td-val" style="color:${r.unfilled>100?'var(--red)':r.unfilled>50?'var(--amber)':'var(--text)'};font-weight:700">${Math.round(r.unfilled).toLocaleString()}</td>`,
+        `<td class="td-val">${fmtCur(r.rev)}</td>`,
+        `<td class="td-val" style="color:var(--red);font-weight:700">${r.risk>0?fmtCur(r.risk):'—'}</td>`
+      ].join(''),
+      tab);
 
   } else if(tab==='ads') {
     if(!ads||(!ads.ad_revenue&&!ads.ad_spend)) {
@@ -906,27 +930,30 @@ function renderRCA(brandId,tab) {
 
   } else if(tab==='adopp') {
     const m=buildAsinMap(rows,r=>({rev:r.dispatched_revenue||r.ordered_revenue||0,units:r.dispatched_units||r.ordered_units||0,gv:r.glance_views||0,oos:r.oos_pct||0}));
-    const opps=Object.values(m).filter(r=>r.gv>50).map(r=>({...r,asp:r.units>0?r.rev/r.units:0,conv:r.gv>0?(r.units/r.gv)*100:0}))
-      .filter(r=>r.asp>5&&r.oos<10).sort((a,b)=>(b.asp*b.gv)-(a.asp*a.gv)).slice(0,15);
+    const allRows2=Object.values(m).filter(r=>r.gv>50).map(r=>({...r,asp:r.units>0?r.rev/r.units:0,conv:r.gv>0?(r.units/r.gv)*100:0}))
+      .filter(r=>r.asp>5&&r.oos<10).map(r=>({...r,score:Math.round((r.asp*r.gv/1000)*(1-(r.conv/8)))})).sort((a,b)=>b.score-a.score).slice(0,30);
     wrap.innerHTML=`<div style="background:var(--ad-bg);border:1px solid var(--ad-color);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
       <b style="color:var(--ad-color)">💡 Ad Opportunity Logic:</b> High ASP + low CVR + decent traffic + in stock (OOS &lt;10%). Prime candidates for Sponsored Products.
     </div>`+
-    (opps.length===0?'<div class="empty">No strong ad opportunities identified.</div>':
-    buildTable(['#','ASIN','Product','Markets','ASP','CVR','Views','OOS','Score'],
-      opps.map((r,i)=>{
-        const score=Math.round((r.asp*r.gv/1000)*(1-(r.conv/8)));
-        return`<tr>
-          <td style="color:var(--text3);font-size:11px">${String(i+1).padStart(2,'0')}</td>
-          <td><div class="td-asin">${r.asin}</div></td>
-          <td><span class="td-name">${r.name}<span class="flag flag-ad">AD OPP</span></span></td>
-          <td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>
-          <td class="td-val" style="color:var(--amber);font-weight:700">${fmtCur(r.asp)}</td>
-          <td class="td-val"><span class="${cvrClass(r.conv)}">${r.conv.toFixed(2)}%</span></td>
-          <td class="td-val">${r.gv.toLocaleString()}</td>
-          <td class="td-val"><span class="${oosClass(r.oos)}">${r.oos.toFixed(1)}%</span></td>
-          <td class="td-val" style="color:var(--ad-color);font-weight:700">${score}</td>
-        </tr>`;
-      })));
+    (allRows2.length===0?'<div class="empty">No strong ad opportunities identified.</div>':
+    buildSortableTable(
+      [{k:'#',label:'#'},{k:'asin',label:'ASIN'},{k:'name',label:'Product'},{k:'markets',label:'Markets'},{k:'asp',label:'ASP',r:true},{k:'conv',label:'CVR',r:true},{k:'gv',label:'Views',r:true},{k:'oos',label:'OOS',r:true},{k:'score',label:'Score',r:true,def:true,dir:'desc'}],
+      allRows2,'score','desc',
+      r=>[
+        `<td style="color:var(--text3);font-size:11px">${allRows2.indexOf(r)<9?'0'+(allRows2.indexOf(r)+1):allRows2.indexOf(r)+1}</td>`,
+        `<td><div class="td-asin">${r.asin}</div></td>`,
+        `<td><span class="td-name">${r.name}<span class="flag flag-ad">AD OPP</span></span></td>`,
+        `<td>${r.marketsStr.split(' ').map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>`,
+        `<td class="td-val" style="color:var(--amber);font-weight:700">${fmtCur(r.asp)}</td>`,
+        `<td class="td-val"><span class="${cvrClass(r.conv)}">${r.conv.toFixed(2)}%</span></td>`,
+        `<td class="td-val">${r.gv.toLocaleString()}</td>`,
+        `<td class="td-val"><span class="${oosClass(r.oos)}">${r.oos.toFixed(1)}%</span></td>`,
+        `<td class="td-val" style="color:var(--ad-color);font-weight:700">${r.score}</td>`
+      ].join(''),
+      tab));
+
+  } else if(tab==='search') {
+    renderSearchTab(brandId, wrap);
 
   } else if(tab==='trends') {
     renderTrendsTab(brandId,wrap);
@@ -1084,17 +1111,17 @@ function drawLineChart(canvasId, labels, data, color, fmt, thresholds) {
 function renderSupplyAlerts() {
   let rows=allRows;
   if(currentMarket!=='ALL') rows=rows.filter(r=>r.market===currentMarket);
+  // Filter to selected brand if one is active
+  if(selectedBrand) rows=rows.filter(r=>r.brand_classified===selectedBrand);
   const seen=new Set(); const alerts=[];
   rows.forEach(r=>{
     const oos=r.oos_pct||0; const uf=r.unfilled_units||0;
     if((oos>=10||uf>50)&&r.asin){
-      // In ALL view, de-dupe by ASIN only; in market view, by ASIN+market
       const k=currentMarket==='ALL'?r.asin:r.asin+'_'+r.market;
       if(!seen.has(k)){
         seen.add(k);
         alerts.push({asin:r.asin,name:r.product_title,market:r.market,oos,uf});
       } else if(currentMarket==='ALL') {
-        // Accumulate unfilled across markets for same ASIN
         const existing=alerts.find(a=>a.asin===r.asin);
         if(existing) existing.uf+=uf;
       }
@@ -1102,6 +1129,10 @@ function renderSupplyAlerts() {
   });
   alerts.sort((a,b)=>b.uf-a.uf);
   const g=document.getElementById('supply-items');
+  const header=document.getElementById('supply-title');
+  const resetBtn=document.getElementById('supply-reset-btn');
+  if(header) header.textContent=`⚠️ Supply Gap Alerts${selectedBrand?' — '+BRAND_LABELS[selectedBrand]:''}`;
+  if(resetBtn) resetBtn.style.display=selectedBrand?'block':'none';
   if(!alerts.length){g.innerHTML='<div class="empty">✅ No supply gap alerts this week</div>';return;}
   g.innerHTML=alerts.slice(0,16).map(a=>`
     <div class="supply-item">
@@ -1159,7 +1190,140 @@ function buildTable(headers,rows){
   return`<table class="data-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
 }
 
+// Sort state per tab
+const sortState={};
+
+function buildSortableTable(cols, data, defaultKey, defaultDir, rowRenderer, tabId) {
+  const st = sortState[tabId] || { key: defaultKey, dir: defaultDir };
+  sortState[tabId] = st;
+
+  // Sort data
+  const sorted = [...data].sort((a, b) => {
+    const va = a[st.key] ?? (st.dir==='asc'?Infinity:-Infinity);
+    const vb = b[st.key] ?? (st.dir==='asc'?Infinity:-Infinity);
+    return st.dir === 'asc' ? va - vb : vb - va;
+  });
+
+  const headers = cols.map(c => {
+    if (c.k === '#' || c.k === 'asin' || c.k === 'name' || c.k === 'markets') {
+      return `<th>${c.label}</th>`;
+    }
+    const active = st.key === c.k;
+    const arrow = active ? (st.dir === 'asc' ? ' ↑' : ' ↓') : ' ↕';
+    return `<th class="${c.r?'r':''}" style="cursor:pointer;user-select:none;${active?'color:var(--blue);':''}" onclick="rcaSort('${tabId}','${c.k}','${active?(st.dir==='asc'?'desc':'asc'):c.dir||'desc'}')">${c.label}<span style="font-size:9px;opacity:0.6">${arrow}</span></th>`;
+  }).join('');
+
+  const trs = sorted.map(r => `<tr>${rowRenderer(r)}</tr>`).join('');
+  return `<table class="data-table"><thead><tr>${headers}</tr></thead><tbody>${trs}</tbody></table>`;
+}
+
+function rcaSort(tabId, key, dir) {
+  sortState[tabId] = { key, dir };
+  if (selectedBrand) renderRCA(selectedBrand, tabId);
+}
+
+// ─── SEARCH TERMS TAB ────────────────────────────────────────
+let searchTermsData = []; // loaded from Supabase
+
+function renderSearchTab(brandId, wrap) {
+  if (!searchTermsData.length) {
+    wrap.innerHTML = `<div class="empty">🔍 No search terms data uploaded yet.<br><br>Upload the Amazon Brand Analytics "Top Search Terms" CSV via the Upload page.</div>`;
+    return;
+  }
+
+  // Get ASINs for this brand from current VC data
+  const brandAsins = new Set(allRows.filter(r => r.brand_classified === brandId).map(r => r.asin));
+
+  // Filter terms where any of the top 3 clicked ASINs belongs to this brand
+  const brandTerms = searchTermsData.filter(t =>
+    brandAsins.has(t.asin1) || brandAsins.has(t.asin2) || brandAsins.has(t.asin3)
+  );
+
+  if (!brandTerms.length) {
+    wrap.innerHTML = `<div class="empty">🔍 No search terms found linked to ${BRAND_LABELS[brandId]} ASINs in the uploaded data.</div>`;
+    return;
+  }
+
+  // Cluster terms into categories
+  const clusters = clusterSearchTerms(brandTerms);
+  const clusterKeys = ['all', ...Object.keys(clusters).filter(k => k !== 'other'), 'other'];
+  const activeCluster = window._searchCluster || 'all';
+  window._searchCluster = activeCluster;
+
+  const filteredTerms = activeCluster === 'all' ? brandTerms :
+    (clusters[activeCluster] || []);
+
+  const clusterBtns = clusterKeys.map(k => {
+    const count = k === 'all' ? brandTerms.length : (clusters[k]||[]).length;
+    if (!count) return '';
+    const active = k === activeCluster;
+    return `<button onclick="setSearchCluster('${brandId}','${k}')" style="padding:5px 12px;border-radius:6px;border:2px solid ${active?'var(--blue)':'var(--border)'};background:${active?'var(--blue)':'var(--blue-light)'};color:${active?'white':'var(--blue-dark)'};font-size:11px;font-weight:700;cursor:pointer;margin-right:6px;margin-bottom:6px;">${k.charAt(0).toUpperCase()+k.slice(1)} (${count})</button>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Filter by cluster</div>
+      ${clusterBtns}
+    </div>` +
+    buildSortableTable(
+      [{k:'rank',label:'Rank',r:true,def:true,dir:'asc'},{k:'term',label:'Search Term'},{k:'cluster',label:'Cluster'},{k:'cvr1',label:'CVR #1',r:true},{k:'cs1',label:'Click Share #1',r:true}],
+      filteredTerms,'rank','asc',
+      r=>[
+        `<td class="td-val" style="font-weight:700;color:var(--blue)">${r.rank}</td>`,
+        `<td style="font-weight:600;color:var(--text)">${r.term}</td>`,
+        `<td><span style="background:var(--blue-light);color:var(--blue-dark);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px">${r.cluster}</span></td>`,
+        `<td class="td-val">${r.cvr1!=null?r.cvr1.toFixed(1)+'%':'—'}</td>`,
+        `<td class="td-val">${r.cs1!=null?r.cs1.toFixed(1)+'%':'—'}</td>`
+      ].join(''),
+      'search');
+}
+
+function setSearchCluster(brandId, cluster) {
+  window._searchCluster = cluster;
+  renderRCA(brandId, 'search');
+}
+
+// Auto-cluster search terms by keyword matching
+const SEARCH_CLUSTERS = {
+  'board games':   ['monopoly','cluedo','clue','scrabble','battleship','connect','trivial','jenga','operation','guess who','mousetrap','buckaroo'],
+  'outdoor & action': ['nerf','blaster','super soaker','water','outdoor','gun','dart'],
+  'collectibles':  ['marvel','avengers','spider','iron man','thor','hulk','star wars','lightsaber','mandalorian','transformer','beyblade','figurine','figure','action figure','collector'],
+  'preschool':     ['peppa','play-doh','playdoh','baby','toddler','preschool','kids','children'],
+  'creative play': ['play-doh','playdoh','dough','clay','craft','art','paint','creative','make'],
+  'toys':          ['toy','toys','game','games','play','gift'],
+};
+
+function clusterSearchTerms(terms) {
+  const result = {};
+  terms.forEach(t => {
+    const term = (t.term || '').toLowerCase();
+    let matched = false;
+    for (const [cluster, keywords] of Object.entries(SEARCH_CLUSTERS)) {
+      if (keywords.some(k => term.includes(k))) {
+        if (!result[cluster]) result[cluster] = [];
+        result[cluster].push({...t, cluster});
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      if (!result['other']) result['other'] = [];
+      result['other'].push({...t, cluster:'other'});
+    }
+  });
+  // Tag each term with its cluster
+  terms.forEach(t => {
+    const term = (t.term || '').toLowerCase();
+    for (const [cluster, keywords] of Object.entries(SEARCH_CLUSTERS)) {
+      if (keywords.some(k => term.includes(k))) { t.cluster = cluster; return; }
+    }
+    t.cluster = 'other';
+  });
+  return result;
+}
+
 // ─── CONTROLS ────────────────────────────────────────────────
+function resetSupplyFilter(){selectedBrand=null;document.querySelectorAll('.brand-card').forEach(c=>c.classList.remove('selected'));document.getElementById('rca-panel').style.display='none';renderSupplyAlerts();}
 function setMarket(m,btn){currentMarket=m;document.querySelectorAll('.market-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');buildDashboard();}
 function setSort(s,btn){currentSort=s;document.querySelectorAll('.sort-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderBrandCards();}
 function setCurrency(c){currency=c;['eur','gbp','usd'].forEach(x=>document.getElementById('btn-'+x).classList.remove('active'));document.getElementById('btn-'+c).classList.add('active');renderBrandCards();if(selectedBrand)renderRCA(selectedBrand,currentTab);}
