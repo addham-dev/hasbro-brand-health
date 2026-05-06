@@ -1248,7 +1248,7 @@ function renderSearchTab(brandId, wrap) {
   // Filter terms where any of the top 3 clicked ASINs belongs to this brand
   const brandTerms = searchTermsData.filter(t =>
     brandAsins.has(t.asin1) || brandAsins.has(t.asin2) || brandAsins.has(t.asin3)
-  );
+  ).map(t => ({...t, cs1: t.click_share_1, cvr1: t.cvr_1}));
 
   if (!brandTerms.length) {
     wrap.innerHTML = `<div class="empty">🔍 No search terms found linked to ${BRAND_LABELS[brandId]} ASINs in the uploaded data.</div>`;
