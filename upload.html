@@ -385,15 +385,34 @@ function getAmazonWeeks(n) {
 }
 
 function buildWeekToggles() {
-  const weeks = getAmazonWeeks(6);
+  const weeks = getAmazonWeeks(52);
   const container = document.getElementById('week-toggle-btns');
-  container.innerHTML = weeks.map((w, i) => `
-    <button onclick="selectWeek('${w.start}','${w.end}','${w.label}',this)"
-      style="padding:8px 18px;border-radius:8px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;${i===0?'background:var(--blue);color:white;border-color:var(--blue);':''}"
-    >${w.label}</button>
+
+  // Group by month
+  const byMonth = {};
+  weeks.forEach(w => {
+    const d = new Date(w.start);
+    const mk = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const ml = d.toLocaleDateString('en-GB', {month:'long', year:'numeric'});
+    if (!byMonth[mk]) byMonth[mk] = {label: ml, weeks: []};
+    byMonth[mk].weeks.push(w);
+  });
+
+  container.innerHTML = Object.entries(byMonth).map(([mk, grp]) => `
+    <div style="margin-bottom:10px;">
+      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">${grp.label}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${grp.weeks.map((w, i) => `
+          <button onclick="selectWeek('${w.start}','${w.end}','${w.label}',this)"
+            style="padding:6px 12px;border-radius:6px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;"
+          >${w.label}</button>
+        `).join('')}
+      </div>
+    </div>
   `).join('');
+
   // Auto-select most recent
-  selectWeek(weeks[0].start, weeks[0].end, weeks[0].label, container.firstElementChild);
+  selectWeek(weeks[0].start, weeks[0].end, weeks[0].label, container.querySelector('button'));
 }
 
 function selectWeek(start, end, label, btn) {
