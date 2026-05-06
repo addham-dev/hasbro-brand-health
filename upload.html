@@ -385,34 +385,14 @@ function getAmazonWeeks(n) {
 }
 
 function buildWeekToggles() {
-  const weeks = getAmazonWeeks(52);
+  const weeks = getAmazonWeeks(6);
   const container = document.getElementById('week-toggle-btns');
-
-  // Group by month
-  const byMonth = {};
-  weeks.forEach(w => {
-    const d = new Date(w.start);
-    const mk = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    const ml = d.toLocaleDateString('en-GB', {month:'long', year:'numeric'});
-    if (!byMonth[mk]) byMonth[mk] = {label: ml, weeks: []};
-    byMonth[mk].weeks.push(w);
-  });
-
-  container.innerHTML = Object.entries(byMonth).map(([mk, grp]) => `
-    <div style="margin-bottom:10px;">
-      <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">${grp.label}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        ${grp.weeks.map((w, i) => `
-          <button onclick="selectWeek('${w.start}','${w.end}','${w.label}',this)"
-            style="padding:6px 12px;border-radius:6px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;"
-          >${w.label}</button>
-        `).join('')}
-      </div>
-    </div>
+  container.innerHTML = weeks.map((w, i) => `
+    <button onclick="selectWeek('${w.start}','${w.end}','${w.label}',this)"
+      style="padding:8px 18px;border-radius:8px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;${i===0?'background:var(--blue);color:white;border-color:var(--blue);':''}"
+    >${w.label}</button>
   `).join('');
-
-  // Auto-select most recent
-  selectWeek(weeks[0].start, weeks[0].end, weeks[0].label, container.querySelector('button'));
+  selectWeek(weeks[0].start, weeks[0].end, weeks[0].label, container.firstElementChild);
 }
 
 function selectWeek(start, end, label, btn) {
@@ -445,7 +425,51 @@ function loadFile(f, type) {
   if (card) { card.classList.add('loaded'); }
   const lbl = document.getElementById('lbl-'+type);
   if (lbl) lbl.textContent = '✓ '+f.name;
+
+  // Auto-detect week from filename for VC reports
+  if (['sales','traffic','inventory'].includes(type)) {
+    autoDetectWeek(f.name);
+  }
+
   checkReady();
+}
+
+function autoDetectWeek(filename) {
+  // Match patterns like 26-04-2026_02-05-2026 or 2026-04-26_2026-05-02
+  const m1 = filename.match(/(\d{2}-\d{2}-\d{4})_(\d{2}-\d{2}-\d{4})/);
+  const m2 = filename.match(/(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})/);
+
+  let startISO = null, endISO = null;
+
+  if (m1) {
+    // DD-MM-YYYY format
+    const [d1,m1_,y1] = m1[1].split('-');
+    const [d2,m2_,y2] = m2 ? m2[1].split('-') : m1[2].split('-');
+    startISO = `${y1}-${m1_}-${d1}`;
+    const [d2b,m2b,y2b] = m1[2].split('-');
+    endISO = `${y2b}-${m2b}-${d2b}`;
+  } else if (m2) {
+    startISO = m2[1];
+    endISO = m2[2];
+  }
+
+  if (startISO && endISO) {
+    document.getElementById('week-start').value = startISO;
+    document.getElementById('week-end').value = endISO;
+    const label = formatDate(startISO) + ' – ' + formatDate(endISO);
+    document.getElementById('week-selected-label').textContent = label + ' (auto-detected from filename)';
+    // Highlight the matching week button if visible
+    document.querySelectorAll('#week-toggle-btns button').forEach(btn => {
+      btn.style.background = 'var(--blue-light)';
+      btn.style.color = 'var(--blue-dark)';
+      btn.style.borderColor = 'var(--border)';
+      if (btn.textContent.includes(formatDate(startISO))) {
+        btn.style.background = 'var(--blue)';
+        btn.style.color = 'white';
+        btn.style.borderColor = 'var(--blue)';
+      }
+    });
+  }
 }
 
 function checkReady() {
