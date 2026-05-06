@@ -723,6 +723,7 @@ function selectBrand(brandId,cardEl) {
   document.getElementById('rca-name').textContent=BRAND_LABELS[brandId];
   document.getElementById('rca-panel').style.display='block';
   renderRCA(brandId,currentTab);
+  renderSupplyAlerts(); // filter supply panel to this brand
   setTimeout(()=>document.getElementById('rca-panel').scrollIntoView({behavior:'smooth',block:'start'}),100);
 }
 
