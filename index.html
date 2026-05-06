@@ -522,10 +522,11 @@ async function loadPeriod(periodVal) {
       });
     }
   } else {
-    // Multi-week (month/quarter/year) — fetch full data for all matching weeks
-    const weekFilter=weekStarts.map(w=>`week_start=eq.${w}`).join(',');
-    const res=await sbFetch(`/rest/v1/brand_health_snapshots?or=(${weekFilter})&select=*&limit=100000&order=week_start.desc`);
-    allRows=res.length>0?res:allRowsAllWeeks.filter(r=>weekStarts.includes(r.week_start));
+    // Multi-week — fetch each week and combine
+    const weekArrays = await Promise.all(
+      weekStarts.map(ws => sbFetch(`/rest/v1/brand_health_snapshots?week_start=eq.${ws}&select=*&limit=50000`))
+    );
+    allRows = weekArrays.flat();
     // Aggregate ads for selected period — sum across all markets, then filter by currentMarket when rendering
     adsData={};
     Object.entries(adsDataAllWeeks).forEach(([k,v])=>{
