@@ -92,7 +92,10 @@
     .history-table tr:last-child td{border-bottom:none;}
     .del-btn{background:var(--red-bg);color:var(--red);border:1px solid var(--red);border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:700;}
 
-    .overlay{display:none;position:fixed;inset:0;background:rgba(0,58,84,0.88);z-index:1000;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+    .nav-links{display:flex;gap:4px;}
+    .nav-link{padding:6px 16px;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);text-decoration:none;transition:all 0.2s;}
+    .nav-link:hover{background:rgba(255,255,255,0.15);color:white;}
+    .nav-link.active{background:white;color:var(--blue-dark);}inset:0;background:rgba(0,58,84,0.88);z-index:1000;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
     .overlay.on{display:flex;}
     .overlay-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:white;}
     .overlay-sub{font-size:12px;color:rgba(255,255,255,0.6);font-family:'DM Mono',monospace;}
@@ -122,7 +125,14 @@
       <div class="logo-sub">Admin Only</div>
     </div>
   </div>
-  <div class="admin-badge">🔒 ADMIN</div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="nav-links">
+      <a class="nav-link" href="index.html">Dashboard</a>
+      <a class="nav-link" href="insights.html">Insights</a>
+      <a class="nav-link active" href="upload.html">Upload</a>
+    </div>
+    <div class="admin-badge">🔒 ADMIN</div>
+  </div>
 </header>
 
 <!-- LOGIN -->
