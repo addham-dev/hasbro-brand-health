@@ -147,18 +147,11 @@
 
     <!-- WEEK -->
     <div class="section-card">
-      <div class="card-title">Reporting Week</div>
-      <div class="week-inputs">
-        <div class="input-group">
-          <label class="input-label">Week Start (Monday)</label>
-          <input type="date" class="date-input" id="week-start">
-        </div>
-        <div class="input-group">
-          <label class="input-label">Week End (Sunday)</label>
-          <input type="date" class="date-input" id="week-end">
-        </div>
-        <button style="padding:10px 20px;background:var(--blue-light);border:2px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;color:var(--blue-dark);cursor:pointer;" onclick="setCurrentWeek()">This Week</button>
-      </div>
+      <div class="card-title">Reporting Week — Select the week you are uploading</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="week-toggle-btns"></div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text2)">Selected: <b id="week-selected-label" style="color:var(--blue)">—</b></div>
+      <input type="hidden" id="week-start">
+      <input type="hidden" id="week-end">
     </div>
 
     <!-- WEEKLY REPORTS -->
@@ -317,7 +310,7 @@ function checkPassword() {
   if (pw === ADMIN_PASSWORD) {
     document.getElementById('login-section').style.display = 'none';
     document.getElementById('main-section').style.display = 'block';
-    setCurrentWeek();
+    buildWeekToggles();
     loadHistory();
   } else {
     document.getElementById('login-error').style.display = 'block';
@@ -325,15 +318,56 @@ function checkPassword() {
   }
 }
 
-function setCurrentWeek() {
+function getAmazonWeeks(n) {
+  // Amazon VC week: Sunday to Saturday
+  // Returns last n completed weeks as [{start, end, label}]
   const now = new Date();
   const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(new Date().setDate(diff));
-  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
-  document.getElementById('week-start').value = monday.toISOString().split('T')[0];
-  document.getElementById('week-end').value = sunday.toISOString().split('T')[0];
+  const daysSinceSun = day;
+  const weeks = [];
+  for (let i = 1; i <= n; i++) {
+    const sat = new Date(now);
+    sat.setDate(now.getDate() - daysSinceSun - 1 - (i - 1) * 7);
+    const sun = new Date(sat);
+    sun.setDate(sat.getDate() - 6);
+    weeks.push({
+      start: sun.toISOString().split('T')[0],
+      end: sat.toISOString().split('T')[0],
+      label: formatDate(sun.toISOString().split('T')[0]) + ' – ' + formatDate(sat.toISOString().split('T')[0])
+    });
+  }
+  return weeks;
 }
+
+function buildWeekToggles() {
+  const weeks = getAmazonWeeks(6);
+  const container = document.getElementById('week-toggle-btns');
+  container.innerHTML = weeks.map((w, i) => `
+    <button onclick="selectWeek('${w.start}','${w.end}','${w.label}',this)"
+      style="padding:8px 18px;border-radius:8px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;${i===0?'background:var(--blue);color:white;border-color:var(--blue);':''}"
+    >${w.label}</button>
+  `).join('');
+  // Auto-select most recent
+  selectWeek(weeks[0].start, weeks[0].end, weeks[0].label, container.firstElementChild);
+}
+
+function selectWeek(start, end, label, btn) {
+  document.getElementById('week-start').value = start;
+  document.getElementById('week-end').value = end;
+  document.getElementById('week-selected-label').textContent = label;
+  document.querySelectorAll('#week-toggle-btns button').forEach(b => {
+    b.style.background = 'var(--blue-light)';
+    b.style.color = 'var(--blue-dark)';
+    b.style.borderColor = 'var(--border)';
+  });
+  if (btn) {
+    btn.style.background = 'var(--blue)';
+    btn.style.color = 'white';
+    btn.style.borderColor = 'var(--blue)';
+  }
+}
+
+function setCurrentWeek() { buildWeekToggles(); }
 
 // ─── FILE HANDLING ────────────────────────────────────────────
 function dOver(e,id){e.preventDefault();document.getElementById(id).style.borderColor='var(--blue)';}
