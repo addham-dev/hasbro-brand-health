@@ -329,7 +329,6 @@ function checkPassword() {
     document.getElementById('login-section').style.display = 'none';
     document.getElementById('main-section').style.display = 'block';
     document.getElementById('overlay').classList.remove('on');
-    buildWeekToggles();
     loadHistory();
   } else {
     document.getElementById('login-error').style.display = 'block';
@@ -363,8 +362,9 @@ function getAmazonWeeks(n) {
 }
 
 function buildWeekToggles() {
-  const weeks = getAmazonWeeks(6);
   const container = document.getElementById('week-toggle-btns');
+  if (!container) return;
+  const weeks = getAmazonWeeks(6);
   container.innerHTML = weeks.map((w, i) => `
     <button onclick="selectWeek('${w.start}','${w.end}','${w.label}',this)"
       style="padding:8px 18px;border-radius:8px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;${i===0?'background:var(--blue);color:white;border-color:var(--blue);':''}"
