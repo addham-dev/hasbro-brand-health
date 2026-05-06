@@ -475,7 +475,6 @@ async function loadPeriod(periodVal) {
   if(periodMode==='week'&&weekStarts.length===1){
     // Single week — fetch full detail
     const res=await sbFetch(`/rest/v1/brand_health_snapshots?week_start=eq.${weekStarts[0]}&select=*&limit=20000`);
-    console.log('Single week fetch returned:', res.length, 'rows for week', weekStarts[0]);
     allRows=res;
 
     // Option 4: use PRIOR week's ads attributed revenue for organic split
@@ -486,7 +485,6 @@ async function loadPeriod(periodVal) {
     const priorAdsWeek=adsWeeks.filter(w=>w<vcWeek).pop();
     // Fall back to closest available (same week or nearest)
     const adsWeekToUse=priorAdsWeek||adsWeeks.find(w=>w>=vcWeek)||vcWeek;
-    console.log('VC week:', vcWeek, '| Ads weeks:', adsWeeks, '| Using:', adsWeekToUse);
 
     adsData={};
     Object.entries(adsDataAllWeeks).forEach(([k,v])=>{
