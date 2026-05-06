@@ -1,5 +1,5 @@
-<!DOCTYPE html> 
-<html lang="en"> 
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -446,11 +446,22 @@ async function loadPeriod(periodVal) {
     // Single week — fetch full detail
     const res=await sbFetch(`/rest/v1/brand_health_snapshots?week_start=eq.${weekStarts[0]}&select=*&limit=20000`);
     allRows=res;
-    // Build ads lookup for this week using || key format
+
+    // Option 4: use FOLLOWING week's ads attributed revenue for organic split
+    // (14-day attribution means clicks from week N convert in week N+1)
+    // Find all unique week_starts in ads data, sorted ascending
+    const adsWeeks=[...new Set(Object.keys(adsDataAllWeeks).map(k=>k.split('||')[0]))].sort();
+    const vcWeek=weekStarts[0];
+    // Find the next ads week after the VC week
+    const nextAdsWeek=adsWeeks.find(w=>w>vcWeek);
+    // Fall back to same week or closest available
+    const adsWeekToUse=nextAdsWeek||adsWeeks.filter(w=>w<=vcWeek).pop()||vcWeek;
+    console.log('VC week:', vcWeek, '| Ads weeks:', adsWeeks, '| Using:', adsWeekToUse);
+
     adsData={};
     Object.entries(adsDataAllWeeks).forEach(([k,v])=>{
       const [ws,bid,mkt]=k.split('||');
-      if(ws!==weekStarts[0]) return;
+      if(ws!==adsWeekToUse) return;
       if(!adsData[bid]) adsData[bid]={};
       const mk=mkt||'ALL';
       if(!adsData[bid][mk]) adsData[bid][mk]={ad_revenue:0,ad_spend:0,ad_impressions:0,ad_clicks:0,organic_revenue:0,organic_glance_views:0,ad_glance_views:0};
@@ -458,10 +469,29 @@ async function loadPeriod(periodVal) {
       adsData[bid][mk].ad_spend+=(v.ad_spend||0);
       adsData[bid][mk].ad_impressions+=(v.ad_impressions||0);
       adsData[bid][mk].ad_clicks+=(v.ad_clicks||0);
-      adsData[bid][mk].organic_revenue+=(v.organic_revenue||0);
-      adsData[bid][mk].organic_glance_views+=(v.organic_glance_views||0);
+      // Recompute organic split using this week's VC totals
+      // (organic_revenue/glance_views stored in ads table reflect old week — recalc below)
       adsData[bid][mk].ad_glance_views+=(v.ad_glance_views||0);
     });
+
+    // Recompute organic = VC total - following week's ad attributed
+    // so the split reflects true ad contribution to THIS week's VC revenue
+    if(Object.keys(adsData).length>0){
+      const vcTotals={};
+      allRows.forEach(r=>{
+        const k=r.brand_classified+'||'+(r.market||'ALL');
+        if(!vcTotals[k]) vcTotals[k]={revenue:0,gviews:0};
+        vcTotals[k].revenue+=(r.dispatched_revenue||r.ordered_revenue||0);
+        vcTotals[k].gviews+=(r.glance_views||0);
+      });
+      Object.entries(adsData).forEach(([bid,markets])=>{
+        Object.entries(markets).forEach(([mk,ad])=>{
+          const vc=vcTotals[bid+'||'+mk]||{revenue:0,gviews:0};
+          ad.organic_revenue=Math.max(0,vc.revenue-ad.ad_revenue);
+          ad.organic_glance_views=Math.max(0,vc.gviews-ad.ad_clicks);
+        });
+      });
+    }
   } else {
     // Multi-week (month/quarter/year) — aggregate from allRowsAllWeeks
     allRows=allRowsAllWeeks.filter(r=>weekStarts.includes(r.week_start));
