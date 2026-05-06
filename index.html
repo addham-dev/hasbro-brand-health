@@ -447,15 +447,14 @@ async function loadPeriod(periodVal) {
     const res=await sbFetch(`/rest/v1/brand_health_snapshots?week_start=eq.${weekStarts[0]}&select=*&limit=20000`);
     allRows=res;
 
-    // Option 4: use FOLLOWING week's ads attributed revenue for organic split
-    // (14-day attribution means clicks from week N convert in week N+1)
-    // Find all unique week_starts in ads data, sorted ascending
+    // Option 4: use PRIOR week's ads attributed revenue for organic split
+    // 14-day attribution: ads from week N-1 drive conversions captured in week N's VC data
     const adsWeeks=[...new Set(Object.keys(adsDataAllWeeks).map(k=>k.split('||')[0]))].sort();
     const vcWeek=weekStarts[0];
-    // Find the next ads week after the VC week
-    const nextAdsWeek=adsWeeks.find(w=>w>vcWeek);
-    // Fall back to same week or closest available
-    const adsWeekToUse=nextAdsWeek||adsWeeks.filter(w=>w<=vcWeek).pop()||vcWeek;
+    // Find the most recent ads week that is BEFORE the VC week
+    const priorAdsWeek=adsWeeks.filter(w=>w<vcWeek).pop();
+    // Fall back to closest available (same week or nearest)
+    const adsWeekToUse=priorAdsWeek||adsWeeks.find(w=>w>=vcWeek)||vcWeek;
     console.log('VC week:', vcWeek, '| Ads weeks:', adsWeeks, '| Using:', adsWeekToUse);
 
     adsData={};
