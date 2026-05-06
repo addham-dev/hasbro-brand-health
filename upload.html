@@ -284,6 +284,27 @@
       <div class="log-area" id="coverage-log" style="height:120px;"><span class="log-line">Upload the EMEA AMZ Ads quarterly Excel file to populate ASIN coverage metrics.</span></div>
     </div>
 
+    <!-- SEARCH TERMS -->
+    <div class="section-card" style="border-color:var(--purple);">
+      <div class="card-title" style="color:var(--purple);">🔍 Weekly Search Terms — Amazon Brand Analytics</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">Upload the <b>Top Search Terms</b> report from Amazon Brand Analytics (weekly, GB market). The parser reads Search Term, Search Frequency Rank, and the top 3 clicked ASINs with their Click Share and CVR.</div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;margin-bottom:16px;">
+        <div class="upload-card" id="card-search" onclick="document.getElementById('file-search').click()"
+          ondragover="dOver(event,'card-search')" ondragleave="dLeave('card-search')" ondrop="dDrop(event,'search')"
+          style="border-color:var(--purple);background:var(--purple-bg);">
+          <div class="uc-icon">🔍</div>
+          <div class="uc-title">Top Search Terms CSV</div>
+          <div class="uc-sub" id="lbl-search">Weekly Brand Analytics export<br>GB market, weekly view</div>
+          <div class="uc-check">✅</div>
+          <input type="file" id="file-search" accept=".csv,.xlsx" onchange="onFile(event,'search')">
+        </div>
+        <button class="process-btn" id="search-btn" onclick="uploadSearchTerms()" disabled style="padding:12px 20px;font-size:13px;background:var(--purple);box-shadow:0 4px 12px rgba(155,89,182,0.3);">
+          Upload Search Terms
+        </button>
+      </div>
+      <div class="log-area" id="search-log" style="height:100px;"><span class="log-line">Upload the Top Search Terms CSV to populate the Search Terms tab in the dashboard.</span></div>
+    </div>
+
     <!-- HISTORY -->
     <div class="section-card">
       <div class="card-title">Upload History</div>
@@ -302,7 +323,7 @@ const ADMIN_PASSWORD = 'hasbro2026';
 const EU5 = ['GB','DE','FR','IT','ES'];
 const YOY_CAP = 2.0;
 
-let files = { sales:null, traffic:null, inventory:null, sp:null, loyalty:null, coverage:null };
+let files = { sales:null, traffic:null, inventory:null, sp:null, loyalty:null, coverage:null, search:null };
 
 // ─── LOGIN ────────────────────────────────────────────────────
 function checkPassword() {
@@ -393,6 +414,7 @@ function checkReady() {
   document.getElementById('ads-btn').disabled = !files.sp;
   if (files.loyalty) document.getElementById('loyalty-btn').disabled = false;
   if (files.coverage) document.getElementById('coverage-btn').disabled = false;
+  if (files.search) document.getElementById('search-btn').disabled = false;
 }
 
 // ─── BRAND CLASSIFICATION ─────────────────────────────────────
@@ -1042,6 +1064,70 @@ function mapAdsPlanBrand(brand) {
 }
 
 function logC(msg, type='') { log(msg, type, 'coverage-log'); }
+
+// ─── SEARCH TERMS UPLOAD ─────────────────────────────────────
+async function uploadSearchTerms() {
+  const weekStart = document.getElementById('week-start').value;
+  if (!weekStart) { alert('Please select a week first.'); return; }
+  document.getElementById('search-log').innerHTML = '';
+  logS('Reading Search Terms report...', 'info');
+
+  try {
+    const data = await files.search.arrayBuffer();
+    const wb = XLSX.read(data, { type:'array', cellText:true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+
+    // Find header row — look for "Search Term" or "Search Frequency Rank"
+    let hi = raw.findIndex(r => r.some(c => String(c).includes('Search Term') || String(c).includes('Search Frequency')));
+    if (hi === -1) hi = 0;
+    const headers = raw[hi].map(h => String(h).trim());
+    logS(`Headers: ${headers.filter(h=>h).slice(0,8).join(', ')}`, 'info');
+
+    // Find key column indices
+    const termCol    = headers.findIndex(h => h.includes('Search Term') && !h.includes('Rank'));
+    const rankCol    = headers.findIndex(h => h.includes('Search Frequency Rank') || h === 'Rank');
+    const asin1Col   = headers.findIndex(h => h.includes('Top Clicked ASIN') || (h.includes('ASIN') && h.includes('1')));
+    const cs1Col     = headers.findIndex(h => h.includes('Click Share') && (h.includes('1') || h.includes('Product no. 1')));
+    const cvr1Col    = headers.findIndex(h => h.includes('Conversion Share') && (h.includes('1') || h.includes('Product no. 1')));
+    const asin2Col   = headers.findIndex(h => h.includes('ASIN') && h.includes('2'));
+    const asin3Col   = headers.findIndex(h => h.includes('ASIN') && h.includes('3'));
+
+    logS(`Col indices — term:${termCol} rank:${rankCol} asin1:${asin1Col} cs1:${cs1Col} cvr1:${cvr1Col}`, 'info');
+
+    const rows = [];
+    raw.slice(hi + 1).forEach(r => {
+      const term = String(r[termCol]||'').trim();
+      const rank = parseInt(r[rankCol]) || null;
+      if (!term || !rank) return;
+      rows.push({
+        week_start: weekStart,
+        term,
+        rank,
+        asin1: String(r[asin1Col]||'').trim()||null,
+        click_share_1: parseFloat(String(r[cs1Col]||'').replace('%',''))||null,
+        cvr_1: parseFloat(String(r[cvr1Col]||'').replace('%',''))||null,
+        asin2: String(r[asin2Col]||'').trim()||null,
+        asin3: String(r[asin3Col]||'').trim()||null,
+      });
+    });
+
+    logS(`✓ Parsed ${rows.length} search terms`, 'ok');
+    if (!rows.length) throw new Error('No rows parsed — check column headers match expected format');
+
+    await sbDelete(`/rest/v1/brand_health_search_terms?week_start=eq.${weekStart}`);
+    // Upload in batches
+    const BATCH = 500;
+    for (let i = 0; i < rows.length; i += BATCH) {
+      await sbPost('/rest/v1/brand_health_search_terms', rows.slice(i, i + BATCH));
+    }
+    logS(`✅ Done! ${rows.length} search terms uploaded for week ${weekStart}`, 'ok');
+  } catch(err) {
+    logS('❌ Error: ' + err.message, 'err');
+    console.error(err);
+  }
+}
+function logS(msg, type='') { log(msg, type, 'search-log'); }
 
 // ─── SUPABASE HELPERS ─────────────────────────────────────────
 function sbFetch(path){return fetch(SUPABASE_URL+path,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(r=>r.json());}
