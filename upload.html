@@ -166,68 +166,40 @@
       <div class="page-sub">Upload Vendor Central reports to update the Brand Health Dashboard. Weekly snapshots are cumulative — all historical weeks are preserved for trend analysis.</div>
     </div>
 
-    <!-- WEEK -->
+    <!-- SMART UPLOAD -->
     <div class="section-card">
-      <div class="card-title">Reporting Week — Select the week you are uploading</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="week-toggle-btns"></div>
-      <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <div style="font-size:11px;color:var(--text2)">Selected: <b id="week-selected-label" style="color:var(--blue)">—</b></div>
-        <button onclick="showManualDate()" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-size:11px;font-weight:600;cursor:pointer;">Older week ↓</button>
-      </div>
-      <div id="manual-date-row" style="display:none;margin-top:10px;display:none;gap:10px;align-items:center;flex-wrap:wrap;">
-        <div class="input-group">
-          <label class="input-label">Week Start (Sunday)</label>
-          <input type="date" class="date-input" id="manual-start" onchange="manualDateChanged()">
-        </div>
-        <div class="input-group">
-          <label class="input-label">Week End (Saturday)</label>
-          <input type="date" class="date-input" id="manual-end" onchange="manualDateChanged()">
-        </div>
-      </div>
       <input type="hidden" id="week-start">
       <input type="hidden" id="week-end">
-    </div>
+      <div class="card-title">Weekly Reports — Drop Files Here</div>
+      <div class="note-box">Drop any Vendor Central or Advertising Console files — Sales, Traffic, Inventory and Executive Summary are all auto-detected from the filename. Multiple files can be dropped at once.</div>
 
-    <!-- WEEKLY REPORTS -->
-    <div class="section-card">
-      <div class="card-title">Weekly Vendor Central Reports</div>
-      <div class="note-box">Upload all three reports for the same week. Each upload replaces any existing data for that week — re-uploading is safe.</div>
-      <div class="upload-card-grid">
-        <div class="upload-card" id="card-sales" onclick="document.getElementById('file-sales').click()"
-          ondragover="dOver(event,'card-sales')" ondragleave="dLeave('card-sales')" ondrop="dDrop(event,'sales')">
-          <div class="uc-icon">📊</div>
-          <div class="uc-title">Sales Report</div>
-          <div class="uc-sub" id="lbl-sales">CSV or Excel<br>EU5 markets, YoY ticked</div>
-          <div class="uc-check">✅</div>
-          <input type="file" id="file-sales" accept=".csv,.xlsx" onchange="onFile(event,'sales')">
-        </div>
-        <div class="upload-card" id="card-traffic" onclick="document.getElementById('file-traffic').click()"
-          ondragover="dOver(event,'card-traffic')" ondragleave="dLeave('card-traffic')" ondrop="dDrop(event,'traffic')">
-          <div class="uc-icon">👁️</div>
-          <div class="uc-title">Traffic Report</div>
-          <div class="uc-sub" id="lbl-traffic">CSV or Excel<br>Glance Views, YoY ticked</div>
-          <div class="uc-check">✅</div>
-          <input type="file" id="file-traffic" accept=".csv,.xlsx" onchange="onFile(event,'traffic')">
-        </div>
-        <div class="upload-card" id="card-inventory" onclick="document.getElementById('file-inventory').click()"
-          ondragover="dOver(event,'card-inventory')" ondragleave="dLeave('card-inventory')" ondrop="dDrop(event,'inventory')">
-          <div class="uc-icon">📦</div>
-          <div class="uc-title">Inventory Report</div>
-          <div class="uc-sub" id="lbl-inventory">CSV or Excel<br>OOS % &amp; Unfilled Orders</div>
-          <div class="uc-check">✅</div>
-          <input type="file" id="file-inventory" accept=".csv,.xlsx" onchange="onFile(event,'inventory')">
-        </div>
+      <!-- Drop zone -->
+      <div id="smart-dropzone"
+        ondragover="smartDOver(event)" ondragleave="smartDLeave()" ondrop="smartDrop(event)"
+        onclick="document.getElementById('smart-file-input').click()"
+        style="border:2px dashed var(--border);border-radius:14px;padding:40px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--blue-light);margin-bottom:16px;">
+        <div style="font-size:36px;margin-bottom:10px;">📂</div>
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--blue-dark);margin-bottom:4px;">Drop files or click to browse</div>
+        <div style="font-size:12px;color:var(--text2)">Sales · Traffic · Inventory · Executive Summary — auto-detected</div>
+        <input type="file" id="smart-file-input" accept=".csv,.xlsx" multiple style="display:none" onchange="smartFileSelect(event)">
       </div>
+
+      <!-- Detected files list -->
+      <div id="detected-files" style="display:none;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Detected files</div>
+        <div id="detected-list" style="display:grid;gap:8px;"></div>
+      </div>
+
+      <button class="process-btn" id="process-btn" onclick="processAndUpload()" disabled>
+        🚀 Process &amp; Push to Dashboard
+      </button>
+      <div class="log-area" id="log-area"><span class="log-line">Drop your weekly VC reports above to get started.</span></div>
     </div>
 
     <!-- ADS REPORTS -->
     <div class="section-card ad-border">
       <div class="card-title ad">🎯 Weekly Ads Report — Executive Summary</div>
-      <div class="note-box ad-note">
-        Upload the <b>Executive Summary (Toys and Games)</b> Excel report from the Advertising Console.<br><br>
-        Reads the <b>"Performance Detail by Platform &amp; Brand"</b> sheet. Combines AMS + DSP revenue (Nominal POS) and clicks per brand per market. <b>Clicks = Ad Glance Views.</b><br><br>
-        Ad attributed revenue is shown separately alongside the VC total — it may exceed dispatched revenue due to the 14-day attribution window, which is expected.
-      </div>
+      <div class="note-box ad-note">If not auto-detected above, manually upload the Executive Summary .xlsx from the Advertising Console.</div>
       <div style="margin-bottom:16px;">
         <div class="upload-card ad-style" id="card-sp" onclick="document.getElementById('file-sp').click()"
           ondragover="dOver(event,'card-sp')" ondragleave="dLeave('card-sp')" ondrop="dDrop(event,'sp')"
@@ -245,15 +217,6 @@
         </button>
         <div class="log-area" id="ads-log"><span class="log-line">Upload the Executive Summary then click Process.</span></div>
       </div>
-    </div>
-
-    <!-- PROCESS WEEKLY -->
-    <div class="section-card">
-      <div class="card-title">Process &amp; Upload Weekly Reports</div>
-      <button class="process-btn" id="process-btn" onclick="processAndUpload()" disabled>
-        🚀 Process &amp; Push to Dashboard
-      </button>
-      <div class="log-area" id="log-area"><span class="log-line">Ready. Upload all three report files then click Process.</span></div>
     </div>
 
     <!-- QUARTERLY LOYALTY -->
@@ -434,19 +397,117 @@ function dLeave(id){document.getElementById(id).style.borderColor='';}
 function dDrop(e,type){e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f,type);}
 function onFile(e,type){if(e.target.files[0])loadFile(e.target.files[0],type);}
 
-function loadFile(f, type) {
-  files[type] = f;
-  const card = document.getElementById('card-'+type);
-  if (card) { card.classList.add('loaded'); }
-  const lbl = document.getElementById('lbl-'+type);
-  if (lbl) lbl.textContent = '✓ '+f.name;
+// ─── SMART DROP ZONE ─────────────────────────────────────────
+const smartFiles = {}; // { sales: {file, week}, traffic: {file, week}, inventory: {file, week}, sp: {file, week} }
 
-  // Auto-detect week from filename for VC reports
-  if (['sales','traffic','inventory'].includes(type)) {
-    autoDetectWeek(f.name);
+function detectFileType(filename) {
+  const f = filename.toLowerCase();
+  if (f.includes('sales_asin') || f.includes('sales_manufacturing')) return 'sales';
+  if (f.includes('traffic_asin') || f.includes('traffic_')) return 'traffic';
+  if (f.includes('inventory_health') || f.includes('inventory_')) return 'inventory';
+  if (f.includes('executive_summary') || f.includes('executive summary')) return 'sp';
+  return null;
+}
+
+function detectWeekFromFilename(filename) {
+  // Match DD-MM-YYYY_DD-MM-YYYY
+  const m = filename.match(/(\d{2}-\d{2}-\d{4})_(\d{2}-\d{2}-\d{4})/);
+  if (m) {
+    const [d1,mo1,y1] = m[1].split('-');
+    const [d2,mo2,y2] = m[2].split('-');
+    return {
+      start: `${y1}-${mo1}-${d1}`,
+      end:   `${y2}-${mo2}-${d2}`,
+      label: `${d1}/${mo1}/${y1} – ${d2}/${mo2}/${y2}`
+    };
   }
+  // Match YYYY-MM-DD_YYYY-MM-DD
+  const m2 = filename.match(/(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})/);
+  if (m2) {
+    const [y1,mo1,d1] = m2[1].split('-');
+    const [y2,mo2,d2] = m2[2].split('-');
+    return {
+      start: m2[1], end: m2[2],
+      label: `${d1}/${mo1}/${y1} – ${d2}/${mo2}/${y2}`
+    };
+  }
+  return null;
+}
 
-  checkReady();
+function smartDOver(e) {
+  e.preventDefault();
+  document.getElementById('smart-dropzone').style.borderColor = 'var(--blue)';
+  document.getElementById('smart-dropzone').style.background = '#D0EEFF';
+}
+function smartDLeave() {
+  document.getElementById('smart-dropzone').style.borderColor = 'var(--border)';
+  document.getElementById('smart-dropzone').style.background = 'var(--blue-light)';
+}
+function smartDrop(e) {
+  e.preventDefault();
+  smartDLeave();
+  handleSmartFiles([...e.dataTransfer.files]);
+}
+function smartFileSelect(e) {
+  handleSmartFiles([...e.target.files]);
+}
+
+function handleSmartFiles(fileList) {
+  fileList.forEach(f => {
+    const type = detectFileType(f.name);
+    const week = detectWeekFromFilename(f.name);
+    if (type) {
+      smartFiles[type] = { file: f, week };
+      // Also set in legacy files object for processAndUpload/processAndUploadAds
+      files[type === 'sp' ? 'sp' : type] = f;
+      if (type === 'sp') {
+        document.getElementById('ads-btn').disabled = false;
+        document.getElementById('lbl-sp').textContent = '✓ ' + f.name;
+      }
+    }
+  });
+  renderDetectedFiles();
+  checkSmartReady();
+}
+
+function renderDetectedFiles() {
+  const types = { sales:'📊 Sales', traffic:'👁 Traffic', inventory:'📦 Inventory', sp:'🎯 Exec Summary' };
+  const entries = Object.entries(smartFiles);
+  if (!entries.length) return;
+  document.getElementById('detected-files').style.display = 'block';
+  document.getElementById('detected-list').innerHTML = entries.map(([type, {file, week}]) => `
+    <div style="display:flex;align-items:center;gap:12px;background:var(--green-bg);border:1px solid var(--green);border-radius:8px;padding:10px 14px;">
+      <span style="font-size:16px">${types[type]?.split(' ')[0]||'📄'}</span>
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:700;color:var(--text)">${types[type]||type}</div>
+        <div style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${file.name}</div>
+      </div>
+      <div style="text-align:right;">
+        ${week ? `<div style="font-size:11px;font-weight:700;color:var(--blue)">${week.label}</div><div style="font-size:10px;color:var(--green)">✓ Week auto-detected</div>` 
+                : `<div style="font-size:10px;color:var(--amber)">⚠️ No date in filename</div>`}
+      </div>
+      <button onclick="removeSmartFile('${type}')" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeSmartFile(type) {
+  delete smartFiles[type];
+  files[type] = null;
+  renderDetectedFiles();
+  checkSmartReady();
+  if (!Object.keys(smartFiles).length) {
+    document.getElementById('detected-files').style.display = 'none';
+  }
+}
+
+function checkSmartReady() {
+  const hasVC = smartFiles.sales && smartFiles.traffic && smartFiles.inventory;
+  const allHaveWeek = hasVC && smartFiles.sales.week && smartFiles.traffic.week && smartFiles.inventory.week;
+  document.getElementById('process-btn').disabled = !(hasVC && allHaveWeek);
+  if (hasVC && !allHaveWeek) {
+    log('⚠️ Could not detect week from filename — rename files to include date range (e.g. Sales_ASIN_..._26-04-2026_02-05-2026.csv)', 'err');
+  }
 }
 
 function showManualDate() {
@@ -668,9 +729,20 @@ function log(msg,type='',areaId='log-area'){
 
 // ─── MAIN PROCESS ────────────────────────────────────────────
 async function processAndUpload() {
-  const weekStart=document.getElementById('week-start').value;
-  const weekEnd=document.getElementById('week-end').value;
-  if(!weekStart||!weekEnd){alert('Please set the reporting week dates first.');return;}
+  // Get week from detected files
+  const weekData = smartFiles.sales?.week || smartFiles.traffic?.week || smartFiles.inventory?.week;
+  if (!weekData) { alert('Could not detect week from filenames. Please rename files to include the date range.'); return; }
+  const weekStart = weekData.start;
+  const weekEnd = weekData.end;
+
+  // Set hidden inputs for compatibility
+  document.getElementById('week-start').value = weekStart;
+  document.getElementById('week-end').value = weekEnd;
+
+  // Use detected files
+  files.sales = smartFiles.sales?.file || files.sales;
+  files.traffic = smartFiles.traffic?.file || files.traffic;
+  files.inventory = smartFiles.inventory?.file || files.inventory;
 
   document.getElementById('overlay').classList.add('on');
   document.getElementById('log-area').innerHTML='';
@@ -914,8 +986,11 @@ function aggregateAdsRows(rows) {
 
 // ─── ADS UPLOAD ──────────────────────────────────────────────
 async function processAndUploadAds() {
-  const weekStart = document.getElementById('week-start').value;
-  if (!weekStart) { alert('Please set the week start date first.'); return; }
+  // Try to detect week from filename, fall back to hidden input
+  const spFile = smartFiles.sp?.file || files.sp;
+  const weekData = smartFiles.sp?.week || detectWeekFromFilename(spFile?.name || '');
+  const weekStart = weekData?.start || document.getElementById('week-start').value;
+  if (!weekStart) { alert('Could not detect week from Executive Summary filename. Please ensure the filename contains the date range.'); return; }
 
   document.getElementById('ads-log').innerHTML = '';
   logA('Starting ads processing...', 'info');
