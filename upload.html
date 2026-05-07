@@ -199,8 +199,18 @@
     <!-- ADS REPORTS -->
     <div class="section-card ad-border">
       <div class="card-title ad">🎯 Weekly Ads Report — Executive Summary</div>
-      <div class="note-box ad-note">If not auto-detected above, manually upload the Executive Summary .xlsx from the Advertising Console.</div>
+      <div class="note-box ad-note">Upload the Executive Summary .xlsx from the Advertising Console. Select the week manually — the filename doesn't contain the date range.</div>
       <div style="margin-bottom:16px;">
+        <div class="week-inputs" style="margin-bottom:14px;">
+          <div class="input-group">
+            <label class="input-label">Week Start (Sunday)</label>
+            <input type="date" class="date-input" id="ads-week-start">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Week End (Saturday)</label>
+            <input type="date" class="date-input" id="ads-week-end">
+          </div>
+        </div>
         <div class="upload-card ad-style" id="card-sp" onclick="document.getElementById('file-sp').click()"
           ondragover="dOver(event,'card-sp')" ondragleave="dLeave('card-sp')" ondrop="dDrop(event,'sp')"
           style="max-width:320px;">
@@ -215,7 +225,7 @@
         <button class="process-btn ad-btn" id="ads-btn" onclick="processAndUploadAds()" disabled>
           🎯 Process &amp; Upload Ads Data
         </button>
-        <div class="log-area" id="ads-log"><span class="log-line">Upload the Executive Summary then click Process.</span></div>
+        <div class="log-area" id="ads-log"><span class="log-line">Select the week, upload the Executive Summary then click Process.</span></div>
       </div>
     </div>
 
@@ -986,11 +996,9 @@ function aggregateAdsRows(rows) {
 
 // ─── ADS UPLOAD ──────────────────────────────────────────────
 async function processAndUploadAds() {
-  // Try to detect week from filename, fall back to hidden input
-  const spFile = smartFiles.sp?.file || files.sp;
-  const weekData = smartFiles.sp?.week || detectWeekFromFilename(spFile?.name || '');
-  const weekStart = weekData?.start || document.getElementById('week-start').value;
-  if (!weekStart) { alert('Could not detect week from Executive Summary filename. Please ensure the filename contains the date range.'); return; }
+  // Use dedicated ads week date inputs
+  const weekStart = document.getElementById('ads-week-start').value;
+  if (!weekStart) { alert('Please select the ads reporting week dates first.'); return; }
 
   document.getElementById('ads-log').innerHTML = '';
   logA('Starting ads processing...', 'info');
