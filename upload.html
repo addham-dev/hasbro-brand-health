@@ -1285,14 +1285,16 @@ async function loadHistory(){
     sbFetch('/rest/v1/brand_health_weeks?select=*&order=week_start.desc&limit=52'),
     sbFetch('/rest/v1/brand_health_ads?select=week_start&order=week_start.desc&limit=200')
   ]);
-  const adsSet=new Set(adsWeeks.map(r=>r.week_start));
+  const adsSet=new Set(adsWeeks.map(r=>r.week_start?.trim?.()?.slice(0,10)||r.week_start));
+  console.log('Weeks in brand_health_weeks:', weeks.map(w=>w.week_start));
+  console.log('Weeks in brand_health_ads:', [...adsSet]);
   const tbody=document.getElementById('history-tbody');
   if(!weeks.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">No uploads yet</td></tr>';return;}
   tbody.innerHTML=weeks.map(w=>`<tr>
     <td>${w.week_label||w.week_start}</td>
     <td>${new Date(w.uploaded_at||w.created_at).toLocaleString('en-GB')}</td>
     <td>—</td>
-    <td>${adsSet.has(w.week_start)?'<span style="color:var(--ad-color);font-weight:700">✅ Ads</span>':'<span style="color:var(--text3);font-size:11px">No ads</span>'}</td>
+    <td>${adsSet.has(w.week_start?.slice(0,10))?'<span style="color:var(--ad-color);font-weight:700">✅ Ads</span>':'<span style="color:var(--text3);font-size:11px">No ads</span>'}</td>
     <td><button class="del-btn" onclick="deleteWeek('${w.week_start}')">Delete</button></td>
   </tr>`).join('');
 }
