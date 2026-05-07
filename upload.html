@@ -1114,7 +1114,7 @@ async function uploadLoyalty(){
 // ─── HISTORY ─────────────────────────────────────────────────
 async function loadHistory(){
   const [weeks,adsWeeks]=await Promise.all([
-    sbFetch('/rest/v1/brand_health_weeks?select=*&order=week_start.desc&limit=10'),
+    sbFetch('/rest/v1/brand_health_weeks?select=*&order=week_start.desc&limit=52'),
     sbFetch('/rest/v1/brand_health_ads?select=week_start&order=week_start.desc&limit=200')
   ]);
   const adsSet=new Set(adsWeeks.map(r=>r.week_start));
