@@ -782,9 +782,10 @@ Be concise, analytical, and direct. Use % changes. Sign off each reply confident
     const typingEl=adamAddMsg('assistant','',true);
     adamLoading=true;document.getElementById('adam-send').disabled=true;
     try{
-      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:ADAM_SYSTEM,messages:adamHistory})});
+      const messages=[{role:'system',content:ADAM_SYSTEM},...adamHistory];
+      const res=await fetch('https://adam-proxy.addham.workers.dev/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});
       const data=await res.json();
-      const reply=data.content?.map(b=>b.text||'').join('')||'Sorry, something went wrong.';
+      const reply=data.reply||'Sorry, something went wrong.';
       adamHistory.push({role:'assistant',content:reply});
       typingEl.querySelector('.adam-bubble').textContent=reply;
     }catch(e){typingEl.querySelector('.adam-bubble').textContent='Something went wrong — please try again.';}
