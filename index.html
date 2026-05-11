@@ -917,16 +917,17 @@ function fmtYoyText(val){if(val==null||isNaN(val))return'<span style="color:var(
     loading=true;
     document.getElementById('adam-send').disabled=true;
     try{
-      // Inject live data into system prompt so Adam reasons from real numbers
       var systemWithData=SYSTEM+(liveDataContext?'\n\n'+liveDataContext:'');
       var messages=[{role:'system',content:systemWithData}].concat(history);
       var res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:messages})});
       var data=await res.json();
-      var reply=data.reply||'Sorry, no response received.';
+      console.log('Adam API response:',JSON.stringify(data).substring(0,500));
+      var reply=data.reply||data.error||'No response received.';
       history.push({role:'assistant',content:reply});
       typingEl.querySelector('.adam-bubble').innerHTML=adamFormat(reply);
     }catch(e){
-      typingEl.querySelector('.adam-bubble').textContent='Something went wrong — please try again.';
+      console.error('Adam error:',e);
+      typingEl.querySelector('.adam-bubble').textContent='Error: '+e.message;
     }
     loading=false;
     document.getElementById('adam-send').disabled=false;
