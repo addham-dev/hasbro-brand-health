@@ -484,11 +484,16 @@ function aggregateBrand(brandId){
 }
 
 function getSentiment(d){
-  var revDown=d.revenueYoy!==null&&d.revenueYoy<-0.02,revUp=d.revenueYoy!==null&&d.revenueYoy>0.02;
-  var gvDown=d.gviewsYoy!==null&&d.gviewsYoy<-0.02,gvUp=d.gviewsYoy!==null&&d.gviewsYoy>0.02;
-  var cvrBad=cvrLevel(d.conv)==='bad',oosBad=oosLabel(d.avgOos)==='red';
-  if(d.avgOos>20)return'cry';if(oosBad&&cvrBad)return'cry';if(revDown&&gvDown)return'cry';
-  if(revUp&&gvUp&&!cvrBad&&!oosBad)return'happy';return'sad';
+  var revDown=d.revenueYoy!==null&&d.revenueYoy<-0.02;
+  var revUp=d.revenueYoy!==null&&d.revenueYoy>0.02;
+  var gvDown=d.gviewsYoy!==null&&d.gviewsYoy<-0.05;
+  var cvrBad=cvrLevel(d.conv)==='bad';
+  var oosRed=oosLabel(d.avgOos)==='red';
+  if(d.avgOos>20)return'cry';
+  if(oosRed&&cvrBad)return'cry';
+  if(revDown&&gvDown)return'cry';
+  if(revUp&&!cvrBad&&!oosRed)return'happy';
+  return'sad';
 }
 var SC={happy:{emoji:'🤑',label:'Happy',cls:'happy'},sad:{emoji:'🧐',label:'Mixed',cls:'sad'},cry:{emoji:'😭',label:'Needs Attention',cls:'cry'}};
 
@@ -813,7 +818,7 @@ function fmtYoyText(val){if(val==null||isNaN(val))return'<span style="color:var(
         var d=bAgg[bid];if(!d||d.rev===0)return;
         var conv=d.gv>0?(d.units/d.gv*100).toFixed(2)+'%':'n/a';
         var ad=adAgg[bid];
-        var line='\n['+( BL[bid]||bid)+'] revenue='+fM(d.rev)+' yoy='+fY(d.revYoyN,d.revYoyD)+' glance_views='+fN(d.gv)+' gv_yoy='+fY(d.gvYoyN,d.gvYoyD)+' cvr='+conv+' avg_oos='+fO(d.oos);
+        var line='\n['+(BL[bid]||bid)+'] revenue='+fM(d.rev)+' yoy='+fY(d.revYoyN,d.revYoyD)+' glance_views='+fN(d.gv)+' gv_yoy='+fY(d.gvYoyN,d.gvYoyD)+' cvr='+conv+' avg_oos='+fO(d.oos);
         if(ad&&ad.adSpend>0)line+=' | ad_spend='+fM(ad.adSpend)+' ad_rev='+fM(ad.adRev)+' roas='+(ad.adRev/ad.adSpend).toFixed(2)+'x';
         lines.push(line);
         d.asins.slice().sort(function(a,b){return b.rev-a.rev;}).slice(0,5).forEach(function(a){
