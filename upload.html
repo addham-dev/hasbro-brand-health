@@ -1096,8 +1096,23 @@ async function parseExecSummary(file) {
             return o;
           });
 
-        const results = [];
+        // Deduplicate by Media Buy Name to prevent AMS+DSP double-counting.
+        // Each campaign line appears once per platform row in the detail sheet —
+        // we want the row where Spend > 0 (the actual spend row), or the first occurrence.
+        const seenCampaigns = new Set();
+        const deduped = [];
+        // First pass: prefer rows where Spend > 0
         rows.forEach(r => {
+          const campaignKey = String(r['Media Buy Name']||'').trim();
+          if (!campaignKey) { deduped.push(r); return; } // no campaign name — include as-is
+          if (!seenCampaigns.has(campaignKey)) {
+            seenCampaigns.add(campaignKey);
+            deduped.push(r);
+          }
+        });
+
+        const results = [];
+        deduped.forEach(r => {
           const country = String(r['Marketing Geography']||r['Country']||'').trim();
           const market = countryToMarket(country);
           if (!market) return; // skip non-EU5
