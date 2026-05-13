@@ -445,13 +445,29 @@ async function extractWeekFromAdsFile(file) {
     const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
     for (const row of raw.slice(0, 20)) {
       for (let i = 0; i < row.length; i++) {
-        if (String(row[i]).includes('Widget Date Range') || String(row[i]).includes('Date Range')) {
+        const cell = String(row[i]).trim();
+        // Datorama: "Widget Date Range" | "30-03-2026 05-04-2026"
+        if (cell.includes('Widget Date Range') || cell.includes('Date Range')) {
           const dateStr = String(row[i+1] || '').trim();
           const m = dateStr.match(/(\d{2}-\d{2}-\d{4})\s+(\d{2}-\d{2}-\d{4})/);
           if (m) {
             const [d1,mo1,y1] = m[1].split('-');
             const [d2,mo2,y2] = m[2].split('-');
-            return { start: `${y1}-${mo1}-${d1}`, label: `${d1}/${mo1}/${y1} - ${d2}/${mo2}/${y2}` };
+            return { start: `${y1}-${mo1}-${d1}`, label: `${d1}/${mo1}/${y1} – ${d2}/${mo2}/${y2}` };
+          }
+        }
+        // Pacvue: "Time Range" | "Mar-30-2026 - Apr-05-2026"
+        if (cell === 'Time Range') {
+          const dateStr = String(row[i+1] || '').trim();
+          const m = dateStr.match(/([A-Za-z]+-\d{2}-\d{4})\s*-\s*([A-Za-z]+-\d{2}-\d{4})/);
+          if (m) {
+            const months = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+            const parseDate = s => {
+              const [mon,dd,yyyy] = s.split('-');
+              return { y:yyyy, m:months[mon.toLowerCase()]||'01', d:dd.padStart(2,'0') };
+            };
+            const d1 = parseDate(m[1]); const d2 = parseDate(m[2]);
+            return { start:`${d1.y}-${d1.m}-${d1.d}`, label:`${d1.d}/${d1.m}/${d1.y} – ${d2.d}/${d2.m}/${d2.y}` };
           }
         }
       }
@@ -523,14 +539,27 @@ async function extractAdsWeekFromFile(file) {
     const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
     for (const row of raw.slice(0, 20)) {
       for (let i = 0; i < row.length; i++) {
-        if (String(row[i]).includes('Widget Date Range') || String(row[i]).includes('Date Range')) {
+        const cell = String(row[i]).trim();
+        // Datorama: "Widget Date Range" | "30-03-2026 05-04-2026"
+        if (cell.includes('Widget Date Range') || cell.includes('Date Range')) {
           const dateStr = String(row[i+1] || '').trim();
           const m = dateStr.match(/(\d{2}-\d{2}-\d{4})\s+(\d{2}-\d{2}-\d{4})/);
           if (m) {
             const [d1,mo1,y1] = m[1].split('-');
-            const [d2,mo2,y2] = m[2].split('-');
             adsDetectedWeekStart = `${y1}-${mo1}-${d1}`;
-            console.log('Ads week detected:', adsDetectedWeekStart);
+            console.log('Ads week detected (Datorama):', adsDetectedWeekStart);
+            return;
+          }
+        }
+        // Pacvue: "Time Range" | "Mar-30-2026 - Apr-05-2026"
+        if (cell === 'Time Range') {
+          const dateStr = String(row[i+1] || '').trim();
+          const m = dateStr.match(/([A-Za-z]+-\d{2}-\d{4})\s*-\s*([A-Za-z]+-\d{2}-\d{4})/);
+          if (m) {
+            const months = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+            const [mon,dd,yyyy] = m[1].split('-');
+            adsDetectedWeekStart = `${yyyy}-${months[mon.toLowerCase()]||'01'}-${dd.padStart(2,'0')}`;
+            console.log('Ads week detected (Pacvue):', adsDetectedWeekStart);
             return;
           }
         }
@@ -1056,8 +1085,51 @@ function countryToMarket(country) {
   return COUNTRY_MAP[(country||'').toLowerCase().trim()] || null;
 }
 
-// ─── PARSE EXECUTIVE SUMMARY XLSX ────────────────────────────
-// Reads the "Performance Detail by Platform & Brand" sheet.
+// ─── DETECT FILE FORMAT ──────────────────────────────────────
+// Returns 'pacvue' or 'datorama' based on sheet/header structure
+function detectAdsFileFormat(wb) {
+  // Pacvue: first sheet has 'Time Range' metadata and Campaign Name / Portfolio Name columns
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+  for (const row of raw.slice(0, 12)) {
+    const strs = row.map(c => String(c).trim().toLowerCase());
+    if (strs.some(s => s === 'campaign name') && strs.some(s => s === 'portfolio name')) return 'pacvue';
+  }
+  // Datorama: has a 'Performance Detail by Platform' sheet
+  if (wb.SheetNames.some(n => /performance detail/i.test(n))) return 'datorama';
+  return 'unknown';
+}
+
+// ─── PACVUE BRAND FROM PORTFOLIO ─────────────────────────────
+function classifyPacvueBrand(portfolioName) {
+  const p = (portfolioName||'').toUpperCase();
+  if (p.includes('GAME')) return 'GAMES';
+  if (p.includes('PLAY')) return 'PLAY_DOH';
+  if (p.includes('MONO')) return 'MONOPOLY';
+  if (p.includes('BEYB')) return 'BEYBLADE';
+  if (p.includes('TRNF')) return 'TRANSFORMERS';
+  if (p.includes('NERF')) return 'NERF';
+  if (p.includes('PEPP')) return 'PEPPA_PIG';
+  if (p.includes('DISK')) return 'DISNEY_KIDS';
+  if (p.includes('MARV')) return 'MARVEL';
+  if (p.includes('COLL')) return 'MARVEL'; // Collector's Corner → MARVEL
+  if (p.includes('MLPY')) return 'MY_LITTLE_PONY';
+  if (p.includes('PWRR')) return 'POWER_RANGERS';
+  return null;
+}
+
+// ─── PACVUE MARKET FROM PROFILE ──────────────────────────────
+function marketFromProfile(profileName) {
+  const p = (profileName||'').toUpperCase();
+  if (p.includes('UK')) return 'GB';
+  if (p.includes('DE')) return 'DE';
+  if (p.includes('FR')) return 'FR';
+  if (p.includes('ES')) return 'ES';
+  if (p.includes('IT')) return 'IT';
+  return null;
+}
+
+// ─── PARSE ADS FILE (PACVUE OR DATORAMA) ─────────────────────
 // Returns array of { brand_classified, market, ad_revenue, ad_spend, ad_impressions, ad_clicks }
 async function parseExecSummary(file) {
   return new Promise((resolve, reject) => {
@@ -1065,29 +1137,74 @@ async function parseExecSummary(file) {
     reader.onload = e => {
       try {
         const wb = XLSX.read(e.target.result, { type:'array', cellText:true, cellDates:true });
+        const format = detectAdsFileFormat(wb);
+        console.log('Detected file format:', format);
 
-        // Find the Performance Detail sheet (partial name match)
+        // ── PACVUE FORMAT ──────────────────────────────────────
+        if (format === 'pacvue') {
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+
+          // Find header row (contains 'Campaign Name' and 'Portfolio Name')
+          const hi = raw.findIndex(r => {
+            const strs = r.map(c => String(c).trim().toLowerCase());
+            return strs.includes('campaign name') && strs.includes('portfolio name');
+          });
+          if (hi === -1) throw new Error('Pacvue: Could not find header row');
+
+          const headers = raw[hi].map(h => String(h).trim());
+          console.log('Pacvue headers:', JSON.stringify(headers));
+
+          const rows = raw.slice(hi + 1)
+            .filter(r => r.some(c => c !== '' && c !== null && c !== undefined))
+            .map(r => {
+              const o = {};
+              headers.forEach((h, i) => { o[h] = (r[i] !== undefined && r[i] !== null) ? r[i] : ''; });
+              return o;
+            })
+            .filter(r => {
+              // Skip total/summary rows — they have no campaign name or have 'total' in it
+              const cn = String(r['Campaign Name']||'').trim().toLowerCase();
+              return cn && cn !== 'total' && cn !== 'totals';
+            });
+
+          const results = [];
+          rows.forEach(r => {
+            const market = marketFromProfile(r['Profile Name']);
+            if (!market) return;
+            const brandId = classifyPacvueBrand(r['Portfolio Name']);
+            if (!brandId) return;
+            const spend   = parseFloat(String(r['Spend']||0).replace(/[^0-9.\-]/g,'')) || 0;
+            const revenue = parseFloat(String(r['Sales 14d']||r['Sales 7d']||r['Sales 30d']||0).replace(/[^0-9.\-]/g,'')) || 0;
+            const impr    = parseFloat(String(r['Impression']||r['Impressions']||0).replace(/[^0-9.\-]/g,'')) || 0;
+            const clicks  = parseFloat(String(r['Click']||r['Clicks']||0).replace(/[^0-9.\-]/g,'')) || 0;
+            if (spend === 0 && revenue === 0) return; // skip zero rows
+            results.push({ brand_classified:brandId, market, ad_revenue:revenue, ad_spend:spend, ad_impressions:impr, ad_clicks:clicks });
+          });
+
+          console.log('Pacvue parsed rows:', results.length);
+          resolve(results);
+          return;
+        }
+
+        // ── DATORAMA FORMAT ───────────────────────────────────
         const sheetName = wb.SheetNames.find(n => /performance detail/i.test(n));
         console.log('Sheets found:', wb.SheetNames, '| Matched:', sheetName);
-        if (!sheetName) throw new Error('Could not find "Performance Detail by Platform & Brand" sheet. Sheets found: '+wb.SheetNames.join(', '));
+        if (!sheetName) throw new Error('Could not find "Performance Detail by Platform & Brand" sheet. Sheets: '+wb.SheetNames.join(', '));
 
         const ws = wb.Sheets[sheetName];
         const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', raw:true });
-        console.log('Total rows:', raw.length, '| First 5 rows:', raw.slice(0,5));
+        console.log('Total rows:', raw.length);
 
-        // Header row contains 'Platform' — find it scanning all rows
-        let hi = raw.findIndex(r => r.some(c => String(c).trim().toLowerCase() === 'platform'));
-        if (hi === -1) {
-          // Try finding any row that looks like a header (has both Platform and Brand)
-          hi = raw.findIndex(r => {
-            const strs = r.map(c => String(c).trim().toLowerCase());
-            return strs.includes('platform') || (strs.includes('brand') && strs.includes('spend'));
-          });
-        }
-        if (hi === -1) throw new Error('Could not find header row. Rows found: ' + JSON.stringify(raw.slice(0,6)));
-        
+        let hi = raw.findIndex(r => {
+          const strs = r.map(c => String(c).trim().toLowerCase());
+          return strs.includes('brand') && strs.includes('spend');
+        });
+        if (hi === -1) throw new Error('Datorama: Could not find header row');
+
         const headers = raw[hi].map(h => String(h).trim());
-        console.log('Headers found:', JSON.stringify(headers));
+        console.log('Datorama headers:', JSON.stringify(headers));
+
         const rows = raw.slice(hi + 1)
           .filter(r => r.some(c => c !== '' && c !== null && c !== undefined))
           .filter(r => String(r[0]).trim() !== '' && String(r[0]).trim() !== 'Totals')
@@ -1095,36 +1212,24 @@ async function parseExecSummary(file) {
             const o = {};
             headers.forEach((h, i) => { o[h] = (r[i] !== undefined && r[i] !== null) ? r[i] : ''; });
             return o;
-          });
-
-        // Deduplicate by Media Buy Name to prevent AMS+DSP double-counting.
-        // Each campaign line appears once per platform row in the detail sheet —
-        // we want the row where Spend > 0 (the actual spend row), or the first occurrence.
-        // Filter to only rows with actual spend — removes zero-spend comparison/reference rows
-        // that inflate totals when the sheet contains prior period data alongside current data.
-        const deduped = rows.filter(r => {
-          const spend = parseFloat(String(r['Spend']||0).replace(/[^0-9.\-]/g,'')) || 0;
-          return spend > 0;
-        });
-        console.log('Rows before filter:', rows.length, '| Rows after filter (spend>0):', deduped.length);
+          })
+          .filter(r => (parseFloat(String(r['Spend']||0).replace(/[^0-9.\-]/g,''))||0) > 0);
 
         const results = [];
-        deduped.forEach(r => {
+        rows.forEach(r => {
           const country = String(r['Marketing Geography']||r['Country']||'').trim();
           const market = countryToMarket(country);
-          if (!market) return; // skip non-EU5
-
+          if (!market) return;
           const brandId = classifyAdsBrand(r['Brand'], r['Free Form']);
           if (!brandId) return;
-
           const revenue = parseFloat(String(r['Nominal POS']||r['Sales']||0).replace(/[^0-9.\-]/g,'')) || 0;
           const spend   = parseFloat(String(r['Spend']||0).replace(/[^0-9.\-]/g,'')) || 0;
           const impr    = parseFloat(String(r['Impressions']||0).replace(/[^0-9.\-]/g,'')) || 0;
           const clicks  = parseFloat(String(r['Clicks']||0).replace(/[^0-9.\-]/g,'')) || 0;
-
           results.push({ brand_classified:brandId, market, ad_revenue:revenue, ad_spend:spend, ad_impressions:impr, ad_clicks:clicks });
         });
 
+        console.log('Datorama parsed rows:', results.length);
         resolve(results);
       } catch(err) { reject(err); }
     };
