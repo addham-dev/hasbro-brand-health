@@ -636,12 +636,13 @@ function smartFileSelect(e) {
 let weekQueue = [];
 
 function handleSmartFiles(fileList) {
-  const byWeek = {};
+  // Separate files by type with their detected weeks
+  const byType = { sales:[], traffic:[], inventory:[], sp:[] };
+
   fileList.forEach(f => {
     const type = detectFileType(f.name);
     const week = detectWeekFromFilename(f.name);
     if (!type) return;
-    // Ads files go to the ads queue, not the VC week queue
     if (type === 'sp') {
       files.sp = f;
       document.getElementById('ads-btn').disabled = false;
@@ -649,15 +650,42 @@ function handleSmartFiles(fileList) {
       return;
     }
     if (!week) { log(`⚠️ Could not detect week from: ${f.name}`, 'err'); return; }
-    const key = week.start;
-    if (!byWeek[key]) byWeek[key] = { weekStart: week.start, weekEnd: week.end, weekLabel: week.label };
-    byWeek[key][type] = f;
+    byType[type].push({ file:f, week });
   });
 
-  Object.values(byWeek).forEach(w => {
-    const idx = weekQueue.findIndex(q => q.weekStart === w.weekStart);
-    if (idx >= 0) weekQueue[idx] = { ...weekQueue[idx], ...w };
-    else weekQueue.push(w);
+  // Group by Sales week (Sales is the anchor — Traffic/Inventory matched by closest date)
+  const salesFiles = byType.sales;
+  if (!salesFiles.length) {
+    // No sales files — just render what we have
+    renderDetectedFiles();
+    checkSmartReady();
+    return;
+  }
+
+  salesFiles.forEach(s => {
+    const key = s.week.start;
+    const existing = weekQueue.findIndex(q => q.weekStart === key);
+    const entry = existing >= 0 ? weekQueue[existing] : { weekStart: s.week.start, weekEnd: s.week.end, weekLabel: s.week.label };
+    entry.sales = s.file;
+
+    // Match closest Inventory file by start date
+    const inv = byType.inventory.reduce((best, f) => {
+      const diff = Math.abs(new Date(f.week.start) - new Date(key));
+      const bestDiff = best ? Math.abs(new Date(best.week.start) - new Date(key)) : Infinity;
+      return diff < bestDiff ? f : best;
+    }, null);
+    if (inv) entry.inventory = inv.file;
+
+    // Match closest Traffic file by start date (within 14 days)
+    const traffic = byType.traffic.reduce((best, f) => {
+      const diff = Math.abs(new Date(f.week.start) - new Date(key));
+      const bestDiff = best ? Math.abs(new Date(best.week.start) - new Date(key)) : Infinity;
+      return diff < bestDiff && diff <= 14*24*60*60*1000 ? f : best;
+    }, null);
+    if (traffic) entry.traffic = traffic.file;
+
+    if (existing >= 0) weekQueue[existing] = entry;
+    else weekQueue.push(entry);
   });
 
   weekQueue.sort((a, b) => a.weekStart.localeCompare(b.weekStart));
