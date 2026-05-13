@@ -1087,6 +1087,7 @@ async function parseExecSummary(file) {
         if (hi === -1) throw new Error('Could not find header row. Rows found: ' + JSON.stringify(raw.slice(0,6)));
         
         const headers = raw[hi].map(h => String(h).trim());
+        console.log('Headers found:', JSON.stringify(headers));
         const rows = raw.slice(hi + 1)
           .filter(r => r.some(c => c !== '' && c !== null && c !== undefined))
           .filter(r => String(r[0]).trim() !== '' && String(r[0]).trim() !== 'Totals')
@@ -1110,6 +1111,7 @@ async function parseExecSummary(file) {
             deduped.push(r);
           }
         });
+        console.log('Rows before dedup:', rows.length, '| Rows after dedup:', deduped.length, '| Sample campaign key:', rows[4] ? String(rows[4]['Media Buy Name']||'MISSING') : 'n/a');
 
         const results = [];
         deduped.forEach(r => {
