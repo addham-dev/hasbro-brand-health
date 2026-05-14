@@ -465,22 +465,22 @@ function aggregateBrand(brandId){
   });
 
   // ── MoM: find the week 4 positions prior in available data ─
-  var allAvailableWeeks=allRowsAllWeeks.map(function(r){return r.week_start;}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
+  var allAvailableWeeks=allRowsAllWeeks.map(function(r){return r.week_start;}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort(); // ascending
   var currentWeeks=rows.map(function(r){return r.week_start;}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
   var priorWeeks=currentWeeks.map(function(ws){
     var idx=allAvailableWeeks.indexOf(ws);
     return idx>=4?allAvailableWeeks[idx-4]:null;
   }).filter(Boolean);
-  var priorRows=priorWeeks.length?allRowsAllWeeks.filter(function(r){
-    if(r.brand_classified!==brandId)return false;
-    if(currentMarket!=='ALL'&&r.market!==currentMarket)return false;
-    return priorWeeks.indexOf(r.week_start)>=0;
-  }):[];
   var priorRevenue=0,priorGviews=0;
-  priorRows.forEach(function(r){
-    priorRevenue+=r.dispatched_revenue||r.ordered_revenue||0;
-    priorGviews+=r.glance_views||0;
-  });
+  if(priorWeeks.length){
+    allRowsAllWeeks.forEach(function(r){
+      if(r.brand_classified!==brandId)return;
+      if(currentMarket!=='ALL'&&r.market!==currentMarket)return;
+      if(priorWeeks.indexOf(r.week_start)<0)return;
+      priorRevenue+=r.dispatched_revenue||r.ordered_revenue||0;
+      priorGviews+=r.glance_views||0;
+    });
+  }
   var revenueYoy=priorRevenue>0?(revenue-priorRevenue)/priorRevenue:null;
   var gviewsYoy=priorGviews>0?(gviews-priorGviews)/priorGviews:null;
 
