@@ -590,7 +590,7 @@ function detectFileType(filename) {
 }
 
 function detectWeekFromFilename(filename) {
-  // Match DD-MM-YYYY_DD-MM-YYYY
+  // VC weekly files always DD-MM-YYYY_DD-MM-YYYY where first date = Sunday week start
   const m = filename.match(/(\d{2}-\d{2}-\d{4})_(\d{2}-\d{2}-\d{4})/);
   if (m) {
     const [d1,mo1,y1] = m[1].split('-');
@@ -601,15 +601,11 @@ function detectWeekFromFilename(filename) {
       label: `${d1}/${mo1}/${y1} – ${d2}/${mo2}/${y2}`
     };
   }
-  // Match YYYY-MM-DD_YYYY-MM-DD
+  // Fallback: YYYY-MM-DD_YYYY-MM-DD
   const m2 = filename.match(/(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})/);
   if (m2) {
-    const [y1,mo1,d1] = m2[1].split('-');
-    const [y2,mo2,d2] = m2[2].split('-');
-    return {
-      start: m2[1], end: m2[2],
-      label: `${d1}/${mo1}/${y1} – ${d2}/${mo2}/${y2}`
-    };
+    const fmt = d => { const [y,mo,dd] = d.split('-'); return `${dd}/${mo}/${y}`; };
+    return { start: m2[1], end: m2[2], label: `${fmt(m2[1])} – ${fmt(m2[2])}` };
   }
   return null;
 }
