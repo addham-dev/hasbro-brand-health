@@ -377,7 +377,7 @@ async function init(){
     var results=await Promise.all([
       sbFetch('/rest/v1/brand_health_weeks?select=*&order=week_start.desc'),
       sbFetch('/rest/v1/brand_health_loyalty?select=*&order=uploaded_at.desc'),
-      sbFetch('/rest/v1/brand_health_ads?select=week_start,brand_classified,market,ad_revenue,ad_spend,ad_impressions,ad_clicks,ad_glance_views,organic_revenue,organic_glance_views&order=week_start.desc&limit=10000')
+      sbFetch('/rest/v1/brand_health_ads?select=week_start,brand_classified,market,ad_revenue,ad_spend,ad_impressions,ad_clicks,ad_glance_views&order=week_start.desc&limit=10000')
     ]);
     var weeksRes=results[0],loyaltyRes=results[1],adsRes=results[2];
     var coverageRes=[];
@@ -464,16 +464,18 @@ function aggregateBrand(brandId){
     unfilled+=r.unfilled_units||0;if(r.oos_pct!=null)oosVals.push(r.oos_pct);
   });
 
-  // ── MoM: compare to same brand 4 weeks prior ──────────────
+  // ── MoM: find the week 4 positions prior in available data ─
+  var allAvailableWeeks=allRowsAllWeeks.map(function(r){return r.week_start;}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
   var currentWeeks=rows.map(function(r){return r.week_start;}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
   var priorWeeks=currentWeeks.map(function(ws){
-    var d=new Date(ws);d.setDate(d.getDate()-28);return d.toISOString().split('T')[0];
-  });
-  var priorRows=allRowsAllWeeks.filter(function(r){
+    var idx=allAvailableWeeks.indexOf(ws);
+    return idx>=4?allAvailableWeeks[idx-4]:null;
+  }).filter(Boolean);
+  var priorRows=priorWeeks.length?allRowsAllWeeks.filter(function(r){
     if(r.brand_classified!==brandId)return false;
     if(currentMarket!=='ALL'&&r.market!==currentMarket)return false;
     return priorWeeks.indexOf(r.week_start)>=0;
-  });
+  }):[];
   var priorRevenue=0,priorGviews=0;
   priorRows.forEach(function(r){
     priorRevenue+=r.dispatched_revenue||r.ordered_revenue||0;
@@ -790,7 +792,7 @@ function fmtYoyText(val){if(val==null||isNaN(val))return'<span style="color:var(
         if(Array.isArray(prData))priorSnaps=priorSnaps.concat(prData);
       }
 
-      var aRes=await fetch(SUPABASE_URL+'/rest/v1/brand_health_ads?week_start=eq.'+latestWs+'&select=brand_classified,market,ad_revenue,ad_spend,organic_revenue&limit=500',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+      var aRes=await fetch(SUPABASE_URL+'/rest/v1/brand_health_ads?week_start=eq.'+latestWs+'&select=brand_classified,market,ad_revenue,ad_spend&limit=500',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
       var ads=await aRes.json();
 
       if(!snaps||!snaps.length){liveDataContext='No snapshot data for latest week.';return;}
