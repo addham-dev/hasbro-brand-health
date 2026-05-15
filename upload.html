@@ -198,25 +198,49 @@
 
     <!-- ADS REPORTS -->
     <div class="section-card ad-border">
-      <div class="card-title ad">🎯 Weekly Ads Reports — Executive Summary</div>
-      <div class="note-box ad-note">Drop one or multiple Executive Summary files at once. Week dates are auto-detected from inside each file.</div>
+      <div class="card-title ad">🎯 Ads Reports — Pacvue & Executive Summary</div>
+      <div class="note-box ad-note">Drop any combination of Pacvue reports (Campaign, Placement, Query) or Datorama Executive Summary files. Report type and week are auto-detected.</div>
       <div style="margin-bottom:16px;">
         <div id="card-sp"
           ondragover="dOver(event,'card-sp')" ondragleave="dLeave('card-sp')" ondrop="dDropMultiAds(event)"
           onclick="document.getElementById('file-sp').click()"
           style="border:2px dashed var(--border);border-radius:12px;padding:30px;text-align:center;cursor:pointer;background:var(--ad-bg);transition:all 0.2s;">
           <div style="font-size:32px;margin-bottom:8px;">📊</div>
-          <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--ad-color);margin-bottom:4px;">Drop Executive Summary files here</div>
-          <div style="font-size:12px;color:var(--text2)">Multiple files supported — week auto-detected from each file</div>
+          <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--ad-color);margin-bottom:4px;">Drop Pacvue or Executive Summary files here</div>
+          <div style="font-size:12px;color:var(--text2)">Campaign · Placement · Query · Executive Summary — all auto-detected</div>
           <input type="file" id="file-sp" accept=".xlsx" multiple style="display:none" onchange="onMultiAds(event)">
         </div>
-        <div id="ads-queue-list" style="display:none;margin-top:12px;display:none;gap:8px;flex-direction:column;"></div>
+        <div id="ads-queue-list" style="margin-top:12px;display:none;flex-direction:column;gap:6px;"></div>
       </div>
       <div>
         <button class="process-btn ad-btn" id="ads-btn" onclick="processAdsQueue()" disabled style="margin-bottom:8px;">
           🎯 Process &amp; Upload All Ads Reports
         </button>
-        <div class="log-area" id="ads-log" style="height:160px;"><span class="log-line">Drop one or more Executive Summary files above.</span></div>
+        <div class="log-area" id="ads-log" style="height:200px;"><span class="log-line">Drop Pacvue Campaign, Placement or Query reports above.</span></div>
+      </div>
+    </div>
+
+    <!-- INBOUND PO -->
+    <div class="section-card" style="border-left:4px solid #F59E0B;">
+      <div class="card-title" style="color:#92400E;">📦 Weekly Inbound Stock — PO Export</div>
+      <div class="note-box" style="background:#FEF3C7;border-color:#F59E0B;color:#92400E;">Drop the full catalogue PO Item Export from Vendor Central. Replaces previous week automatically.</div>
+      <div style="margin-bottom:16px;">
+        <div id="card-po"
+          ondragover="dOver(event,'card-po')" ondragleave="dLeave('card-po')" ondrop="dDropPO(event)"
+          onclick="document.getElementById('file-po').click()"
+          style="border:2px dashed #F59E0B;border-radius:12px;padding:30px;text-align:center;cursor:pointer;background:#FFFBEB;transition:all 0.2s;">
+          <div style="font-size:32px;margin-bottom:8px;">📦</div>
+          <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#92400E;margin-bottom:4px;">Drop PO Item Export here</div>
+          <div style="font-size:12px;color:#B45309;">POItemExport_YYYY-MM-DD.xls — full catalogue, no ASIN filter</div>
+          <input type="file" id="file-po" accept=".xls,.xlsx,.csv" style="display:none" onchange="onPOFile(event)">
+        </div>
+        <div id="po-detected" style="display:none;margin-top:8px;font-size:12px;color:var(--text2);"></div>
+      </div>
+      <div>
+        <button class="process-btn" id="po-btn" onclick="processAndUploadPO()" disabled style="margin-bottom:8px;background:#F59E0B;">
+          📦 Process &amp; Upload PO Data
+        </button>
+        <div class="log-area" id="po-log" style="height:120px;"><span class="log-line">Drop the PO Item Export above.</span></div>
       </div>
     </div>
 
@@ -319,7 +343,7 @@ const SUPABASE_URL = 'https://rycqfwzgvpzwhphgclpb.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_CbKFhpN2dWI_UXhwGkclqw_AMPSprs4';
 const ADMIN_PASSWORD = 'hasbro2026';
 const EU5 = ['GB','DE','FR','IT','ES'];
-const YOY_CAP = 2.0;
+const YOY_CAP = 50.0; // 5000% — handles new product launches and seasonal spikes
 
 let files = { sales:null, traffic:null, inventory:null, sp:null, loyalty:null, coverage:null, search:null };
 
@@ -1273,79 +1297,388 @@ function aggregateAdsRows(rows) {
 }
 
 // ─── ADS UPLOAD ──────────────────────────────────────────────
-async function processAndUploadAds() {
-  const weekStart = adsDetectedWeekStart;
-  if (!weekStart) { alert('Could not detect week from the Executive Summary file. Make sure you uploaded the correct file.'); return; }
+// ─── PO FILE HANDLER ─────────────────────────────────────────
+let poFile = null;
 
+function dDropPO(e) {
+  e.preventDefault();
+  document.getElementById('card-po').style.border = '2px dashed #F59E0B';
+  const files = [...e.dataTransfer.files];
+  if (files.length) onPOFile({ target: { files } });
+}
+
+function onPOFile(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  poFile = f;
+  document.getElementById('po-detected').style.display = 'block';
+  document.getElementById('po-detected').innerHTML = `✓ ${f.name} — ready to upload`;
+  document.getElementById('po-btn').disabled = false;
+}
+
+async function processAndUploadPO() {
+  if (!poFile) return;
+  document.getElementById('po-log').innerHTML = '';
+  logPO('Reading PO export...', 'info');
+  try {
+    const rows = await parsePOFile(poFile);
+    logPO(`✓ ${rows.length} open PO lines parsed`, 'ok');
+    if (!rows.length) throw new Error('No open PO lines found');
+
+    const pullDate = new Date().toISOString().split('T')[0];
+    await sbDelete(`/rest/v1/brand_health_inbound?week_pulled=eq.${pullDate}`);
+    // Delete all previous — only keep latest
+    await sbFetch('/rest/v1/brand_health_inbound?select=week_pulled&order=week_pulled.desc&limit=1').then(async res => {
+      if (res.length && res[0].week_pulled !== pullDate) {
+        await sbDelete(`/rest/v1/brand_health_inbound?week_pulled=neq.${pullDate}`);
+      }
+    });
+
+    const BATCH = 500; let uploaded = 0;
+    const finalRows = rows.map(r => ({ ...r, week_pulled: pullDate }));
+    for (let i = 0; i < finalRows.length; i += BATCH) {
+      await sbPost('/rest/v1/brand_health_inbound', finalRows.slice(i, i + BATCH));
+      uploaded += Math.min(BATCH, finalRows.length - i);
+    }
+    logPO(`✅ Done! ${finalRows.length} PO lines uploaded for ${pullDate}`, 'ok');
+  } catch(err) {
+    logPO('❌ Error: ' + err.message, 'err');
+    console.error(err);
+  }
+}
+
+async function parsePOFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+        const locationMarket = {
+          'BHX4':'GB','BHX2':'GB','VETY':'GB','LBA2':'GB',
+          'DTM1':'DE','DTM2':'DE','HAM2':'DE','FRA3':'DE',
+          'TRN3':'IT','MXP6':'IT',
+          'ZAZ1':'ES','MAD4':'ES','XAR1':'ES',
+          'CDG7':'FR','CDG4':'FR','VETV':'FR','LYS5':'FR',
+          'WRO5':'PL','KTW1':'PL'
+        };
+
+        const rows = raw
+          .filter(r => {
+            const status = String(r['Status']||'').trim().toLowerCase();
+            const remaining = parseFloat(String(r['Remaining quantity']||'0').replace(/[^0-9.]/g,''))||0;
+            return (status === 'confirmed' || status === 'unconfirmed') && remaining > 0;
+          })
+          .map(r => {
+            const loc = String(r['Ship-to location']||'').trim();
+            const market = locationMarket[loc] || null;
+            if (!market) return null;
+
+            const parseDate = v => {
+              if (!v) return null;
+              const d = new Date(v);
+              return isNaN(d) ? null : d.toISOString().split('T')[0];
+            };
+
+            return {
+              asin: String(r['ASIN']||'').trim(),
+              market,
+              po_number: String(r['PO']||'').trim(),
+              status: String(r['Status']||'').trim(),
+              open_units: Math.round(parseFloat(String(r['Remaining quantity']||'0').replace(/[^0-9.]/g,''))||0),
+              expected_delivery: parseDate(r['Expected date']),
+              window_start: parseDate(r['Window start']),
+              window_end: parseDate(r['Window end'])
+            };
+          })
+          .filter(r => r && r.asin && r.open_units > 0);
+
+        resolve(rows);
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('Failed to read PO file'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function logPO(msg, type='') { log(msg, type, 'po-log'); }
+
+// ─── PACVUE REPORT TYPE DETECTION ────────────────────────────
+function detectPacvueReportType(wb) {
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+  for (const row of raw.slice(0, 15)) {
+    const strs = row.map(c => String(c).trim().toLowerCase());
+    if (strs.includes('placement')) return 'placement';
+    if (strs.includes('query') || strs.includes('keyword text')) return 'query';
+    if (strs.includes('campaign name') && strs.includes('portfolio name') && !strs.includes('placement') && !strs.includes('query')) return 'campaign';
+  }
+  return null;
+}
+
+// ─── PACVUE CAMPAIGN PARSER ───────────────────────────────────
+async function parsePacvueCampaign(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type:'array', cellDates:true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+        const hi = raw.findIndex(r => {
+          const s = r.map(c => String(c).trim().toLowerCase());
+          return s.includes('campaign name') && s.includes('spend');
+        });
+        if (hi === -1) throw new Error('Campaign: header row not found');
+        const headers = raw[hi].map(h => String(h).trim());
+        const rows = raw.slice(hi+1)
+          .filter(r => r.some(c => c !== '' && c !== null))
+          .map(r => { const o={}; headers.forEach((h,i) => o[h] = r[i]??''); return o; })
+          .filter(r => String(r['Time']).startsWith('2026'));
+
+        const results = [];
+        rows.forEach(r => {
+          const market = marketFromProfile(r['Profile Name']);
+          if (!market) return;
+          const brand = classifyPacvueBrand(r['Portfolio Name']);
+          if (!brand) return;
+          const date = new Date(r['Time']);
+          const weekStart = new Date(date);
+          weekStart.setDate(date.getDate() - ((date.getDay() + 6) % 7)); // Monday
+          const ws = weekStart.toISOString().split('T')[0];
+          results.push({
+            week_start: ws,
+            brand_classified: brand,
+            market,
+            campaign_name: String(r['Campaign Name']||'').trim(),
+            ad_spend: parseFloat(String(r['Spend']||0).replace(/[^0-9.\-]/g,''))||0,
+            ad_revenue: parseFloat(String(r['Sales 14d']||r['Sales 7d']||0).replace(/[^0-9.\-]/g,''))||0,
+            ad_clicks: Math.round(parseFloat(String(r['Click']||r['Clicks']||0))||0),
+            ad_impressions: Math.round(parseFloat(String(r['Impression']||r['Impressions']||0))||0),
+            ad_orders: Math.round(parseFloat(String(r['Order 14d']||0))||0)
+          });
+        });
+        resolve(results);
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('Failed to read Campaign file'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ─── PACVUE PLACEMENT PARSER ──────────────────────────────────
+async function parsePacvuePlacement(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type:'array', cellDates:true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+        const hi = raw.findIndex(r => {
+          const s = r.map(c => String(c).trim().toLowerCase());
+          return s.includes('placement') && s.includes('spend');
+        });
+        if (hi === -1) throw new Error('Placement: header row not found');
+        const headers = raw[hi].map(h => String(h).trim());
+        const rows = raw.slice(hi+1)
+          .filter(r => r.some(c => c !== '' && c !== null))
+          .map(r => { const o={}; headers.forEach((h,i) => o[h] = r[i]??''); return o; })
+          .filter(r => String(r['Time']).startsWith('2026'));
+
+        const results = [];
+        rows.forEach(r => {
+          const market = marketFromProfile(r['Profile Name']);
+          if (!market) return;
+          const brand = classifyPacvueBrand(r['Campaign Name']);
+          const date = new Date(r['Time']);
+          const weekStart = new Date(date);
+          weekStart.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+          const ws = weekStart.toISOString().split('T')[0];
+          const spend = parseFloat(String(r['Spend']||0).replace(/[^0-9.\-]/g,''))||0;
+          if (spend === 0) return;
+          results.push({
+            week_start: ws,
+            brand_classified: brand || 'OTHER',
+            market,
+            placement: String(r['Placement']||'').trim(),
+            ad_spend: spend,
+            ad_revenue: parseFloat(String(r['Sales 14d']||0).replace(/[^0-9.\-]/g,''))||0,
+            ad_clicks: Math.round(parseFloat(String(r['Click']||0))||0),
+            ad_impressions: Math.round(parseFloat(String(r['Impression']||0))||0),
+            ctr: parseFloat(String(r['CTR']||0))||0,
+            cpc: parseFloat(String(r['CPC']||0))||0
+          });
+        });
+        resolve(results);
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('Failed to read Placement file'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ─── PACVUE QUERY PARSER ──────────────────────────────────────
+async function parsePacvueQuery(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type:'array', cellDates:true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+        const hi = raw.findIndex(r => {
+          const s = r.map(c => String(c).trim().toLowerCase());
+          return (s.includes('query') || s.includes('keyword text')) && s.includes('spend');
+        });
+        if (hi === -1) throw new Error('Query: header row not found');
+        const headers = raw[hi].map(h => String(h).trim());
+        const rows = raw.slice(hi+1)
+          .filter(r => r.some(c => c !== '' && c !== null))
+          .map(r => { const o={}; headers.forEach((h,i) => o[h] = r[i]??''); return o; })
+          .filter(r => String(r['Time']).startsWith('2026'));
+
+        const results = [];
+        rows.forEach(r => {
+          const market = marketFromProfile(r['Profile Name']);
+          if (!market) return;
+          const brand = classifyPacvueBrand(r['Campaign Name']);
+          const date = new Date(r['Time']);
+          const weekStart = new Date(date);
+          weekStart.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+          const ws = weekStart.toISOString().split('T')[0];
+          const spend = parseFloat(String(r['Spend']||0).replace(/[^0-9.\-]/g,''))||0;
+          if (spend === 0) return;
+          results.push({
+            week_start: ws,
+            brand_classified: brand || 'OTHER',
+            market,
+            query: String(r['Query']||'').trim().toLowerCase(),
+            keyword: String(r['Keyword Text']||'').trim().toLowerCase(),
+            ad_spend: spend,
+            ad_revenue: parseFloat(String(r['Sales 14d']||0).replace(/[^0-9.\-]/g,''))||0,
+            ad_clicks: Math.round(parseFloat(String(r['Click']||0))||0),
+            ad_impressions: Math.round(parseFloat(String(r['Impression']||0))||0),
+            roas: parseFloat(String(r['ROAS 14d']||0))||0,
+            orders: Math.round(parseFloat(String(r['Order 14d']||0))||0)
+          });
+        });
+        resolve(results);
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('Failed to read Query file'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ─── AGGREGATE CAMPAIGN DATA INTO brand_health_ads ───────────
+function aggregateCampaignToAds(campaignRows) {
+  const agg = {};
+  campaignRows.forEach(r => {
+    const k = `${r.week_start}||${r.brand_classified}||${r.market}`;
+    if (!agg[k]) agg[k] = { week_start:r.week_start, brand_classified:r.brand_classified, market:r.market, ad_spend:0, ad_revenue:0, ad_clicks:0, ad_impressions:0, ad_glance_views:0 };
+    agg[k].ad_spend      += r.ad_spend;
+    agg[k].ad_revenue    += r.ad_revenue;
+    agg[k].ad_clicks     += r.ad_clicks;
+    agg[k].ad_impressions+= r.ad_impressions;
+  });
+  return Object.values(agg);
+}
+
+
+async function processAndUploadAds() {
   document.getElementById('ads-log').innerHTML = '';
   logA('Starting ads processing...', 'info');
 
   try {
-    logA('Reading Executive Summary...', 'info');
-    const parsedRows = await parseExecSummary(files.sp);
-    logA(`✓ ${parsedRows.length} brand-market rows parsed`, 'ok');
-
-    // Aggregate AMS+DSP per brand+market — no averaging, use as reported
-    const agg = aggregateAdsRows(parsedRows);
-
-    // Log per-brand summary
-    const brandSummary = {};
-    agg.forEach(r => {
-      if (!brandSummary[r.brand_classified]) brandSummary[r.brand_classified] = { rev:0, spend:0, clicks:0 };
-      brandSummary[r.brand_classified].rev    += r.ad_revenue;
-      brandSummary[r.brand_classified].spend  += r.ad_spend;
-      brandSummary[r.brand_classified].clicks += r.ad_clicks;
-    });
-    Object.entries(brandSummary).forEach(([bid, s]) => {
-      const roas = s.spend > 0 ? (s.rev / s.spend).toFixed(2) : '—';
-      logA(`  ${bid}: rev=€${s.rev.toFixed(0)} spend=€${s.spend.toFixed(0)} ROAS=${roas} clicks=${Math.round(s.clicks)}`, 'ok');
+    const wb = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(XLSX.read(e.target.result, { type:'array', cellDates:true }));
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsArrayBuffer(files.sp);
     });
 
-    // Fetch VC weekly totals per brand+market for organic split
-    logA('Fetching VC totals for organic split...', 'info');
-    const vcRows = await sbFetch(`/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}&select=brand_classified,market,dispatched_revenue,ordered_revenue,glance_views`);
-    const vcMap = {};
-    vcRows.forEach(r => {
-      const k = r.brand_classified + '||' + r.market;
-      if (!vcMap[k]) vcMap[k] = { revenue:0, gviews:0 };
-      vcMap[k].revenue += (r.dispatched_revenue || r.ordered_revenue || 0);
-      vcMap[k].gviews  += (r.glance_views || 0);
-    });
+    const format = detectAdsFileFormat(wb);
+    const reportType = format === 'pacvue' ? detectPacvueReportType(wb) : 'datorama';
+    logA(`Format: ${format === 'pacvue' ? 'Pacvue ' + reportType : 'Datorama Executive Summary'}`, 'info');
 
-    // Build final rows
-    // organic = VC total - ad attributed (floored at 0 — can exceed VC due to 14-day window)
-    const finalRows = agg.map(r => {
-      const k = r.brand_classified + '||' + r.market;
-      const vc = vcMap[k] || { revenue:0, gviews:0 };
-      return {
-        week_start:           weekStart,
-        brand_classified:     r.brand_classified,
-        market:               r.market,
-        ad_revenue:           Math.round(r.ad_revenue * 100) / 100,
-        ad_spend:             Math.round(r.ad_spend * 100) / 100,
-        ad_impressions:       Math.round(r.ad_impressions),
-        ad_clicks:            Math.round(r.ad_clicks),
-        ad_glance_views:      Math.round(r.ad_clicks), // Clicks = Ad Glance Views
-        organic_revenue:      Math.max(0, Math.round((vc.revenue - r.ad_revenue) * 100) / 100),
-        organic_glance_views: Math.max(0, Math.round(vc.gviews - r.ad_clicks))
-      };
-    });
+    if (format === 'pacvue' && reportType === 'campaign') {
+      const campaignRows = await parsePacvueCampaign(files.sp);
+      logA(`✓ ${campaignRows.length} campaign-day rows parsed`, 'ok');
+      const weeks = [...new Set(campaignRows.map(r => r.week_start))].sort();
+      logA(`Processing ${weeks.length} weeks...`, 'info');
+      for (const ws of weeks) {
+        const weekRows = campaignRows.filter(r => r.week_start === ws);
+        await sbDelete(`/rest/v1/brand_health_ads_campaigns?week_start=eq.${ws}`);
+        const BATCH = 500;
+        for (let i = 0; i < weekRows.length; i += BATCH) {
+          await sbPost('/rest/v1/brand_health_ads_campaigns', weekRows.slice(i, i+BATCH));
+        }
+        const aggRows = aggregateCampaignToAds(weekRows);
+        await sbDelete(`/rest/v1/brand_health_ads?week_start=eq.${ws}`);
+        await sbPost('/rest/v1/brand_health_ads', aggRows);
+        logA(`✅ Week ${ws} — ${weekRows.length} campaign rows, ${aggRows.length} brand-market aggregates`, 'ok');
+      }
 
-    logA(`✓ Built ${finalRows.length} brand-market rows`, 'ok');
-    if (!finalRows.length) throw new Error('0 rows built — check the file parsed correctly');
-    await sbDelete(`/rest/v1/brand_health_ads?week_start=eq.${weekStart}`);
-    await sbPost('/rest/v1/brand_health_ads', finalRows);
+    } else if (format === 'pacvue' && reportType === 'placement') {
+      const placementRows = await parsePacvuePlacement(files.sp);
+      logA(`✓ ${placementRows.length} placement rows parsed`, 'ok');
+      const weeks = [...new Set(placementRows.map(r => r.week_start))].sort();
+      for (const ws of weeks) {
+        const weekRows = placementRows.filter(r => r.week_start === ws);
+        await sbDelete(`/rest/v1/brand_health_ads_placement?week_start=eq.${ws}`);
+        const BATCH = 500;
+        for (let i = 0; i < weekRows.length; i += BATCH) await sbPost('/rest/v1/brand_health_ads_placement', weekRows.slice(i, i+BATCH));
+        logA(`✅ Week ${ws} — ${weekRows.length} placement rows`, 'ok');
+      }
 
-    // Ensure week exists in brand_health_weeks
-    const existingWeek = await sbFetch(`/rest/v1/brand_health_weeks?week_start=eq.${weekStart}&select=week_start`);
-    if (!existingWeek.length) {
-      const d = new Date(weekStart);
-      const end = new Date(d); end.setDate(d.getDate() + 6);
-      const fmt = x => x.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});
-      await sbPost('/rest/v1/brand_health_weeks', { week_start: weekStart, week_label: fmt(d) + ' – ' + fmt(end) });
+    } else if (format === 'pacvue' && reportType === 'query') {
+      const queryRows = await parsePacvueQuery(files.sp);
+      logA(`✓ ${queryRows.length} query rows parsed`, 'ok');
+      const weeks = [...new Set(queryRows.map(r => r.week_start))].sort();
+      for (const ws of weeks) {
+        const weekRows = queryRows.filter(r => r.week_start === ws);
+        await sbDelete(`/rest/v1/brand_health_ads_queries?week_start=eq.${ws}`);
+        const BATCH = 500;
+        for (let i = 0; i < weekRows.length; i += BATCH) await sbPost('/rest/v1/brand_health_ads_queries', weekRows.slice(i, i+BATCH));
+        logA(`✅ Week ${ws} — ${weekRows.length} query rows`, 'ok');
+      }
+
+    } else {
+      // Datorama Executive Summary — existing flow
+      const weekStart = adsDetectedWeekStart;
+      if (!weekStart) throw new Error('Could not detect week from file');
+      const parsedRows = await parseExecSummary(files.sp);
+      logA(`✓ ${parsedRows.length} brand-market rows parsed`, 'ok');
+      const agg = aggregateAdsRows(parsedRows);
+      const vcRows = await sbFetch(`/rest/v1/brand_health_snapshots?week_start=eq.${weekStart}&select=brand_classified,market,dispatched_revenue,ordered_revenue,glance_views`);
+      const vcMap = {};
+      vcRows.forEach(r => {
+        const k = r.brand_classified + '||' + r.market;
+        if (!vcMap[k]) vcMap[k] = { revenue:0, gviews:0 };
+        vcMap[k].revenue += (r.dispatched_revenue || r.ordered_revenue || 0);
+        vcMap[k].gviews  += (r.glance_views || 0);
+      });
+      const finalRows = agg.map(r => {
+        const k = r.brand_classified + '||' + r.market;
+        const vc = vcMap[k] || { revenue:0, gviews:0 };
+        return {
+          week_start: weekStart, brand_classified: r.brand_classified, market: r.market,
+          ad_revenue: Math.round(r.ad_revenue*100)/100, ad_spend: Math.round(r.ad_spend*100)/100,
+          ad_impressions: Math.round(r.ad_impressions), ad_clicks: Math.round(r.ad_clicks),
+          ad_glance_views: Math.round(r.ad_clicks),
+          organic_revenue: Math.max(0, Math.round((vc.revenue - r.ad_revenue)*100)/100),
+          organic_glance_views: Math.max(0, Math.round(vc.gviews - r.ad_clicks))
+        };
+      });
+      if (!finalRows.length) throw new Error('0 rows built — check file parsed correctly');
+      await sbDelete(`/rest/v1/brand_health_ads?week_start=eq.${weekStart}`);
+      await sbPost('/rest/v1/brand_health_ads', finalRows);
+      logA(`✅ Done! ${finalRows.length} rows for week ${weekStart}`, 'ok');
     }
 
-    logA(`✅ Done! ${finalRows.length} rows for week ${weekStart}`, 'ok');
     if (!window._processingQueue) loadHistory();
 
   } catch(err) {
