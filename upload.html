@@ -832,7 +832,37 @@ const BRANDS = [
   { id:'OTHER', titleKeys:[], brandKeys:[] }
 ];
 
-function classifyBrand(title, brandCol) {
+// ─── ASIN OVERRIDES — always wins regardless of title/brand ──
+const ASIN_OVERRIDES = {
+  // Jenga Maker — product title contains 'Monopoly' but is a GAMES product
+  'B09C8NH9HT': 'GAMES', 'B09PYQR2X1': 'GAMES', 'B09C8PD6GD': 'GAMES',
+  // Monopoly Grab and Go — classified as MONOPOLY but belongs in GAMES
+  'B0CBKTHQW2': 'GAMES', 'B0CBQ1N91P': 'GAMES', 'B0CBPMMZGL': 'GAMES',
+  'B0CBMNR1YY': 'GAMES', 'B0CBSKB23Y': 'GAMES', 'B0CSG3QQXG': 'GAMES',
+  'B0CZ7HYRK7': 'GAMES', 'B0CSPVLPR7': 'GAMES',
+  // Hungry Hungry Hippos Launchers — was in MONOPOLY
+  'B0862Z2NVB': 'GAMES',
+  // Speak Out — was in OTHER
+  'B071XTR46P': 'GAMES', 'B01J3KSDXI': 'GAMES',
+  // Pie Face — was in OTHER
+  'B01FDIWEI4': 'GAMES', 'B07CK86RVZ': 'GAMES',
+  // Simon — was in OTHER
+  'B06X9SG9VB': 'GAMES',
+  // Rummikub — was in OTHER
+  'B000NIJ6UY': 'GAMES',
+  // Kerplunk
+  'B00005N5P6': 'GAMES',
+  // Big Taboo
+  'B000I1TDA4': 'GAMES',
+  // Battleship Grab and Go
+  'B0BDHYT2KL': 'GAMES',
+  // Bop It Marvel Hulk — title contains Marvel but is a GAMES product
+  'B0FJBXSZLK': 'GAMES',
+};
+
+function classifyBrand(title, brandCol, asin) {
+  // ASIN override takes highest priority
+  if (asin && ASIN_OVERRIDES[String(asin).trim()]) return ASIN_OVERRIDES[String(asin).trim()];
   const t=(title||'').toLowerCase(), b=(brandCol||'').toLowerCase().trim();
   const dk=BRANDS[0];
   if(dk.titleKeys.some(k=>t.includes(k))||dk.brandKeys.some(k=>b===k||b.includes(k))) return dk.id;
@@ -1028,7 +1058,7 @@ async function processAndUpload() {
           week_start: w.weekStart, asin,
           product_title: String(col(r,'Product title')||'').trim().substring(0,500),
           brand_raw: String(col(r,'Brand')||'').trim(),
-          brand_classified: classifyBrand(col(r,'Product title'), col(r,'Brand')),
+          brand_classified: classifyBrand(col(r,'Product title'), col(r,'Brand'), String(r['ASIN']).trim()),
           market,
           dispatched_revenue: cleanNum(col(r,'Dispatched revenue')),
           ordered_revenue: cleanNum(col(r,'Ordered revenue')),
