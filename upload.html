@@ -1387,19 +1387,22 @@ async function parsePOFile(file) {
         const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
 
         const locationMarket = {
-          'BHX4':'GB','BHX2':'GB','VETY':'GB','LBA2':'GB',
-          'DTM1':'DE','DTM2':'DE','HAM2':'DE','FRA3':'DE',
-          'TRN3':'IT','MXP6':'IT',
-          'ZAZ1':'ES','MAD4':'ES','XAR1':'ES',
-          'CDG7':'FR','CDG4':'FR','VETV':'FR','LYS5':'FR',
-          'WRO5':'PL','KTW1':'PL'
+          'BHX4':'GB','BHX2':'GB','VETY':'GB','LBA2':'GB','BHX1':'GB','MAN1':'GB',
+          'DTM1':'DE','DTM2':'DE','HAM2':'DE','FRA3':'DE','LEJ1':'DE','MUC3':'DE',
+          'TRN3':'IT','MXP6':'IT','FCO2':'IT','VCE2':'IT',
+          'ZAZ1':'ES','MAD4':'ES','XAR1':'ES','MAD9':'ES','BCN2':'ES',
+          'CDG7':'FR','CDG4':'FR','VETV':'FR','LYS5':'FR','XOR1':'FR',
+          'WRO5':'PL','KTW1':'PL','KTW5':'PL'
         };
 
         const rows = raw
           .filter(r => {
             const status = String(r['Status']||'').trim().toLowerCase();
             const remaining = parseFloat(String(r['Remaining quantity']||'0').replace(/[^0-9.]/g,''))||0;
-            return (status === 'confirmed' || status === 'unconfirmed') && remaining > 0;
+            const requested = parseFloat(String(r['Requested quantity']||'0').replace(/[^0-9.]/g,''))||0;
+            // Include confirmed with remaining qty OR unconfirmed with requested qty
+            return (status === 'confirmed' && remaining > 0) ||
+                   (status === 'unconfirmed' && requested > 0);
           })
           .map(r => {
             const loc = String(r['Ship-to location']||'').trim();
@@ -1412,12 +1415,17 @@ async function parsePOFile(file) {
               return isNaN(d) ? null : d.toISOString().split('T')[0];
             };
 
+            const status = String(r['Status']||'').trim().toLowerCase();
+            const units = status === 'unconfirmed'
+              ? Math.round(parseFloat(String(r['Requested quantity']||'0').replace(/[^0-9.]/g,''))||0)
+              : Math.round(parseFloat(String(r['Remaining quantity']||'0').replace(/[^0-9.]/g,''))||0);
+
             return {
               asin: String(r['ASIN']||'').trim(),
               market,
               po_number: String(r['PO']||'').trim(),
               status: String(r['Status']||'').trim(),
-              open_units: Math.round(parseFloat(String(r['Remaining quantity']||'0').replace(/[^0-9.]/g,''))||0),
+              open_units: units,
               expected_delivery: parseDate(r['Expected date']),
               window_start: parseDate(r['Window start']),
               window_end: parseDate(r['Window end'])
