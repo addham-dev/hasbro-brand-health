@@ -646,10 +646,15 @@ function smartDLeave() {
 function smartDrop(e) {
   e.preventDefault();
   smartDLeave();
-  handleSmartFiles([...e.dataTransfer.files]);
+  const files = [...e.dataTransfer.files];
+  setTimeout(() => handleSmartFiles(files), 10);
 }
 function smartFileSelect(e) {
-  handleSmartFiles([...e.target.files]);
+  const files = [...e.target.files];
+  if (files.length > 20) {
+    document.getElementById('smart-dropzone').innerHTML = `<div style="font-size:14px;color:var(--blue);font-weight:700">⏳ Processing ${files.length} files...</div>`;
+  }
+  setTimeout(() => handleSmartFiles(files), 10);
 }
 
 // ─── BULK WEEK QUEUE ─────────────────────────────────────────
