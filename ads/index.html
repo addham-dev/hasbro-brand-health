@@ -235,6 +235,7 @@
           <button class="filter-tab active" onclick="setQuerySort('spend',this)" id="qsort-spend">By Spend</button>
           <button class="filter-tab" onclick="setQuerySort('roas',this)" id="qsort-roas">By ROAS</button>
           <button class="filter-tab" onclick="setQuerySort('clicks',this)" id="qsort-clicks">By Clicks</button>
+          <button onclick="exportCSV('queries')" style="padding:6px 14px;border-radius:6px;border:2px solid var(--green);background:var(--green-bg);color:var(--green);font-size:11px;font-weight:700;cursor:pointer;">⬇ Export CSV</button>
         </div>
       </div>
       <div style="overflow-x:auto;max-height:500px;overflow-y:auto;" id="all-queries-table"></div>
@@ -256,7 +257,10 @@
     <div class="panel" id="agency-brief-panel"></div>
   </div>
   <div>
-    <div class="section-title">⚠️ Ad Spend on OOS ASINs — Pure Waste</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div class="section-title" style="margin-bottom:0;flex:1">⚠️ Ad Spend on OOS ASINs — Pure Waste</div>
+      <button onclick="exportCSV('oos')" style="padding:6px 14px;border-radius:6px;border:2px solid var(--amber);background:var(--amber-bg);color:var(--amber);font-size:11px;font-weight:700;cursor:pointer;">⬇ Export CSV</button>
+    </div>
     <div class="panel" id="oos-waste-panel">
       <div class="loading">Loading OOS data...</div>
     </div>
@@ -264,7 +268,10 @@
 
   <!-- SECTION 7: Campaign Drilldown -->
   <div>
-    <div class="section-title">📋 Campaign Drilldown</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div class="section-title" style="margin-bottom:0;flex:1">📋 Campaign Drilldown</div>
+      <button onclick="exportCSV('campaigns')" style="padding:6px 14px;border-radius:6px;border:2px solid var(--ad);background:var(--ad-bg);color:var(--ad);font-size:11px;font-weight:700;cursor:pointer;">⬇ Export CSV</button>
+    </div>
     <div class="panel" id="campaign-panel">
       <div class="loading">Loading campaigns...</div>
     </div>
@@ -830,7 +837,7 @@ function renderOOSWaste(){
     document.getElementById('oos-waste-panel').innerHTML='<div class="empty">✅ No high-OOS ASINs with significant unfilled demand detected.</div>';
     return;
   }
-  const sorted=oosItems.sort((a,b)=>(b.oos_pct||0)-(a.oos_pct||0)).slice(0,20);
+  const sorted=oosItems.sort((a,b)=>(b.oos_pct||0)-(a.oos_pct||0)).slice(0,75);
   document.getElementById('oos-waste-panel').innerHTML=`
     <div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);">
       <b style="color:var(--amber)">⚠️ Action Required:</b> These ASINs have ≥50% OOS and unfilled demand. Pause any active ad campaigns for these products immediately to stop wasted spend.
@@ -894,6 +901,52 @@ function renderCampaigns(){
         }).join('')}</tbody>
       </table>
     </div>`:'<div class="empty">No campaign data for this period. Upload Pacvue Campaign Report.</div>';
+}
+
+function exportCSV(type){
+  let rows=[], filename='';
+  const week=currentWeek||'week';
+
+  if(type==='campaigns'){
+    filename=`hasbro_campaigns_${week}.csv`;
+    rows=[['Campaign','Brand','Markets','Spend (€)','Revenue (€)','ROAS','Clicks','Impressions','CTR %','CPC (€)']];
+    const byName={};
+    filterByBrand(weekData.campaigns).forEach(r=>{
+      const k=r.campaign_name||'Unknown';
+      if(!byName[k])byName[k]={spend:0,revenue:0,clicks:0,impressions:0,brand:r.brand_classified,markets:new Set()};
+      byName[k].spend+=r.ad_spend||0;byName[k].revenue+=r.ad_revenue||0;byName[k].clicks+=r.ad_clicks||0;byName[k].impressions+=r.ad_impressions||0;byName[k].markets.add(r.market);
+    });
+    Object.entries(byName).sort((a,b)=>b[1].spend-a[1].spend).forEach(([name,d])=>{
+      const roas=d.spend>0?d.revenue/d.spend:0;
+      const ctr=d.impressions>0?d.clicks/d.impressions*100:0;
+      const cpc=d.clicks>0?d.spend/d.clicks:0;
+      rows.push([name,BRAND_LABELS[d.brand]||d.brand,[...d.markets].join(';'),d.spend.toFixed(2),d.revenue.toFixed(2),roas.toFixed(2),d.clicks,d.impressions,ctr.toFixed(2),cpc.toFixed(2)]);
+    });
+  } else if(type==='queries'){
+    filename=`hasbro_queries_${week}.csv`;
+    rows=[['Query','Spend (€)','Revenue (€)','ROAS','Clicks','Status']];
+    const qs=filterByBrand(weekData.queries);
+    const qAgg={};
+    qs.forEach(r=>{const q=(r.query||'').trim();if(!q)return;if(!qAgg[q])qAgg[q]={spend:0,revenue:0,clicks:0};qAgg[q].spend+=r.ad_spend||0;qAgg[q].revenue+=r.ad_revenue||0;qAgg[q].clicks+=r.ad_clicks||0;});
+    Object.entries(qAgg).filter(([q,d])=>d.spend>0).sort((a,b)=>b[1].spend-a[1].spend).slice(0,500).forEach(([q,d])=>{
+      const roas=d.spend>0?d.revenue/d.spend:0;
+      const status=roas<1?'WASTE — Add as Negative':roas>=5?'TOP — Scale':roas>=2?'Good':'Monitor';
+      rows.push([q,d.spend.toFixed(2),d.revenue.toFixed(2),roas.toFixed(2),d.clicks,status]);
+    });
+  } else if(type==='oos'){
+    filename=`hasbro_oos_asins_${week}.csv`;
+    rows=[['ASIN','Product Title','Market','OOS %','Unfilled Units','Glance Views','Action']];
+    snapshotData.filter(r=>(r.oos_pct||0)>=50&&(r.unfilled_units||0)>0).sort((a,b)=>(b.oos_pct||0)-(a.oos_pct||0)).slice(0,75).forEach(r=>{
+      rows.push([r.asin,r.product_title||'',r.market,(r.oos_pct||0).toFixed(0),Math.round(r.unfilled_units||0),Math.round(r.glance_views||0),'PAUSE ADS — OOS']);
+    });
+  }
+
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  a.click();
 }
 
 function setMarket(m,btn){
