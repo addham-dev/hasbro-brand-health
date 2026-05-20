@@ -1974,8 +1974,30 @@ function classifySearchTerm(term) {
 }
 
 async function uploadSearchTerms() {
-  const weekStart = document.getElementById('week-start').value;
-  if (!weekStart) { alert('Please select a week first.'); return; }
+  let weekStart = document.getElementById('week-start').value;
+
+  // Auto-detect week from filename if not set
+  if (!weekStart && files.search) {
+    const fname = files.search.name || '';
+    const m = fname.match(/(\d{4}[-_]\d{2}[-_]\d{2})/);
+    if (m) {
+      // Find the Sunday of that week
+      const d = new Date(m[1].replace(/_/g,'-'));
+      d.setDate(d.getDate() - d.getDay());
+      weekStart = d.toISOString().split('T')[0];
+      document.getElementById('week-start').value = weekStart;
+      logS(`Auto-detected week: ${weekStart}`, 'info');
+    }
+  }
+
+  // If still no week, use last Monday as a sensible default
+  if (!weekStart) {
+    const d = new Date();
+    d.setDate(d.getDate() - d.getDay()); // Sunday
+    weekStart = d.toISOString().split('T')[0];
+    document.getElementById('week-start').value = weekStart;
+    logS(`Using current week: ${weekStart}`, 'info');
+  }
   document.getElementById('search-log').innerHTML = '';
   logS('Reading Search Terms report...', 'info');
 
