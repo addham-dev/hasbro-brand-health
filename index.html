@@ -238,6 +238,13 @@
     <button class="period-tab" onclick="setPeriodMode('year',this)">Annual</button>
   </div>
   <div class="divider"></div>
+  <span class="filter-label">vs</span>
+  <div class="period-tabs">
+    <button class="period-tab comp-tab active" onclick="setComparison('wow',this)">WoW</button>
+    <button class="period-tab comp-tab" onclick="setComparison('4w',this)">4W</button>
+    <button class="period-tab comp-tab" onclick="setComparison('yoy',this)">YoY</button>
+  </div>
+  <div class="divider"></div>
   <span class="filter-label">Market</span>
   <div class="market-tabs">
     <button class="market-tab active" onclick="setMarket('ALL',this)">All EU5</button>
@@ -391,7 +398,19 @@ async function init(){
     adsDataAllWeeks={};
     adsRes.forEach(function(r){var k=r.week_start+'||'+r.brand_classified+'||'+(r.market||'ALL');adsDataAllWeeks[k]=r;});
     if(!allWeeks.length){document.getElementById('loading-screen').style.display='none';document.getElementById('no-data-screen').style.display='block';return;}
-    var snap=await sbFetch('/rest/v1/brand_health_snapshots?select=week_start,brand_classified,market,dispatched_revenue,ordered_revenue,dispatched_units,ordered_units,glance_views,oos_pct,unfilled_units,revenue_yoy,glance_views_yoy&limit=500000&order=week_start.desc');
+    // Fetch all snapshots with pagination — 500k limit but remove range header
+    var snap = [];
+    var page = 0;
+    var pageSize = 10000;
+    while(true) {
+      var chunk = await fetch(SUPABASE_URL+'/rest/v1/brand_health_snapshots?select=week_start,brand_classified,market,dispatched_revenue,ordered_revenue,dispatched_units,ordered_units,glance_views,oos_pct,unfilled_units&order=week_start.desc&limit='+pageSize+'&offset='+(page*pageSize), {
+        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'count=none'}
+      }).then(function(r){return r.json();}).then(function(d){return Array.isArray(d)?d:[];});
+      snap = snap.concat(chunk);
+      if (chunk.length < pageSize) break;
+      page++;
+      if (page > 49) break; // safety cap at 500k rows
+    }
     allRowsAllWeeks=snap;
     buildPeriodSelect();
     await loadPeriod(currentPeriod);
@@ -466,13 +485,14 @@ function setComparison(mode, btn) {
 
 function getPriorWeeks(currentWeeks) {
   var allAvailable = allRowsAllWeeks.map(function(r){ return r.week_start; })
-    .filter(function(v,i,a){ return a.indexOf(v)===i; }).sort();
+    .filter(function(v,i,a){ return a.indexOf(v)===i; })
+    .sort(); // ascending — critical for index lookup
   return currentWeeks.map(function(ws) {
     var idx = allAvailable.indexOf(ws);
+    if (idx < 0) return null;
     if (currentComparison === 'wow') return idx >= 1 ? allAvailable[idx-1] : null;
     if (currentComparison === '4w')  return idx >= 4 ? allAvailable[idx-4] : null;
     if (currentComparison === 'yoy') {
-      // Find closest week ~52 weeks prior (within 2 weeks tolerance)
       var target = new Date(ws);
       target.setDate(target.getDate() - 364);
       var best = null, bestDiff = Infinity;
@@ -499,6 +519,7 @@ function aggregateBrand(brandId){
   var currentWeeks = rows.map(function(r){ return r.week_start; })
     .filter(function(v,i,a){ return a.indexOf(v)===i; });
   var priorWeeks = getPriorWeeks(currentWeeks);
+  if (brandId === 'GAMES') console.log('GAMES comparison:', currentComparison, 'currentWeeks:', currentWeeks, 'priorWeeks:', priorWeeks, 'allRowsAllWeeks length:', allRowsAllWeeks.length);
   var priorRevenue=0, priorGviews=0;
   if (priorWeeks.length) {
     allRowsAllWeeks.forEach(function(r) {
