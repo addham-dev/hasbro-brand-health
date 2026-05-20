@@ -479,13 +479,12 @@ function setComparison(mode, btn) {
 }
 
 function getPriorWeekStart(currentWeekStart) {
-  // Find the prior week from allWeeks list
-  var sorted = allWeeks.map(function(w){ return w.week_start; }).sort();
+  var sorted = allWeeks.map(function(w){ return w.week_start; }).sort(); // ascending
   var idx = sorted.indexOf(currentWeekStart);
-  if (currentComparison === 'wow') return idx >= 1 ? sorted[idx-1] : null;
-  if (currentComparison === '4w')  return idx >= 4 ? sorted[idx-4] : null;
+  if (idx < 0) { console.log('getPriorWeekStart: week not found:', currentWeekStart); return null; }
+  if (currentComparison === 'wow') { var r = idx >= 1 ? sorted[idx-1] : null; console.log('WoW prior:', r); return r; }
+  if (currentComparison === '4w')  { var r = idx >= 4 ? sorted[idx-4] : null; console.log('4W prior:', r); return r; }
   if (currentComparison === 'yoy') {
-    // Find closest week ~52 weeks prior
     var target = new Date(currentWeekStart);
     target.setDate(target.getDate() - 364);
     var best = null, bestDiff = Infinity;
@@ -493,6 +492,7 @@ function getPriorWeekStart(currentWeekStart) {
       var d = Math.abs(new Date(w) - target);
       if (d < bestDiff && d <= 14*24*60*60*1000) { bestDiff = d; best = w; }
     });
+    console.log('YoY prior:', best, 'target:', target.toISOString().split('T')[0]);
     return best;
   }
   return null;
@@ -525,7 +525,7 @@ async function loadPriorData() {
     priorData[k].revenue += r.dispatched_revenue||0;
     priorData[k].gviews  += r.glance_views||0;
   });
-}
+  console.log('priorData loaded:', Object.keys(priorData).length, 'brand-market combinations, sample GAMES||GB:', priorData['GAMES||GB']);
 
 function aggregateBrand(brandId){
   var rows=getRows(brandId);
@@ -667,9 +667,10 @@ function renderRCA(brandId,tab){
   var adRevPct=ads&&d.revenue>0?((ads.ad_revenue/d.revenue)*100).toFixed(0):null;
   var rcaOrgRev=ads?Math.max(0,d.revenue-(ads.ad_revenue||0)):0;
   var rcaOrgGv=ads?Math.max(0,d.gviews-(ads.ad_glance_views||0)):0;
+  var compLabel = currentComparison==='wow'?'vs last week':currentComparison==='4w'?'vs 4 weeks ago':'vs last year';
   document.getElementById('kpi-row').innerHTML=
-    '<div class="kpi-card"><div class="kpi-label">Revenue</div><div class="kpi-value c-blue">'+fmtCur(d.revenue)+'</div><div class="kpi-yoy">'+fmtYoyText(d.revenueYoy)+' vs last year</div>'+(ads?'<div class="kpi-ads-split"><span class="kpi-split-pill org">🌿 Org '+fmtCur(rcaOrgRev)+'</span><span class="kpi-split-pill ad">🎯 Ads '+fmtCur(ads.ad_revenue||0)+' ('+adRevPct+'%)</span></div>':'')+'</div>'+
-    '<div class="kpi-card"><div class="kpi-label">Glance Views</div><div class="kpi-value c-green">'+fmtNum(d.gviews)+'</div><div class="kpi-yoy">'+fmtYoyText(d.gviewsYoy)+' vs last year</div>'+(ads?'<div class="kpi-ads-split"><span class="kpi-split-pill org">🌿 Org '+fmtNum(rcaOrgGv)+'</span><span class="kpi-split-pill ad">🎯 Ad '+fmtNum(ads.ad_glance_views||0)+'</span></div>':'')+'</div>'+
+    '<div class="kpi-card"><div class="kpi-label">Revenue</div><div class="kpi-value c-blue">'+fmtCur(d.revenue)+'</div><div class="kpi-yoy">'+fmtYoyText(d.revenueYoy)+' '+compLabel+'</div>'+(ads?'<div class="kpi-ads-split"><span class="kpi-split-pill org">🌿 Org '+fmtCur(rcaOrgRev)+'</span><span class="kpi-split-pill ad">🎯 Ads '+fmtCur(ads.ad_revenue||0)+' ('+adRevPct+'%)</span></div>':'')+'</div>'+
+    '<div class="kpi-card"><div class="kpi-label">Glance Views</div><div class="kpi-value c-green">'+fmtNum(d.gviews)+'</div><div class="kpi-yoy">'+fmtYoyText(d.gviewsYoy)+' '+compLabel+'</div>'+(ads?'<div class="kpi-ads-split"><span class="kpi-split-pill org">🌿 Org '+fmtNum(rcaOrgGv)+'</span><span class="kpi-split-pill ad">🎯 Ad '+fmtNum(ads.ad_glance_views||0)+'</span></div>':'')+'</div>'+
     '<div class="kpi-card"><div class="kpi-label">Conversion Rate</div><div class="kpi-value '+(cvrLevel(d.conv)==='good'?'c-green':cvrLevel(d.conv)==='ok'?'c-amber':'c-red')+'">'+d.conv.toFixed(2)+'%</div><div class="kpi-yoy">'+(d.conv>=10?'✅ Good (≥10%)':d.conv>=5?'⚠️ Average (5–9%)':'🔴 Low (<5%)')+'</div></div>'+
     '<div class="kpi-card"><div class="kpi-label">Avg OOS</div><div class="kpi-value '+(oosLabel(d.avgOos)==='green'?'c-green':oosLabel(d.avgOos)==='amber'?'c-amber':'c-red')+'">'+d.avgOos.toFixed(1)+'%</div><div class="kpi-yoy">'+(d.avgOos<=6?'✅ Good (≤6%)':d.avgOos<=9?'⚠️ Monitor (7–9%)':'🔴 High (≥10%)')+' · Unfilled: '+Math.round(d.unfilled)+'</div></div>';
   var wrap=document.getElementById('table-wrap');
