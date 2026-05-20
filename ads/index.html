@@ -212,22 +212,49 @@
     </div>
   </div>
 
-  <!-- SECTION 5: Query Intelligence -->
+  <!-- SECTION 5: Query Intelligence - FULL -->
   <div>
     <div class="section-title">🔍 Search Query Intelligence</div>
-    <div class="two-col">
+    <div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
+      <b style="color:var(--amber)">⏱ 14-Day Attribution Window:</b> Revenue figures reflect sales attributed within 14 days of a click. Recent campaigns (last 2 weeks) will show understated ROAS as attribution is still accruing. Use trend direction rather than absolute ROAS for recently-launched campaigns.
+    </div>
+    <div class="two-col" style="margin-bottom:16px;">
       <div class="panel">
-        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">💸 Wasted Spend — ROAS &lt; 1x</div>
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">💸 Wasted Spend — ROAS &lt; 1x — Add as Negatives</div>
         <div id="wasted-spend-table"></div>
       </div>
       <div class="panel">
-        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">🏆 Top Converting Queries</div>
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">🏆 Top Converting — Scale These</div>
         <div id="top-queries-table"></div>
       </div>
     </div>
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;">All Queries — Top 100 by Spend</div>
+        <div style="display:flex;gap:8px;">
+          <button class="filter-tab active" onclick="setQuerySort('spend',this)" id="qsort-spend">By Spend</button>
+          <button class="filter-tab" onclick="setQuerySort('roas',this)" id="qsort-roas">By ROAS</button>
+          <button class="filter-tab" onclick="setQuerySort('clicks',this)" id="qsort-clicks">By Clicks</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:500px;overflow-y:auto;" id="all-queries-table"></div>
+    </div>
   </div>
 
-  <!-- SECTION 6: OOS Waste -->
+  <!-- SECTION 8: Root Cause Analysis by Brand -->
+  <div>
+    <div class="section-title">🔬 Root Cause Analysis — Brand Deep Dive</div>
+    <div style="background:var(--blue-light);border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);">
+      Select a brand above to filter. Analysis identifies the primary driver of under/over-performance and recommended action.
+    </div>
+    <div id="root-cause-panel" class="panel"></div>
+  </div>
+
+  <!-- SECTION 9: Agency Brief -->
+  <div>
+    <div class="section-title">📝 Agency Brief — Week of <span id="brief-week-label">—</span></div>
+    <div class="panel" id="agency-brief-panel"></div>
+  </div>
   <div>
     <div class="section-title">⚠️ Ad Spend on OOS ASINs — Pure Waste</div>
     <div class="panel" id="oos-waste-panel">
@@ -301,16 +328,16 @@ async function loadWeek(ws){
 
   const mktFilter=currentMarket!=='ALL'?`&market=eq.${currentMarket}`:'';
 
-  // Pacvue weeks start Saturday, VC weeks start Sunday — offset by 1 day
-  function pacvueWeek(vcWeek){ if(!vcWeek)return null; const d=new Date(vcWeek); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
-  const pw=pacvueWeek(ws);
-  const ppw=pacvueWeek(priorWeek);
+  // Pacvue campaigns/placement use Saturday week start, queries/VC use Sunday
+  function satWeek(vcWeek){ if(!vcWeek)return null; const d=new Date(vcWeek); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
+  const pw=satWeek(ws);
+  const ppw=satWeek(priorWeek);
 
   // Fetch all data in parallel
   const [campaigns,placement,queries,priorCampaigns,priorPlacement,snapshots,adsAgg,priorAdsAgg]=await Promise.all([
     sbFetch(`/rest/v1/brand_health_ads_campaigns?week_start=eq.${pw}${mktFilter}&select=week_start,campaign_name,brand_classified,market,ad_spend,ad_revenue,ad_clicks,ad_impressions`),
     sbFetch(`/rest/v1/brand_health_ads_placement?week_start=eq.${pw}${mktFilter}&select=week_start,placement,brand_classified,market,ad_spend,ad_revenue,ad_clicks,ad_impressions`),
-    sbFetch(`/rest/v1/brand_health_ads_queries?week_start=eq.${pw}${mktFilter}&select=week_start,query,brand_classified,market,ad_spend,ad_revenue,ad_clicks`),
+    sbFetch(`/rest/v1/brand_health_ads_queries?week_start=eq.${ws}${mktFilter}&select=week_start,query,brand_classified,market,ad_spend,ad_revenue,ad_clicks`),
     ppw?sbFetch(`/rest/v1/brand_health_ads_campaigns?week_start=eq.${ppw}${mktFilter}&select=brand_classified,market,ad_spend,ad_revenue,ad_clicks,ad_impressions`):Promise.resolve([]),
     ppw?sbFetch(`/rest/v1/brand_health_ads_placement?week_start=eq.${ppw}${mktFilter}&select=placement,brand_classified,market,ad_spend,ad_revenue,ad_clicks,ad_impressions`):Promise.resolve([]),
     sbFetch(`/rest/v1/brand_health_snapshots?week_start=eq.${ws}${mktFilter}&select=asin,product_title,brand_classified,market,oos_pct,unfilled_units,glance_views`),
@@ -356,6 +383,8 @@ function renderAll(){
   renderQueries();
   renderOOSWaste();
   renderCampaigns();
+  renderRootCause();
+  renderAgencyBrief();
 }
 
 function renderBrandPills(){
@@ -554,35 +583,244 @@ function renderPlacement(){
   }).join('');
 }
 
+let querySortKey='spend';
+
+function setQuerySort(key, btn){
+  querySortKey=key;
+  document.querySelectorAll('[id^="qsort-"]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderQueries();
+}
+
 function renderQueries(){
   const qs=filterByBrand(weekData.queries);
 
-  // Wasted: spend > 0, revenue < spend (ROAS < 1)
-  const wasted=qs.filter(r=>(r.ad_spend||0)>0&&(r.ad_revenue||0)<(r.ad_spend||0))
-    .reduce((m,r)=>{const q=r.query||'';if(!m[q])m[q]={spend:0,revenue:0,clicks:0};m[q].spend+=r.ad_spend||0;m[q].revenue+=r.ad_revenue||0;m[q].clicks+=r.ad_clicks||0;return m;},{});
-  const wastedArr=Object.entries(wasted).sort((a,b)=>b[1].spend-a[1].spend).slice(0,12);
+  // Aggregate by query
+  const qAgg={};
+  qs.forEach(r=>{
+    const q=(r.query||'').trim().toLowerCase();
+    if(!q)return;
+    if(!qAgg[q])qAgg[q]={spend:0,revenue:0,clicks:0};
+    qAgg[q].spend+=r.ad_spend||0;qAgg[q].revenue+=r.ad_revenue||0;qAgg[q].clicks+=r.ad_clicks||0;
+  });
 
+  // Wasted
+  const wastedArr=Object.entries(qAgg).filter(([q,d])=>d.spend>0&&d.revenue<d.spend).sort((a,b)=>b[1].spend-a[1].spend).slice(0,15);
   document.getElementById('wasted-spend-table').innerHTML=wastedArr.length?`
     <table class="data-table">
       <thead><tr><th>Query</th><th class="r">Spend</th><th class="r">ROAS</th><th class="r">Clicks</th></tr></thead>
-      <tbody>${wastedArr.map(([q,d])=>{
-        const roas=d.spend>0?d.revenue/d.spend:0;
-        return`<tr><td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${q}">${q}</td><td class="td-r" style="color:var(--red);font-weight:700">${fmtCur(d.spend)}</td><td class="td-r"><span class="roas-bad">${fmtRoas(roas)}</span></td><td class="td-r">${fmtNum(d.clicks)}</td></tr>`;
+      <tbody>${wastedArr.map(([q,d])=>{const roas=d.spend>0?d.revenue/d.spend:0;
+        return`<tr><td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${q}">${q}</td><td class="td-r" style="color:var(--red);font-weight:700">${fmtCur(d.spend)}</td><td class="td-r roas-bad">${fmtRoas(roas)}</td><td class="td-r">${fmtNum(d.clicks)}</td></tr>`;
       }).join('')}</tbody>
     </table>`:'<div class="empty">✅ No wasted spend detected this week.</div>';
 
-  // Top converting: highest ROAS with meaningful spend
-  const good=qs.filter(r=>(r.ad_spend||0)>5&&(r.ad_revenue||0)>0)
-    .reduce((m,r)=>{const q=r.query||'';if(!m[q])m[q]={spend:0,revenue:0,clicks:0};m[q].spend+=r.ad_spend||0;m[q].revenue+=r.ad_revenue||0;m[q].clicks+=r.ad_clicks||0;return m;},{});
-  const goodArr=Object.entries(good).map(([q,d])=>([q,d,d.spend>0?d.revenue/d.spend:0])).sort((a,b)=>b[2]-a[2]).slice(0,12);
-
+  // Top converting
+  const goodArr=Object.entries(qAgg).filter(([q,d])=>d.spend>2&&d.revenue>0).map(([q,d])=>([q,d,d.spend>0?d.revenue/d.spend:0])).sort((a,b)=>b[2]-a[2]).slice(0,15);
   document.getElementById('top-queries-table').innerHTML=goodArr.length?`
     <table class="data-table">
       <thead><tr><th>Query</th><th class="r">Spend</th><th class="r">ROAS</th><th class="r">Revenue</th></tr></thead>
       <tbody>${goodArr.map(([q,d,roas])=>{
-        return`<tr><td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${q}">${q}</td><td class="td-r">${fmtCur(d.spend)}</td><td class="td-r"><span class="${roasClass(roas)}">${fmtRoas(roas)}</span></td><td class="td-r">${fmtCur(d.revenue)}</td></tr>`;
+        return`<tr><td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${q}">${q}</td><td class="td-r">${fmtCur(d.spend)}</td><td class="td-r"><span class="${roasClass(roas)}">${fmtRoas(roas)}</span></td><td class="td-r">${fmtCur(d.revenue)}</td></tr>`;
       }).join('')}</tbody>
-    </table>`:'<div class="empty">No query data available.</div>';
+    </table>`:'<div class="empty">No converting query data available.</div>';
+
+  // All queries top 100
+  const sortFn={spend:(a,b)=>b[1].spend-a[1].spend,roas:(a,b)=>(b[1].spend>0?b[1].revenue/b[1].spend:0)-(a[1].spend>0?a[1].revenue/a[1].spend:0),clicks:(a,b)=>b[1].clicks-a[1].clicks};
+  const allArr=Object.entries(qAgg).filter(([q,d])=>d.spend>0).sort(sortFn[querySortKey]||sortFn.spend).slice(0,100);
+  const el=document.getElementById('all-queries-table');
+  if(el){
+    el.innerHTML=allArr.length?`
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Query</th><th class="r">Spend</th><th class="r">Revenue</th><th class="r">ROAS</th><th class="r">Clicks</th></tr></thead>
+        <tbody>${allArr.map(([q,d],i)=>{
+          const roas=d.spend>0?d.revenue/d.spend:0;
+          const waste=roas<1&&d.spend>10;const top=roas>=5;
+          return`<tr style="${waste?'background:var(--red-bg)':top?'background:var(--green-bg)':''}">
+            <td style="color:var(--text3);font-size:10px">${i+1}</td>
+            <td style="font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${q}">${q}${waste?'<span class="badge badge-waste">WASTE</span>':''}${top?'<span class="badge" style="background:var(--green-bg);color:var(--green)">TOP</span>':''}</td>
+            <td class="td-r">${fmtCur(d.spend)}</td>
+            <td class="td-r">${fmtCur(d.revenue)}</td>
+            <td class="td-r"><span class="${roasClass(roas)}">${fmtRoas(roas)}</span></td>
+            <td class="td-r">${fmtNum(d.clicks)}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`:'<div class="empty">No query data for this week. Check that the Query Report was uploaded.</div>';
+  }
+}
+
+function renderRootCause(){
+  const panel=document.getElementById('root-cause-panel');
+  if(!panel)return;
+  const byBrand={};
+  filterByBrand(weekData.campaigns).forEach(r=>{
+    const b=r.brand_classified||'OTHER';
+    if(!byBrand[b])byBrand[b]={spend:0,revenue:0,clicks:0,impressions:0};
+    byBrand[b].spend+=r.ad_spend||0;byBrand[b].revenue+=r.ad_revenue||0;byBrand[b].clicks+=r.ad_clicks||0;byBrand[b].impressions+=r.ad_impressions||0;
+  });
+  const brands=Object.entries(byBrand).sort((a,b)=>b[1].spend-a[1].spend);
+  if(!brands.length){panel.innerHTML='<div class="empty">No campaign data available.</div>';return;}
+
+  panel.innerHTML=brands.map(([b,d])=>{
+    const roas=d.spend>0?d.revenue/d.spend:0;
+    const ctr=d.impressions>0?d.clicks/d.impressions*100:0;
+    const cpc=d.clicks>0?d.spend/d.clicks:0;
+    // Root cause logic
+    let issues=[];let actions=[];
+    if(ctr<0.15){issues.push('Very low CTR ('+ctr.toFixed(2)+'%) — impressions not converting to clicks');actions.push('Refresh ad creative and main image. Test price-led headlines. Check if ads are showing for irrelevant broad match terms.');}
+    else if(ctr<0.30){issues.push('CTR below 0.30% threshold ('+ctr.toFixed(2)+'%)');actions.push('A/B test headline copy. Ensure lifestyle imagery is used on Sponsored Brand ads. Review keyword match types.');}
+    if(roas<1.5&&d.spend>500){issues.push('ROAS at '+roas.toFixed(2)+'x — spend not generating sufficient revenue');actions.push('Reduce bids by 20% on campaigns below 2x ROAS. Pause lowest-performing ad groups. Shift budget to top-performing campaigns.');}
+    else if(roas>=5){issues.push('Strong ROAS at '+roas.toFixed(2)+'x — potential underinvestment');actions.push('Increase daily budgets by 30-50%. Expand keyword list. Test broader match types to capture more volume.');}
+    if(cpc>3&&d.clicks<1000){issues.push('High CPC ('+fmtCur(cpc)+') with low click volume');actions.push('Review bid strategy. Consider switching from fixed bid to dynamic bids down only. Check auction competitiveness.');}
+    if(!issues.length){issues.push('Performance within normal range');actions.push('Monitor week-on-week trends. Consider incremental testing on placements or match types.');}
+
+    const color=BRAND_COLORS[b]||'var(--ad)';
+    return`<div style="border-left:4px solid ${color};padding:12px 16px;margin-bottom:12px;background:var(--bg);border-radius:0 8px 8px 0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text)">${BRAND_LABELS[b]||b}</div>
+        <div style="display:flex;gap:12px;font-size:11px;">
+          <span>Spend: <b>${fmtCur(d.spend)}</b></span>
+          <span>ROAS: <b class="${roasClass(roas)}">${fmtRoas(roas)}</b></span>
+          <span>CTR: <b class="${ctrClass(ctr)}">${ctr.toFixed(2)}%</b></span>
+          <span>Clicks: <b>${fmtNum(d.clicks)}</b></span>
+        </div>
+      </div>
+      ${issues.map((iss,i)=>`
+        <div style="margin-bottom:6px;">
+          <div style="font-size:11px;color:var(--red);font-weight:600;margin-bottom:2px;">⚠ ${iss}</div>
+          <div style="font-size:11px;color:var(--text2);padding-left:12px;">→ ${actions[i]||''}</div>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderAgencyBrief(){
+  const panel=document.getElementById('agency-brief-panel');
+  const wlabel=document.getElementById('brief-week-label');
+  if(!panel)return;
+
+  const wLabel=allWeeks.find(w=>w.week_start===currentWeek);
+  if(wlabel) wlabel.textContent=wLabel?(wLabel.week_label||currentWeek):currentWeek;
+
+  const byBrand={};
+  filterByBrand(weekData.campaigns).forEach(r=>{
+    const b=r.brand_classified||'OTHER';
+    if(!byBrand[b])byBrand[b]={spend:0,revenue:0,clicks:0,impressions:0};
+    byBrand[b].spend+=r.ad_spend||0;byBrand[b].revenue+=r.ad_revenue||0;byBrand[b].clicks+=r.ad_clicks||0;byBrand[b].impressions+=r.ad_impressions||0;
+  });
+
+  const cur=getPortfolioStats(filterByBrand(weekData.campaigns));
+  const pri=getPortfolioStats(filterByBrand(priorData.campaigns));
+  const wowClicks=wow(cur.clicks,pri.clicks);
+  const wowRoas=wow(cur.roas,pri.roas);
+
+  // Wasted spend total
+  const qs=filterByBrand(weekData.queries);
+  const qAgg={};
+  qs.forEach(r=>{const q=(r.query||'').trim();if(!q)return;if(!qAgg[q])qAgg[q]={spend:0,revenue:0};qAgg[q].spend+=r.ad_spend||0;qAgg[q].revenue+=r.ad_revenue||0;});
+  const wastedTotal=Object.values(qAgg).filter(d=>d.spend>0&&d.revenue<d.spend).reduce((s,d)=>s+d.spend,0);
+  const topWasted=Object.entries(qAgg).filter(([q,d])=>d.spend>0&&d.revenue<d.spend).sort((a,b)=>b[1].spend-a[1].spend).slice(0,5).map(([q])=>q);
+
+  // Top placement
+  const placements=filterByBrand(weekData.placement);
+  const plAgg={};
+  placements.forEach(r=>{const p=r.placement||'Other';if(!plAgg[p])plAgg[p]={spend:0,revenue:0};plAgg[p].spend+=r.ad_spend||0;plAgg[p].revenue+=r.ad_revenue||0;});
+  const tosRoas=plAgg['Top of Search on-Amazon']&&plAgg['Top of Search on-Amazon'].spend>0?(plAgg['Top of Search on-Amazon'].revenue/plAgg['Top of Search on-Amazon'].spend):0;
+  const dpRoas=plAgg['Detail Page on-Amazon']&&plAgg['Detail Page on-Amazon'].spend>0?(plAgg['Detail Page on-Amazon'].revenue/plAgg['Detail Page on-Amazon'].spend):0;
+
+  // Underperforming brands
+  const weakBrands=Object.entries(byBrand).filter(([b,d])=>d.spend>200&&(d.spend>0?d.revenue/d.spend:0)<2).map(([b])=>BRAND_LABELS[b]||b);
+  const strongBrands=Object.entries(byBrand).filter(([b,d])=>d.spend>200&&(d.spend>0?d.revenue/d.spend:0)>=4).map(([b])=>BRAND_LABELS[b]||b);
+
+  panel.innerHTML=`
+    <div style="background:var(--ad-bg);border-radius:8px;padding:14px 18px;margin-bottom:20px;">
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--ad);margin-bottom:6px;">📋 Weekly Ads Brief — For Agency / Internal Optimisation Team</div>
+      <div style="font-size:11px;color:var(--text2);">Generated from Pacvue campaign data. All revenue figures use 14-day attribution. Campaigns launched within the last 14 days will show understated ROAS — allow full attribution window before making bid decisions.</div>
+    </div>
+
+    <div style="display:grid;gap:16px;">
+
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;border-bottom:2px solid var(--border);padding-bottom:6px;">1. PORTFOLIO SUMMARY</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8;">
+          Total spend this week: <b>${fmtCur(cur.spend)}</b> generating <b>${fmtCur(cur.revenue)}</b> revenue at <b class="${roasClass(cur.roas)}">${fmtRoas(cur.roas)} ROAS</b>.
+          ${wowClicks!==null?`Clicks are <b style="color:${wowClicks>0?'var(--green)':'var(--red)'};">${wowClicks>0?'up':'down'} ${Math.abs((wowClicks*100)).toFixed(0)}% WoW</b> at ${fmtNum(cur.clicks)} total.`:''}
+          CTR is <b class="${ctrClass(cur.ctr)}">${cur.ctr.toFixed(2)}%</b> against a target of ≥0.30%.
+          ${wowRoas!==null?`ROAS is <b style="color:${wowRoas>0?'var(--green)':'var(--red)'};">${wowRoas>0?'improving':'declining'} ${Math.abs((wowRoas*100)).toFixed(0)}% WoW</b>.`:''}
+        </div>
+      </div>
+
+      ${weakBrands.length?`
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;border-bottom:2px solid var(--red-bg);padding-bottom:6px;">2. UNDERPERFORMING BRANDS — ACTION REQUIRED</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8;">
+          The following brands are below 2x ROAS threshold: <b>${weakBrands.join(', ')}</b>.
+          <br><b>Recommended actions:</b>
+          <ul style="margin-top:8px;padding-left:20px;color:var(--text2);">
+            <li>Reduce bids by 15-25% on all exact match campaigns for these brands</li>
+            <li>Pause any broad match campaigns with ROAS below 1x</li>
+            <li>Review and tighten targeting — add negatives for irrelevant search terms</li>
+            <li>Check if low ROAS correlates with OOS — no point bidding on out-of-stock ASINs</li>
+          </ul>
+        </div>
+      </div>`:''}
+
+      ${strongBrands.length?`
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;border-bottom:2px solid var(--green-bg);padding-bottom:6px;">3. SCALING OPPORTUNITY</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8;">
+          <b>${strongBrands.join(', ')}</b> ${strongBrands.length===1?'is':'are'} delivering ≥4x ROAS — these brands are underinvested.
+          <br><b>Recommended actions:</b>
+          <ul style="margin-top:8px;padding-left:20px;color:var(--text2);">
+            <li>Increase daily budgets by 30-50% for these brands</li>
+            <li>Expand keyword lists — add related and competitor terms</li>
+            <li>Test Sponsored Brand Video if not already running</li>
+            <li>Ensure Top of Search bids are competitive — ROAS headroom exists</li>
+          </ul>
+        </div>
+      </div>`:''}
+
+      ${wastedTotal>100?`
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;border-bottom:2px solid var(--amber-bg);padding-bottom:6px;">4. NEGATIVE KEYWORD ACTION — ${fmtCur(wastedTotal)} WASTED SPEND</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8;">
+          <b>${fmtCur(wastedTotal)}</b> spent this week on queries returning ROAS below 1x.
+          ${topWasted.length?`Top queries to add as negatives: <b>${topWasted.join(', ')}</b>.`:''}
+          <br><b>Recommended actions:</b>
+          <ul style="margin-top:8px;padding-left:20px;color:var(--text2);">
+            <li>Add all ROAS &lt;0.5x queries as exact match negatives at campaign level</li>
+            <li>Add competitor brand terms (Lego, Mattel etc) as negatives unless conquesting intentionally</li>
+            <li>Review broad match terms weekly — these generate the most waste</li>
+          </ul>
+        </div>
+      </div>`:''}
+
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;border-bottom:2px solid var(--border);padding-bottom:6px;">5. PLACEMENT STRATEGY</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8;">
+          Top of Search delivering <b class="${roasClass(tosRoas)}">${fmtRoas(tosRoas)}</b> vs Detail Page at <b class="${roasClass(dpRoas)}">${fmtRoas(dpRoas)}</b>.
+          ${tosRoas>dpRoas*1.5?'Top of Search is significantly outperforming Detail Page — <b>increase Top of Search bid adjustments</b> and reduce Detail Page allocation.':
+            dpRoas>tosRoas*1.5?'Detail Page is outperforming Top of Search — review if Top of Search bids are winning at appropriate volumes.':
+            'Placement performance is broadly balanced — maintain current allocation.'}
+          <br><b>CTR by placement:</b> Top of Search CTR is typically 5-10x higher than Detail Page — if overall CTR is low, the issue may be low Top of Search impression share (losing auctions).
+        </div>
+      </div>
+
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;border-bottom:2px solid var(--border);padding-bottom:6px;">6. CTR IMPROVEMENT</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8;">
+          Portfolio CTR is <b class="${ctrClass(cur.ctr)}">${cur.ctr.toFixed(2)}%</b>. Low CTR is the primary driver of low click volume.
+          <br><b>Creative checklist for agency:</b>
+          <ul style="margin-top:8px;padding-left:20px;color:var(--text2);">
+            <li>Main image must be high contrast, lifestyle where possible, minimal background</li>
+            <li>Sponsored Brand headline should lead with benefit not brand name</li>
+            <li>Price-led headlines ("Under €X" or "X% off") typically lift CTR 15-25%</li>
+            <li>Animated Sponsored Brand Video outperforms static for awareness brands (Beyblade, Nerf)</li>
+            <li>Test: product on white vs lifestyle image — varies significantly by category</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>`;
 }
 
 function renderOOSWaste(){
