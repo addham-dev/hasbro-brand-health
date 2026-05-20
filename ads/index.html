@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Hasbro EU — Ads Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --blue:#009CDE;--blue-dark:#0077A8;--blue-light:#E5F6FF;
+      --bg:#F0F8FC;--white:#fff;--text:#003A54;--text2:#5A8DA0;
+      --text3:#A0C8D8;--border:#D0EAF5;
+      --green:#00B388;--green-bg:#E5FFF6;
+      --red:#E8423F;--red-bg:#FFF0F0;
+      --amber:#F5A623;--amber-bg:#FFF8EC;
+      --purple:#9B59B6;--purple-bg:#F5EEF8;
+      --ad:#4F46E5;--ad-bg:#EEF2FF;
+      --shadow:0 2px 16px rgba(0,156,222,0.08);
+      --shadow-lg:0 8px 32px rgba(0,156,222,0.15);
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+
+    header{background:#1F1646;padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:68px;box-shadow:0 4px 20px rgba(0,0,0,0.3);}
+    .logo{display:flex;align-items:center;gap:16px;}
+    .logo-img{height:36px;width:auto;}
+    .logo-divider{width:1px;height:32px;background:rgba(255,255,255,0.2);}
+    .logo-text{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:white;}
+    .logo-sub{font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+    .nav-links{display:flex;gap:4px;}
+    .nav-link{padding:6px 16px;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,0.65);text-decoration:none;transition:all 0.2s;}
+    .nav-link:hover{background:rgba(255,255,255,0.1);color:white;}
+    .nav-link.active{background:var(--ad);color:white;}
+
+    .filter-bar{background:white;padding:10px 40px;display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--border);box-shadow:var(--shadow);flex-wrap:wrap;}
+    .filter-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
+    .filter-tabs{display:flex;gap:4px;}
+    .filter-tab{padding:6px 14px;border-radius:6px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+    .filter-tab.active{background:var(--ad);color:white;border-color:var(--ad);}
+    .divider{width:1px;height:24px;background:var(--border);}
+    .week-select{padding:6px 12px;border-radius:6px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;outline:none;}
+
+    main{padding:24px 40px;max-width:1600px;margin:0 auto;display:grid;gap:24px;}
+
+    .section-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+    .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+    /* KPI Strip */
+    .kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
+    .kpi-card{background:white;border-radius:12px;padding:14px 16px;border:2px solid var(--border);box-shadow:var(--shadow);}
+    .kpi-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+    .kpi-value{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;line-height:1;}
+    .kpi-wow{font-size:11px;font-weight:600;margin-top:4px;}
+    .kpi-flag{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:5px;display:inline-block;}
+    .flag-red{background:var(--red-bg);color:var(--red);}
+    .flag-amber{background:var(--amber-bg);color:var(--amber);}
+    .flag-green{background:var(--green-bg);color:var(--green);}
+
+    /* Action cards */
+    .action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+    .action-card{background:white;border-radius:12px;padding:16px;border:2px solid var(--border);box-shadow:var(--shadow);}
+    .action-card.urgent{border-color:var(--red);background:var(--red-bg);}
+    .action-card.warning{border-color:var(--amber);background:var(--amber-bg);}
+    .action-card.good{border-color:var(--green);background:var(--green-bg);}
+    .action-icon{font-size:20px;margin-bottom:8px;}
+    .action-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:4px;}
+    .action-body{font-size:12px;color:var(--text2);line-height:1.5;}
+
+    /* Two col layout */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+
+    /* Panel */
+    .panel{background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow);border:2px solid var(--border);}
+
+    /* Tables */
+    .data-table{width:100%;border-collapse:collapse;}
+    .data-table th{text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;padding:8px 10px;border-bottom:2px solid var(--border);white-space:nowrap;}
+    .data-table th.r{text-align:right;}
+    .data-table td{padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;}
+    .data-table tr:last-child td{border-bottom:none;}
+    .data-table tr:hover td{background:var(--blue-light);}
+    .td-mono{font-family:'DM Mono',monospace;font-size:11px;}
+    .td-r{text-align:right;font-family:'DM Mono',monospace;font-size:11px;}
+
+    /* Bar chart inline */
+    .bar-bg{height:5px;background:var(--border);border-radius:3px;margin-top:3px;}
+    .bar-fg{height:100%;border-radius:3px;}
+
+    /* Placement donut-style bars */
+    .placement-row{margin-bottom:14px;}
+    .placement-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+    .placement-name{font-size:12px;font-weight:600;color:var(--text);}
+    .placement-stats{font-size:11px;color:var(--text2);}
+    .placement-bar{height:10px;background:var(--border);border-radius:5px;overflow:hidden;}
+    .placement-fill{height:100%;border-radius:5px;transition:width 0.6s ease;}
+
+    /* Brand filter pills */
+    .brand-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+    .brand-pill{padding:5px 12px;border-radius:20px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+    .brand-pill.active{background:var(--ad);color:white;border-color:var(--ad);}
+
+    /* CTR meter */
+    .ctr-good{color:var(--green);font-weight:700;}
+    .ctr-warn{color:var(--amber);font-weight:700;}
+    .ctr-bad{color:var(--red);font-weight:700;}
+
+    .mp{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;}
+    .mp-GB{background:#E8F4FF;color:#0077A8;}
+    .mp-DE{background:#FFF3E0;color:#E65100;}
+    .mp-FR{background:#F3E5F5;color:#6A1B9A;}
+    .mp-IT{background:#E8F5E9;color:#2E7D32;}
+    .mp-ES{background:#FFF8E1;color:#F57F17;}
+
+    .roas-good{color:var(--green);font-weight:700;}
+    .roas-warn{color:var(--amber);font-weight:700;}
+    .roas-bad{color:var(--red);font-weight:700;}
+
+    .loading{text-align:center;padding:60px;color:var(--text3);font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+    .empty{text-align:center;padding:40px;color:var(--text3);font-size:12px;}
+
+    .wow-up{color:var(--green);font-weight:700;}
+    .wow-down{color:var(--red);font-weight:700;}
+
+    .badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:4px;}
+    .badge-waste{background:var(--red-bg);color:var(--red);}
+    .badge-oos{background:var(--amber-bg);color:var(--amber);}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="https://corporate.hasbro.com/_next/image?url=%2Fimages%2Fhasbro_logo.png&w=256&q=75" alt="Hasbro" class="logo-img">
+    <div class="logo-divider"></div>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon" class="logo-img" style="height:22px;filter:brightness(0) invert(1);opacity:0.85;">
+    <div class="logo-divider"></div>
+    <div>
+      <div class="logo-text">Ads Intelligence</div>
+      <div class="logo-sub">Weekly Optimisation Brief</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="../index.html">Dashboard</a>
+    <a class="nav-link" href="../insights.html">Insights</a>
+    <a class="nav-link active" href="#">Ads Intelligence</a>
+    <a class="nav-link" href="../upload.html">Upload</a>
+    <a class="nav-link" href="https://addham-dev.github.io/hasbro-sales-ticker/" target="_blank">Live Sales ↗</a>
+  </div>
+</header>
+
+<div class="filter-bar">
+  <span class="filter-label">Week</span>
+  <select class="week-select" id="week-select" onchange="loadWeek(this.value)"><option>Loading...</option></select>
+  <div class="divider"></div>
+  <span class="filter-label">Market</span>
+  <div class="filter-tabs" id="market-tabs">
+    <button class="filter-tab active" onclick="setMarket('ALL',this)">All EU5</button>
+    <button class="filter-tab" onclick="setMarket('GB',this)">🇬🇧 GB</button>
+    <button class="filter-tab" onclick="setMarket('DE',this)">🇩🇪 DE</button>
+    <button class="filter-tab" onclick="setMarket('FR',this)">🇫🇷 FR</button>
+    <button class="filter-tab" onclick="setMarket('IT',this)">🇮🇹 IT</button>
+    <button class="filter-tab" onclick="setMarket('ES',this)">🇪🇸 ES</button>
+  </div>
+  <div class="divider"></div>
+  <span class="filter-label" id="week-badge-label">Loading...</span>
+</div>
+
+<main id="main" style="display:none">
+
+  <!-- SECTION 1: Weekly Action Brief -->
+  <div>
+    <div class="section-title">⚡ Weekly Action Brief</div>
+    <div class="action-grid" id="action-grid"></div>
+  </div>
+
+  <!-- SECTION 2: Click Health KPIs -->
+  <div>
+    <div class="section-title">📊 Click Health — This Week vs Last Week</div>
+    <div class="kpi-strip" id="kpi-strip"></div>
+  </div>
+
+  <!-- SECTION 3: Brand Performance -->
+  <div>
+    <div class="section-title">🎯 Brand Performance</div>
+    <div class="brand-pills" id="brand-pills"></div>
+    <div class="two-col">
+      <div class="panel">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Spend & ROAS by Brand</div>
+        <div id="brand-roas-table"></div>
+      </div>
+      <div class="panel">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">CTR by Brand — Threshold: 0.30%</div>
+        <div id="brand-ctr-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: Placement Split -->
+  <div>
+    <div class="section-title">📍 Placement Intelligence</div>
+    <div class="two-col">
+      <div class="panel">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;">Spend by Placement</div>
+        <div id="placement-spend"></div>
+      </div>
+      <div class="panel">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;">ROAS by Placement</div>
+        <div id="placement-roas"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: Query Intelligence -->
+  <div>
+    <div class="section-title">🔍 Search Query Intelligence</div>
+    <div class="two-col">
+      <div class="panel">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">💸 Wasted Spend — ROAS &lt; 1x</div>
+        <div id="wasted-spend-table"></div>
+      </div>
+      <div class="panel">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">🏆 Top Converting Queries</div>
+        <div id="top-queries-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: OOS Waste -->
+  <div>
+    <div class="section-title">⚠️ Ad Spend on OOS ASINs — Pure Waste</div>
+    <div class="panel" id="oos-waste-panel">
+      <div class="loading">Loading OOS data...</div>
+    </div>
+  </div>
+
+  <!-- SECTION 7: Campaign Drilldown -->
+  <div>
+    <div class="section-title">📋 Campaign Drilldown</div>
+    <div class="panel" id="campaign-panel">
+      <div class="loading">Loading campaigns...</div>
+    </div>
+  </div>
+
+</main>
+<div id="loading-screen" class="loading">Loading Ads Intelligence...</div>
+
+<script>
+const SB_URL='https://rycqfwzgvpzwhphgclpb.supabase.co';
+const SB_KEY='sb_publishable_CbKFhpN2dWI_UXhwGkclqw_AMPSprs4';
+const BRAND_LABELS={GAMES:'Games',PLAY_DOH:'Play-Doh',MONOPOLY:'Monopoly',BEYBLADE:'Beyblade',NERF:'Nerf',TRANSFORMERS:'Transformers',MARVEL:'Marvel',STAR_WARS:'Star Wars',PEPPA_PIG:'Peppa Pig',DISNEY_KIDS:'Disney Kids',OTHER:'Other'};
+const BRAND_ORDER=['BEYBLADE','NERF','PLAY_DOH','GAMES','MONOPOLY','STAR_WARS','MARVEL','TRANSFORMERS','PEPPA_PIG','DISNEY_KIDS','OTHER'];
+const BRAND_COLORS={GAMES:'#009CDE',PLAY_DOH:'#E91E8C',MONOPOLY:'#B22222',BEYBLADE:'#00B388',NERF:'#FF6B00',TRANSFORMERS:'#F5A623',MARVEL:'#E8423F',STAR_WARS:'#1a1a2e',PEPPA_PIG:'#FF6B9D',DISNEY_KIDS:'#9B59B6',OTHER:'#A0C8D8'};
+
+let currentWeek=null, priorWeek=null, currentMarket='ALL', selectedBrand='ALL';
+let weekData={campaigns:[],placement:[],queries:[]};
+let priorData={campaigns:[],placement:[],queries:[]};
+let snapshotData=[];
+let allWeeks=[];
+
+function sbFetch(path){
+  const sep=path.indexOf('?')>=0?'&':'?';
+  return fetch(SB_URL+path+sep+'limit=20000',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
+    .then(r=>r.ok?r.json():[])
+    .then(d=>Array.isArray(d)?d:[])
+    .catch(()=>[]);
+}
+
+function fmtCur(v){if(v==null)return'—';if(v>=1000000)return'€'+(v/1000000).toFixed(1)+'M';if(v>=1000)return'€'+(v/1000).toFixed(1)+'K';return'€'+v.toFixed(0);}
+function fmtNum(n){if(n==null)return'—';if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(0)+'K';return Math.round(n).toLocaleString();}
+function fmtPct(v){return v!=null?v.toFixed(2)+'%':'—';}
+function fmtRoas(v){return v!=null?v.toFixed(2)+'x':'—';}
+function roasClass(v){return v>=4?'roas-good':v>=2?'roas-warn':'roas-bad';}
+function ctrClass(v){return v>=0.3?'ctr-good':v>=0.15?'ctr-warn':'ctr-bad';}
+function wow(cur,pri){if(!pri)return null;return(cur-pri)/pri;}
+function fmtWow(v){if(v==null)return'';const p=(v*100).toFixed(1),c=v>0?'var(--green)':v<0?'var(--red)':'var(--text3)',a=v>0?'▲':'▼';return`<span style="color:${c};font-weight:700;font-size:10px">${a}${Math.abs(p)}%</span>`;}
+
+async function init(){
+  const weeks=await sbFetch('/rest/v1/brand_health_weeks?select=week_start,week_label&order=week_start.desc');
+  allWeeks=weeks;
+  if(!weeks.length){document.getElementById('loading-screen').textContent='No data uploaded yet.';return;}
+
+  const sel=document.getElementById('week-select');
+  sel.innerHTML=weeks.map(w=>`<option value="${w.week_start}">${w.week_label||w.week_start}</option>`).join('');
+  currentWeek=weeks[0].week_start;
+  priorWeek=weeks[1]?weeks[1].week_start:null;
+
+  await loadWeek(currentWeek);
+}
+
+async function loadWeek(ws){
+  currentWeek=ws;
+  const wsIdx=allWeeks.findIndex(w=>w.week_start===ws);
+  priorWeek=wsIdx>=0&&wsIdx<allWeeks.length-1?allWeeks[wsIdx+1].week_start:null;
+  const wLabel=allWeeks.find(w=>w.week_start===ws);
+  document.getElementById('week-badge-label').textContent=wLabel?(wLabel.week_label||ws):ws;
+
+  document.getElementById('loading-screen').style.display='block';
+  document.getElementById('main').style.display='none';
+
+  const mktFilter=currentMarket!=='ALL'?`&market=eq.${currentMarket}`:'';
+
+  // Fetch all data in parallel
+  const [campaigns,placement,queries,priorCampaigns,priorPlacement,snapshots]=await Promise.all([
+    sbFetch(`/rest/v1/brand_health_ads_campaigns?week_start=eq.${ws}${mktFilter}&select=week_start,campaign_name,brand_classified,market,ad_spend,ad_revenue,ad_clicks,ad_impressions`),
+    sbFetch(`/rest/v1/brand_health_ads_placement?week_start=eq.${ws}${mktFilter}&select=week_start,placement,brand_classified,market,ad_spend,ad_revenue,ad_clicks,ad_impressions`),
+    sbFetch(`/rest/v1/brand_health_ads_queries?week_start=eq.${ws}${mktFilter}&select=week_start,query,brand_classified,market,ad_spend,ad_revenue,ad_clicks`),
+    priorWeek?sbFetch(`/rest/v1/brand_health_ads_campaigns?week_start=eq.${priorWeek}${mktFilter}&select=brand_classified,market,ad_spend,ad_revenue,ad_clicks,ad_impressions`):Promise.resolve([]),
+    priorWeek?sbFetch(`/rest/v1/brand_health_ads_placement?week_start=eq.${priorWeek}${mktFilter}&select=placement,brand_classified,market,ad_spend,ad_revenue,ad_clicks,ad_impressions`):Promise.resolve([]),
+    sbFetch(`/rest/v1/brand_health_snapshots?week_start=eq.${ws}${mktFilter}&select=asin,product_title,brand_classified,market,oos_pct,unfilled_units,glance_views`),
+  ]);
+
+  weekData={campaigns,placement,queries};
+  priorData={campaigns:priorCampaigns,placement:priorPlacement};
+  snapshotData=snapshots;
+
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('main').style.display='grid';
+
+  renderAll();
+}
+
+function filterByBrand(arr){
+  if(selectedBrand==='ALL') return arr;
+  return arr.filter(r=>r.brand_classified===selectedBrand);
+}
+
+function agg(arr,keyFn,valFn){
+  const m={};
+  arr.forEach(r=>{
+    const k=keyFn(r);
+    if(!m[k]) m[k]={...valFn(r,true)};
+    else{const v=valFn(r,false);Object.keys(v).forEach(key=>m[k][key]=(m[k][key]||0)+(v[key]||0));}
+  });
+  return m;
+}
+
+function renderAll(){
+  renderBrandPills();
+  renderKPIs();
+  renderActions();
+  renderBrandTables();
+  renderPlacement();
+  renderQueries();
+  renderOOSWaste();
+  renderCampaigns();
+}
+
+function renderBrandPills(){
+  const brands=BRAND_ORDER.filter(b=>weekData.campaigns.some(r=>r.brand_classified===b));
+  document.getElementById('brand-pills').innerHTML=
+    `<button class="brand-pill ${selectedBrand==='ALL'?'active':''}" onclick="setBrand('ALL',this)">All Brands</button>`+
+    brands.map(b=>`<button class="brand-pill ${selectedBrand===b?'active':''}" onclick="setBrand('${b}',this)" style="${selectedBrand===b?'':'border-color:'+BRAND_COLORS[b]}">${BRAND_LABELS[b]||b}</button>`).join('');
+}
+
+function getPortfolioStats(campaigns){
+  let spend=0,revenue=0,clicks=0,impressions=0;
+  campaigns.forEach(r=>{spend+=r.ad_spend||0;revenue+=r.ad_revenue||0;clicks+=r.ad_clicks||0;impressions+=r.ad_impressions||0;});
+  return{spend,revenue,clicks,impressions,roas:spend>0?revenue/spend:0,ctr:impressions>0?clicks/impressions*100:0,cpc:clicks>0?spend/clicks:0};
+}
+
+function renderKPIs(){
+  const cur=getPortfolioStats(filterByBrand(weekData.campaigns));
+  const pri=getPortfolioStats(filterByBrand(priorData.campaigns));
+  const cards=[
+    {label:'Total Spend',val:fmtCur(cur.spend),wow:wow(cur.spend,pri.spend),fmt:'cur'},
+    {label:'Ad Revenue',val:fmtCur(cur.revenue),wow:wow(cur.revenue,pri.revenue),fmt:'cur'},
+    {label:'ROAS',val:fmtRoas(cur.roas),wow:wow(cur.roas,pri.roas),cls:roasClass(cur.roas)},
+    {label:'Total Clicks',val:fmtNum(cur.clicks),wow:wow(cur.clicks,pri.clicks),fmt:'num',flag:cur.clicks<1000?'Low clicks':''},
+    {label:'Impressions',val:fmtNum(cur.impressions),wow:wow(cur.impressions,pri.impressions)},
+    {label:'CTR',val:cur.ctr.toFixed(2)+'%',wow:wow(cur.ctr,pri.ctr),cls:ctrClass(cur.ctr),flag:cur.ctr<0.3?'Below threshold':''}
+  ];
+  document.getElementById('kpi-strip').innerHTML=cards.map(c=>`
+    <div class="kpi-card">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value" style="color:${c.cls?'inherit':'var(--ad)'}">${c.val}</div>
+      <div class="kpi-wow">${fmtWow(c.wow)} vs last week</div>
+      ${c.flag?`<div class="kpi-flag ${c.flag.includes('Low')||c.flag.includes('Below')?'flag-red':'flag-green'}">${c.flag}</div>`:''}
+    </div>
+  `).join('');
+}
+
+function renderActions(){
+  const actions=[];
+  const cur=getPortfolioStats(filterByBrand(weekData.campaigns));
+  const pri=getPortfolioStats(filterByBrand(priorData.campaigns));
+
+  // CTR check
+  if(cur.ctr<0.3){
+    actions.push({type:'urgent',icon:'🚨',title:'CTR Below Threshold',body:`Portfolio CTR is ${cur.ctr.toFixed(2)}% — below the 0.30% minimum. Low CTR indicates poor creative relevance or wrong targeting. Review ad copy and imagery for all active campaigns.`});
+  } else if(cur.ctr<0.5){
+    actions.push({type:'warning',icon:'⚠️',title:'CTR Needs Improvement',body:`Portfolio CTR at ${cur.ctr.toFixed(2)}% — room for improvement. A/B test new creative. Target is ≥0.50% for Sponsored Products.`});
+  }
+
+  // Click volume
+  if(pri.clicks>0&&wow(cur.clicks,pri.clicks)<-0.15){
+    actions.push({type:'urgent',icon:'📉',title:'Clicks Down Significantly',body:`Clicks dropped ${Math.abs((wow(cur.clicks,pri.clicks)*100)).toFixed(0)}% WoW. Check for budget caps, bid reductions, or seasonal search volume decline. Review impression share.`});
+  }
+
+  // Wasted spend
+  const wasted=filterByBrand(weekData.queries).filter(r=>(r.ad_revenue||0)<(r.ad_spend||0));
+  const wastedSpend=wasted.reduce((s,r)=>s+(r.ad_spend||0),0);
+  if(wastedSpend>50){
+    actions.push({type:'warning',icon:'💸',title:`€${Math.round(wastedSpend)} Wasted Spend`,body:`${wasted.length} search queries with ROAS <1x are burning budget. Add as negative keywords or reduce bids. Top wasted query: "${(wasted.sort((a,b)=>b.ad_spend-a.ad_spend)[0]?.query||'—')}".`});
+  }
+
+  // OOS spend
+  const oosAsins=new Set(snapshotData.filter(r=>(r.oos_pct||0)>=50).map(r=>r.asin));
+  if(oosAsins.size>0){
+    actions.push({type:'urgent',icon:'🚫',title:'Bidding on OOS Products',body:`Found ${oosAsins.size} ASINs with ≥50% OOS that may have active ad spend. Pause campaigns for out-of-stock products immediately to prevent wasted spend.`});
+  }
+
+  // ROAS check
+  if(cur.roas>0&&cur.roas<2){
+    actions.push({type:'urgent',icon:'📊',title:`ROAS at ${cur.roas.toFixed(2)}x — Below Target`,body:`Portfolio ROAS is below 2x. Review top spend campaigns for efficiency. Consider reducing bids on low-converting keywords and reallocating to higher ROAS placements.`});
+  } else if(cur.roas>=4){
+    actions.push({type:'good',icon:'🚀',title:`Strong ROAS at ${cur.roas.toFixed(2)}x`,body:`Portfolio is delivering efficiently. Consider increasing budgets on top-performing campaigns to capture more volume while ROAS is healthy.`});
+  }
+
+  // Top of search share
+  const tosSpend=filterByBrand(weekData.placement).filter(r=>(r.placement||'').toLowerCase().includes('top')).reduce((s,r)=>s+(r.ad_spend||0),0);
+  const totalSpend=filterByBrand(weekData.placement).reduce((s,r)=>s+(r.ad_spend||0),0);
+  const tosShare=totalSpend>0?tosSpend/totalSpend*100:0;
+  if(tosShare<30&&totalSpend>100){
+    actions.push({type:'warning',icon:'🏔️',title:`Top of Search Only ${tosShare.toFixed(0)}% of Spend`,body:`Low Top of Search share means low visibility on the most competitive placement. Increase bids on high-converting keywords to win more Top of Search impressions.`});
+  }
+
+  if(!actions.length){
+    actions.push({type:'good',icon:'✅',title:'All Systems Healthy',body:'No critical issues detected this week. Monitor CTR and ROAS trends and consider scaling budgets on top performers.'});
+  }
+
+  document.getElementById('action-grid').innerHTML=actions.map(a=>`
+    <div class="action-card ${a.type}">
+      <div class="action-icon">${a.icon}</div>
+      <div class="action-title">${a.title}</div>
+      <div class="action-body">${a.body}</div>
+    </div>
+  `).join('');
+}
+
+function renderBrandTables(){
+  const byBrand={};
+  filterByBrand(weekData.campaigns).forEach(r=>{
+    const b=r.brand_classified||'OTHER';
+    if(!byBrand[b])byBrand[b]={spend:0,revenue:0,clicks:0,impressions:0};
+    byBrand[b].spend+=r.ad_spend||0;byBrand[b].revenue+=r.ad_revenue||0;byBrand[b].clicks+=r.ad_clicks||0;byBrand[b].impressions+=r.ad_impressions||0;
+  });
+  const brands=Object.entries(byBrand).sort((a,b)=>b[1].spend-a[1].spend);
+  const maxSpend=brands[0]?brands[0][1].spend:1;
+
+  // ROAS table
+  document.getElementById('brand-roas-table').innerHTML=brands.length?`
+    <table class="data-table">
+      <thead><tr>
+        <th>Brand</th>
+        <th class="r">Spend</th>
+        <th class="r">Revenue</th>
+        <th class="r">ROAS</th>
+        <th class="r">Clicks</th>
+      </tr></thead>
+      <tbody>${brands.map(([b,d])=>{
+        const roas=d.spend>0?d.revenue/d.spend:0;
+        return`<tr>
+          <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${BRAND_COLORS[b]||'#ccc'};margin-right:6px;"></span><b>${BRAND_LABELS[b]||b}</b>
+            <div class="bar-bg"><div class="bar-fg" style="width:${(d.spend/maxSpend*100).toFixed(0)}%;background:${BRAND_COLORS[b]||'var(--ad)'}"></div></div>
+          </td>
+          <td class="td-r">${fmtCur(d.spend)}</td>
+          <td class="td-r">${fmtCur(d.revenue)}</td>
+          <td class="td-r"><span class="${roasClass(roas)}">${fmtRoas(roas)}</span></td>
+          <td class="td-r">${fmtNum(d.clicks)}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`:'<div class="empty">No campaign data for this period.</div>';
+
+  // CTR table
+  document.getElementById('brand-ctr-table').innerHTML=brands.length?`
+    <table class="data-table">
+      <thead><tr>
+        <th>Brand</th>
+        <th class="r">Impressions</th>
+        <th class="r">Clicks</th>
+        <th class="r">CTR</th>
+        <th class="r">CPC</th>
+      </tr></thead>
+      <tbody>${brands.map(([b,d])=>{
+        const ctr=d.impressions>0?d.clicks/d.impressions*100:0;
+        const cpc=d.clicks>0?d.spend/d.clicks:0;
+        return`<tr>
+          <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${BRAND_COLORS[b]||'#ccc'};margin-right:6px;"></span><b>${BRAND_LABELS[b]||b}</b></td>
+          <td class="td-r">${fmtNum(d.impressions)}</td>
+          <td class="td-r">${fmtNum(d.clicks)}</td>
+          <td class="td-r"><span class="${ctrClass(ctr)}">${ctr.toFixed(2)}%</span></td>
+          <td class="td-r">${fmtCur(cpc)}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`:'<div class="empty">No campaign data.</div>';
+}
+
+function renderPlacement(){
+  const byPlace={};
+  filterByBrand(weekData.placement).forEach(r=>{
+    const p=r.placement||'Other';
+    if(!byPlace[p])byPlace[p]={spend:0,revenue:0,clicks:0,impressions:0};
+    byPlace[p].spend+=r.ad_spend||0;byPlace[p].revenue+=r.ad_revenue||0;byPlace[p].clicks+=r.ad_clicks||0;byPlace[p].impressions+=r.ad_impressions||0;
+  });
+  const places=Object.entries(byPlace).sort((a,b)=>b[1].spend-a[1].spend);
+  const totalSpend=places.reduce((s,p)=>s+p[1].spend,0);
+  const maxRoas=Math.max(...places.map(p=>p[1].spend>0?p[1].revenue/p[1].spend:0),1);
+
+  const colors={'top of search':'var(--blue)','detail page':'var(--purple)','other':'var(--amber)'};
+  function plColor(name){const k=Object.keys(colors).find(c=>name.toLowerCase().includes(c));return k?colors[k]:'var(--text3)';}
+
+  if(!places.length){
+    document.getElementById('placement-spend').innerHTML='<div class="empty">No placement data uploaded (Pacvue Placement Report needed).</div>';
+    document.getElementById('placement-roas').innerHTML='';
+    return;
+  }
+
+  document.getElementById('placement-spend').innerHTML=places.map(([p,d])=>{
+    const pct=totalSpend>0?(d.spend/totalSpend*100).toFixed(0):0;
+    return`<div class="placement-row">
+      <div class="placement-label">
+        <span class="placement-name">${p}</span>
+        <span class="placement-stats">${fmtCur(d.spend)} · ${pct}%</span>
+      </div>
+      <div class="placement-bar"><div class="placement-fill" style="width:${pct}%;background:${plColor(p)}"></div></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:3px">${fmtNum(d.clicks)} clicks · CTR ${d.impressions>0?(d.clicks/d.impressions*100).toFixed(2):'—'}%</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('placement-roas').innerHTML=places.map(([p,d])=>{
+    const roas=d.spend>0?d.revenue/d.spend:0;
+    const pct=Math.min(roas/maxRoas*100,100).toFixed(0);
+    return`<div class="placement-row">
+      <div class="placement-label">
+        <span class="placement-name">${p}</span>
+        <span class="placement-stats ${roasClass(roas)}">${fmtRoas(roas)}</span>
+      </div>
+      <div class="placement-bar"><div class="placement-fill" style="width:${pct}%;background:${plColor(p)}"></div></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:3px">${fmtCur(d.revenue)} revenue</div>
+    </div>`;
+  }).join('');
+}
+
+function renderQueries(){
+  const qs=filterByBrand(weekData.queries);
+
+  // Wasted: spend > 0, revenue < spend (ROAS < 1)
+  const wasted=qs.filter(r=>(r.ad_spend||0)>0&&(r.ad_revenue||0)<(r.ad_spend||0))
+    .reduce((m,r)=>{const q=r.query||'';if(!m[q])m[q]={spend:0,revenue:0,clicks:0};m[q].spend+=r.ad_spend||0;m[q].revenue+=r.ad_revenue||0;m[q].clicks+=r.ad_clicks||0;return m;},{});
+  const wastedArr=Object.entries(wasted).sort((a,b)=>b[1].spend-a[1].spend).slice(0,12);
+
+  document.getElementById('wasted-spend-table').innerHTML=wastedArr.length?`
+    <table class="data-table">
+      <thead><tr><th>Query</th><th class="r">Spend</th><th class="r">ROAS</th><th class="r">Clicks</th></tr></thead>
+      <tbody>${wastedArr.map(([q,d])=>{
+        const roas=d.spend>0?d.revenue/d.spend:0;
+        return`<tr><td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${q}">${q}</td><td class="td-r" style="color:var(--red);font-weight:700">${fmtCur(d.spend)}</td><td class="td-r"><span class="roas-bad">${fmtRoas(roas)}</span></td><td class="td-r">${fmtNum(d.clicks)}</td></tr>`;
+      }).join('')}</tbody>
+    </table>`:'<div class="empty">✅ No wasted spend detected this week.</div>';
+
+  // Top converting: highest ROAS with meaningful spend
+  const good=qs.filter(r=>(r.ad_spend||0)>5&&(r.ad_revenue||0)>0)
+    .reduce((m,r)=>{const q=r.query||'';if(!m[q])m[q]={spend:0,revenue:0,clicks:0};m[q].spend+=r.ad_spend||0;m[q].revenue+=r.ad_revenue||0;m[q].clicks+=r.ad_clicks||0;return m;},{});
+  const goodArr=Object.entries(good).map(([q,d])=>([q,d,d.spend>0?d.revenue/d.spend:0])).sort((a,b)=>b[2]-a[2]).slice(0,12);
+
+  document.getElementById('top-queries-table').innerHTML=goodArr.length?`
+    <table class="data-table">
+      <thead><tr><th>Query</th><th class="r">Spend</th><th class="r">ROAS</th><th class="r">Revenue</th></tr></thead>
+      <tbody>${goodArr.map(([q,d,roas])=>{
+        return`<tr><td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${q}">${q}</td><td class="td-r">${fmtCur(d.spend)}</td><td class="td-r"><span class="${roasClass(roas)}">${fmtRoas(roas)}</span></td><td class="td-r">${fmtCur(d.revenue)}</td></tr>`;
+      }).join('')}</tbody>
+    </table>`:'<div class="empty">No query data available.</div>';
+}
+
+function renderOOSWaste(){
+  // Find ASINs with high OOS and any ad impressions in same week
+  const oosItems=snapshotData.filter(r=>(r.oos_pct||0)>=50&&(r.unfilled_units||0)>0);
+  if(!oosItems.length){
+    document.getElementById('oos-waste-panel').innerHTML='<div class="empty">✅ No high-OOS ASINs with significant unfilled demand detected.</div>';
+    return;
+  }
+  const sorted=oosItems.sort((a,b)=>(b.oos_pct||0)-(a.oos_pct||0)).slice(0,20);
+  document.getElementById('oos-waste-panel').innerHTML=`
+    <div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);">
+      <b style="color:var(--amber)">⚠️ Action Required:</b> These ASINs have ≥50% OOS and unfilled demand. Pause any active ad campaigns for these products immediately to stop wasted spend.
+    </div>
+    <table class="data-table">
+      <thead><tr><th>ASIN</th><th>Product</th><th>Market</th><th class="r">OOS %</th><th class="r">Unfilled Units</th><th class="r">Glance Views (demand)</th></tr></thead>
+      <tbody>${sorted.map(r=>`
+        <tr>
+          <td class="td-mono" style="color:var(--blue)">${r.asin}</td>
+          <td style="font-size:11px;color:var(--text2);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.product_title||'—'}</td>
+          <td><span class="mp mp-${r.market}">${r.market}</span></td>
+          <td class="td-r" style="color:var(--red);font-weight:700">${(r.oos_pct||0).toFixed(0)}%</td>
+          <td class="td-r" style="color:var(--amber);font-weight:700">${Math.round(r.unfilled_units||0).toLocaleString()}</td>
+          <td class="td-r">${fmtNum(r.glance_views)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderCampaigns(){
+  const camps=filterByBrand(weekData.campaigns);
+  const byName={};
+  camps.forEach(r=>{
+    const k=r.campaign_name||'Unknown';
+    if(!byName[k])byName[k]={spend:0,revenue:0,clicks:0,impressions:0,brand:r.brand_classified,markets:new Set()};
+    byName[k].spend+=r.ad_spend||0;byName[k].revenue+=r.ad_revenue||0;byName[k].clicks+=r.ad_clicks||0;byName[k].impressions+=r.ad_impressions||0;byName[k].markets.add(r.market);
+  });
+  const arr=Object.entries(byName).sort((a,b)=>b[1].spend-a[1].spend).slice(0,25);
+
+  document.getElementById('campaign-panel').innerHTML=arr.length?`
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr>
+          <th>Campaign</th>
+          <th>Brand</th>
+          <th>Markets</th>
+          <th class="r">Spend</th>
+          <th class="r">Revenue</th>
+          <th class="r">ROAS</th>
+          <th class="r">Clicks</th>
+          <th class="r">Impressions</th>
+          <th class="r">CTR</th>
+          <th class="r">CPC</th>
+        </tr></thead>
+        <tbody>${arr.map(([name,d])=>{
+          const roas=d.spend>0?d.revenue/d.spend:0;
+          const ctr=d.impressions>0?d.clicks/d.impressions*100:0;
+          const cpc=d.clicks>0?d.spend/d.clicks:0;
+          return`<tr>
+            <td style="font-weight:600;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${name}">${name}</td>
+            <td><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;background:${BRAND_COLORS[d.brand]||'#eee'}22;color:${BRAND_COLORS[d.brand]||'var(--text2)'}">${BRAND_LABELS[d.brand]||d.brand||'—'}</span></td>
+            <td>${[...d.markets].map(m=>`<span class="mp mp-${m}">${m}</span>`).join(' ')}</td>
+            <td class="td-r">${fmtCur(d.spend)}</td>
+            <td class="td-r">${fmtCur(d.revenue)}</td>
+            <td class="td-r"><span class="${roasClass(roas)}">${fmtRoas(roas)}</span></td>
+            <td class="td-r">${fmtNum(d.clicks)}</td>
+            <td class="td-r">${fmtNum(d.impressions)}</td>
+            <td class="td-r"><span class="${ctrClass(ctr)}">${ctr.toFixed(2)}%</span></td>
+            <td class="td-r">${fmtCur(cpc)}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`:'<div class="empty">No campaign data for this period. Upload Pacvue Campaign Report.</div>';
+}
+
+function setMarket(m,btn){
+  currentMarket=m;
+  document.querySelectorAll('#market-tabs .filter-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadWeek(currentWeek);
+}
+
+function setBrand(b,btn){
+  selectedBrand=b;
+  document.querySelectorAll('.brand-pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+init();
+</script>
+</body>
+</html>
