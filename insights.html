@@ -200,8 +200,11 @@ function buildBrandFilters(){
 function renderStats(){
   const brandTerms=allData.filter(d=>d.category==='BRAND');
   const top500=allData.filter(d=>d.category==='TOP500');
+  // Only count TOP500 terms where a Hasbro brand is the top clicked product
   const hasbroInTop500=top500.filter(d=>d.brand_classified&&d.brand_classified!=='PLATFORM');
-  const topRanked=brandTerms.reduce((best,t)=>(!best||t.rank<best.rank)?t:best,null);
+  // Highest ranked is the lowest rank number across ALL brand terms
+  const topRanked=brandTerms.filter(d=>d.rank).reduce((best,t)=>(!best||t.rank<best.rank)?t:best,null);
+  console.log('TOP500 total:', top500.length, 'Hasbro in TOP500:', hasbroInTop500.length, 'terms:', hasbroInTop500.map(d=>d.term+' #'+d.rank));
   const topBrand=topRanked?.brand_classified||'ALL';
   document.getElementById('stat-grid').innerHTML=`
     <div class="stat-card" style="cursor:pointer" onmouseenter="this.style.borderColor='var(--blue)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="setView('brand',document.getElementById('view-brand'))">
