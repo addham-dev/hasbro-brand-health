@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>Hasbro EU — Insights</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -19,7 +20,6 @@
     }
     *{margin:0;padding:0;box-sizing:border-box;}
     body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
-
     header{background:#1F1646;padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:68px;box-shadow:0 4px 20px rgba(0,0,0,0.3);}
     .logo{display:flex;align-items:center;gap:16px;}
     .logo-img{height:36px;width:auto;display:block;}
@@ -30,25 +30,19 @@
     .nav-link{padding:6px 16px;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,0.65);text-decoration:none;transition:all 0.2s;}
     .nav-link:hover{background:rgba(255,255,255,0.1);color:white;}
     .nav-link.active{background:var(--blue);color:white;}
-
     .sub-nav{background:white;padding:0 40px;display:flex;align-items:center;gap:0;border-bottom:2px solid var(--border);box-shadow:var(--shadow);}
     .sub-tab{padding:14px 20px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s;white-space:nowrap;}
     .sub-tab:hover{color:var(--blue);}
     .sub-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
-
     main{padding:28px 40px;max-width:1400px;margin:0 auto;}
-
     .section-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
     .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
-
     .filter-row{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
     .filter-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
     .filter-btn{padding:6px 14px;border-radius:6px;border:2px solid var(--border);background:var(--blue-light);color:var(--blue-dark);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;}
     .filter-btn.active{background:var(--blue);color:white;border-color:var(--blue);}
     .divider{width:1px;height:24px;background:var(--border);flex-shrink:0;}
-
     .info-box{background:var(--blue-light);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6;}
-
     .data-table{width:100%;border-collapse:collapse;}
     .data-table th{text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;padding:10px 14px;border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;background:white;position:sticky;top:0;}
     .data-table th:hover{color:var(--blue);}
@@ -70,19 +64,15 @@
     .est-high{color:var(--green);font-weight:700;}
     .est-mid{color:var(--amber);font-weight:700;}
     .est-low{color:var(--text2);}
-
     .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
-    .stat-card{background:white;border-radius:12px;padding:16px;box-shadow:var(--shadow);border:2px solid var(--border);}
+    .stat-card{background:white;border-radius:12px;padding:16px;box-shadow:var(--shadow);border:2px solid var(--border);transition:all 0.2s;}
     .stat-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
     .stat-value{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--blue);}
     .stat-sub{font-size:11px;color:var(--text2);margin-top:3px;}
-
     .table-wrap{background:white;border-radius:14px;box-shadow:var(--shadow);border:2px solid var(--border);overflow:hidden;}
     .table-scroll{overflow-x:auto;max-height:680px;overflow-y:auto;}
-
     .loading{text-align:center;padding:80px;color:var(--text3);font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
     .empty{text-align:center;padding:60px;color:var(--text3);font-size:13px;}
-
     .week-badge-small{background:var(--blue-light);border-radius:6px;padding:4px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--blue-dark);border:1px solid var(--border);}
   </style>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-RF2D8HGXG0"></script>
@@ -119,14 +109,10 @@
     <div id="search-loading" class="loading">Loading search terms data...</div>
     <div id="search-content" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <div>
-          <div class="section-title">Amazon UK — Top Search Terms</div>
-        </div>
+        <div><div class="section-title">Amazon UK — Top Search Terms</div></div>
         <span class="week-badge-small" id="week-label">—</span>
       </div>
-
       <div class="stat-grid" id="stat-grid"></div>
-
       <div class="filter-row">
         <span class="filter-label">View</span>
         <button class="filter-btn active" id="view-brand" onclick="setView('brand',this)">🎯 Hasbro Brand Terms</button>
@@ -136,9 +122,7 @@
         <span class="filter-label">Brand</span>
         <div id="brand-filter-btns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
       </div>
-
       <div class="info-box" id="info-box"></div>
-
       <div class="table-wrap">
         <div class="table-scroll">
           <table class="data-table" id="main-table">
@@ -170,7 +154,6 @@
 <script>
 const SUPABASE_URL='https://rycqfwzgvpzwhphgclpb.supabase.co';
 const SUPABASE_KEY='sb_publishable_CbKFhpN2dWI_UXhwGkclqw_AMPSprs4';
-
 const BRAND_LABELS={TRANSFORMERS:'Transformers',NERF:'Nerf',MONOPOLY:'Monopoly',PLAY_DOH:'Play-Doh',BEYBLADE:'Beyblade',PEPPA_PIG:'Peppa Pig',MARVEL:'Marvel',STAR_WARS:'Star Wars',GAMES:'Games',DISNEY_KIDS:'Disney Kids',HASBRO:'Hasbro'};
 const BRAND_ORDER=['TRANSFORMERS','NERF','MONOPOLY','PLAY_DOH','BEYBLADE','PEPPA_PIG','MARVEL','STAR_WARS','GAMES','DISNEY_KIDS','HASBRO'];
 
@@ -179,30 +162,32 @@ let currentView='brand';
 let currentBrand='ALL';
 let sortKey='rank';
 let sortDir='asc';
-let activeSubTab='search';
 
 async function init(){
   try{
-    const data=await sbFetch('/rest/v1/brand_health_search_terms?select=*&order=rank.asc&limit=10000');
+    const data=await sbFetch('/rest/v1/brand_health_search_terms?select=*&order=rank.asc',20000);
     document.getElementById('search-loading').style.display='none';
     if(!data.length){document.getElementById('search-empty').style.display='block';return;}
     allData=data;
-
-    // Set week label
     const weeks=[...new Set(data.map(d=>d.week_start))].sort().reverse();
     document.getElementById('week-label').textContent='Week of '+formatDate(weeks[0]);
-
     buildBrandFilters();
     renderStats();
     renderTable();
     document.getElementById('search-content').style.display='block';
   }catch(e){
-    document.getElementById('search-loading').textContent='Error loading data: '+e.message;
+    document.getElementById('search-loading').textContent='Error: '+e.message;
   }
 }
 
-function sbFetch(path){
-  return fetch(SUPABASE_URL+path,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(r=>r.json()).then(d=>Array.isArray(d)?d:[]);
+function sbFetch(path, limit=10000){
+  return fetch(SUPABASE_URL+path,{headers:{
+    'apikey':SUPABASE_KEY,
+    'Authorization':'Bearer '+SUPABASE_KEY,
+    'Range':'0-'+(limit-1),
+    'Range-Unit':'items',
+    'Prefer':'count=none'
+  }}).then(r=>r.json()).then(d=>Array.isArray(d)?d:[]);
 }
 
 function buildBrandFilters(){
@@ -217,11 +202,28 @@ function renderStats(){
   const top500=allData.filter(d=>d.category==='TOP500');
   const hasbroInTop500=top500.filter(d=>d.brand_classified&&d.brand_classified!=='PLATFORM');
   const topRanked=brandTerms.reduce((best,t)=>(!best||t.rank<best.rank)?t:best,null);
+  const topBrand=topRanked?.brand_classified||'ALL';
   document.getElementById('stat-grid').innerHTML=`
-    <div class="stat-card"><div class="stat-label">Hasbro Brand Terms</div><div class="stat-value">${brandTerms.length.toLocaleString()}</div><div class="stat-sub">Across all brands & categories</div></div>
-    <div class="stat-card"><div class="stat-label">Hasbro in Top 500</div><div class="stat-value" style="color:var(--green)">${hasbroInTop500.length}</div><div class="stat-sub">Platform-wide search terms</div></div>
-    <div class="stat-card"><div class="stat-label">Highest Ranked Term</div><div class="stat-value" style="font-size:18px;color:var(--text)">${topRanked?.term||'—'}</div><div class="stat-sub">Rank #${topRanked?.rank?.toLocaleString()||'—'} · ${BRAND_LABELS[topRanked?.brand_classified]||''}</div></div>
-    <div class="stat-card"><div class="stat-label">Est. Top Term Searches</div><div class="stat-value" style="color:var(--amber)">${topRanked?.est_weekly_searches?.toLocaleString()||'—'}</div><div class="stat-sub">Per week (estimated)</div></div>
+    <div class="stat-card" style="cursor:pointer" onmouseenter="this.style.borderColor='var(--blue)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="setView('brand',document.getElementById('view-brand'))">
+      <div class="stat-label">Hasbro Brand Terms</div>
+      <div class="stat-value">${brandTerms.length.toLocaleString()}</div>
+      <div class="stat-sub">Across all brands & categories ↗</div>
+    </div>
+    <div class="stat-card" style="cursor:pointer" onmouseenter="this.style.borderColor='var(--green)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="setView('top500',document.getElementById('view-top500'))">
+      <div class="stat-label">Hasbro in Top 500</div>
+      <div class="stat-value" style="color:var(--green)">${hasbroInTop500.length}</div>
+      <div class="stat-sub">Click to see platform terms ↗</div>
+    </div>
+    <div class="stat-card" style="cursor:pointer" onmouseenter="this.style.borderColor='var(--purple)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="setView('toys',document.getElementById('view-toys'));setTimeout(()=>setBrandByValue('${topBrand}'),50)">
+      <div class="stat-label">Highest Ranked Term</div>
+      <div class="stat-value" style="font-size:18px;color:var(--text)">${topRanked?.term||'—'}</div>
+      <div class="stat-sub">Rank #${topRanked?.rank?.toLocaleString()||'—'} · ${BRAND_LABELS[topRanked?.brand_classified]||''} ↗</div>
+    </div>
+    <div class="stat-card" style="cursor:pointer" onmouseenter="this.style.borderColor='var(--amber)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="sortKey='rank';sortDir='asc';setView('brand',document.getElementById('view-brand'))">
+      <div class="stat-label">Est. Top Term Searches</div>
+      <div class="stat-value" style="color:var(--amber)">${topRanked?.est_weekly_searches?.toLocaleString()||'—'}</div>
+      <div class="stat-sub">Per week (estimated) ↗</div>
+    </div>
   `;
 }
 
@@ -237,30 +239,23 @@ function getFilteredData(){
 function renderTable(){
   const data=getFilteredData();
   const sorted=[...data].sort((a,b)=>{
-    const va=a[sortKey]??( sortDir==='asc'?Infinity:-Infinity);
-    const vb=b[sortKey]??( sortDir==='asc'?Infinity:-Infinity);
+    const va=a[sortKey]??(sortDir==='asc'?Infinity:-Infinity);
+    const vb=b[sortKey]??(sortDir==='asc'?Infinity:-Infinity);
     if(typeof va==='string') return sortDir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
     return sortDir==='asc'?va-vb:vb-va;
   });
   const show=sorted.slice(0,200);
-
-  // Update sort indicators
   ['rank','term','top_clicked_category','est_weekly_searches','click_share_1','cvr_1'].forEach(k=>{
     const el=document.getElementById('sort-'+k);
     if(el) el.textContent=sortKey===k?(sortDir==='asc'?' ↑':' ↓'):' ↕';
   });
-
-  // Info box
   const infoMap={
     top500:`Showing the top 500 most-searched terms on Amazon UK this week. <b style="color:var(--blue)">Highlighted rows</b> are terms where a Hasbro brand appears in the top 3 clicked products.`,
-    brand:`All search terms containing Hasbro brand keywords across all Amazon categories. Est. weekly searches is directional — based on search frequency rank using a power-law model.`,
+    brand:`All search terms containing Hasbro brand keywords across all Amazon categories.`,
     toys:`Hasbro-related search terms where the top clicked product category is Toys. Most commercially relevant for the business.`
   };
   document.getElementById('info-box').innerHTML=infoMap[currentView]||'';
-
-  // Hide brand filters for top500
   document.getElementById('brand-filter-btns').style.display=currentView==='top500'?'none':'flex';
-
   const tbody=document.getElementById('table-body');
   tbody.innerHTML=show.map(t=>{
     const isHasbro=t.brand_classified&&t.brand_classified!=='PLATFORM';
@@ -276,21 +271,32 @@ function renderTable(){
       <td class="td-val">${t.cvr_1!=null?t.cvr_1.toFixed(1)+'%':'—'}</td>
     </tr>`;
   }).join('');
-
   document.getElementById('table-footer').textContent=`Showing ${show.length} of ${sorted.length} terms${sorted.length>200?' — top 200 shown':''}.`;
 }
 
 function setView(view,btn){
   currentView=view;
   document.querySelectorAll('.filter-btn[id^="view-"]').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+  if(btn) btn.classList.add('active');
   renderTable();
 }
 
 function setBrand(brand,btn){
   currentBrand=brand;
   document.querySelectorAll('#brand-filter-btns .filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+  if(btn) btn.classList.add('active');
+  renderTable();
+}
+
+function setBrandByValue(brand){
+  const btns=document.querySelectorAll('#brand-filter-btns .filter-btn');
+  let found=false;
+  btns.forEach(b=>{
+    b.classList.remove('active');
+    if(b.textContent.trim()===BRAND_LABELS[brand]){b.classList.add('active');found=true;}
+  });
+  if(!found&&btns.length) btns[0].classList.add('active');
+  currentBrand=found?brand:'ALL';
   renderTable();
 }
 
@@ -301,10 +307,8 @@ function sortBy(key){
 }
 
 function setSubTab(tab,btn){
-  activeSubTab=tab;
   document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  // Only search is built — others are coming soon
 }
 
 function formatDate(d){if(!d)return'—';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
