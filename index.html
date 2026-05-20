@@ -374,9 +374,16 @@ function periodKey(d){if(periodMode==='week')return d;if(periodMode==='month')re
 function periodLabel(k){if(periodMode==='week'){var p=k.split('-');return p[2]+'/'+p[1]+'/'+p[0];}return k;}
 
 function sbFetch(path){
-  return fetch(SUPABASE_URL+path,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}})
-    .then(function(r){return r.json();})
-    .then(function(d){return Array.isArray(d)?d:[];});
+  // Use a high range to get up to 20000 rows in one call
+  return fetch(SUPABASE_URL+path,{headers:{
+    'apikey':SUPABASE_KEY,
+    'Authorization':'Bearer '+SUPABASE_KEY,
+    'Range':'0-19999',
+    'Range-Unit':'items',
+    'Prefer':'count=none'
+  }})
+  .then(function(r){return r.json();})
+  .then(function(d){return Array.isArray(d)?d:[];});
 }
 
 async function init(){
