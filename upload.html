@@ -1508,7 +1508,7 @@ async function parsePacvueCampaign(file) {
         const rows = raw.slice(hi+1)
           .filter(r => r.some(c => c !== '' && c !== null))
           .map(r => { const o={}; headers.forEach((h,i) => o[h] = r[i]??''); return o; })
-          .filter(r => String(r['Time']).startsWith('2026'));
+          .filter(r => { const t = r['Time']; return t && (String(t).startsWith('2026') || (t instanceof Date && t.getFullYear() >= 2024)); });
 
         const results = [];
         rows.forEach(r => {
@@ -1518,7 +1518,7 @@ async function parsePacvueCampaign(file) {
           if (!brand) return;
           const date = new Date(r['Time']);
           const weekStart = new Date(date);
-          weekStart.setDate(date.getDate() - ((date.getDay() + 6) % 7)); // Monday
+          weekStart.setDate(date.getDate() - date.getDay()); // Sunday (matches VC)
           const ws = weekStart.toISOString().split('T')[0];
           results.push({
             week_start: ws,
@@ -1558,7 +1558,7 @@ async function parsePacvuePlacement(file) {
         const rows = raw.slice(hi+1)
           .filter(r => r.some(c => c !== '' && c !== null))
           .map(r => { const o={}; headers.forEach((h,i) => o[h] = r[i]??''); return o; })
-          .filter(r => String(r['Time']).startsWith('2026'));
+          .filter(r => { const t = r['Time']; return t && (String(t).startsWith('2026') || (t instanceof Date && t.getFullYear() >= 2024)); });
 
         const results = [];
         rows.forEach(r => {
@@ -1567,7 +1567,7 @@ async function parsePacvuePlacement(file) {
           const brand = classifyPacvueBrand(r['Campaign Name']);
           const date = new Date(r['Time']);
           const weekStart = new Date(date);
-          weekStart.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+          weekStart.setDate(date.getDate() - date.getDay()); // Sunday (matches VC)
           const ws = weekStart.toISOString().split('T')[0];
           const spend = parseFloat(String(r['Spend']||0).replace(/[^0-9.\-]/g,''))||0;
           if (spend === 0) return;
@@ -1610,7 +1610,7 @@ async function parsePacvueQuery(file) {
         const rows = raw.slice(hi+1)
           .filter(r => r.some(c => c !== '' && c !== null))
           .map(r => { const o={}; headers.forEach((h,i) => o[h] = r[i]??''); return o; })
-          .filter(r => String(r['Time']).startsWith('2026'));
+          .filter(r => { const t = r['Time']; return t && (String(t).startsWith('2026') || (t instanceof Date && t.getFullYear() >= 2024)); });
 
         const results = [];
         rows.forEach(r => {
@@ -1619,7 +1619,7 @@ async function parsePacvueQuery(file) {
           const brand = classifyPacvueBrand(r['Campaign Name']);
           const date = new Date(r['Time']);
           const weekStart = new Date(date);
-          weekStart.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+          weekStart.setDate(date.getDate() - date.getDay()); // Sunday (matches VC)
           const ws = weekStart.toISOString().split('T')[0];
           const spend = parseFloat(String(r['Spend']||0).replace(/[^0-9.\-]/g,''))||0;
           if (spend === 0) return;
