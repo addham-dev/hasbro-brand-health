@@ -885,100 +885,66 @@ function fmtNum(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)ret
 function fmtYoy(val){if(val==null||isNaN(val))return'';var p=(val*100).toFixed(1),cls=val>0?'yoy-up':val<0?'yoy-down':'yoy-na',arr=val>0?'▲':val<0?'▼':'';return'<span class="yoy '+cls+'">'+arr+Math.abs(p)+'%</span>';}
 function fmtYoyText(val){if(val==null||isNaN(val))return'';var p=(val*100).toFixed(1),col=val>0?'var(--green)':val<0?'var(--red)':'var(--text3)',arr=val>0?'▲':val<0?'▼':'';return'<span style="color:'+col+';font-weight:700">'+arr+Math.abs(p)+'%</span>';}
 
-/* ADAM WIDGET LOGIC */
+/* ADAM WIDGET — tool-calling architecture */
 (function(){
   var PROXY='https://adam-proxy.addham.workers.dev/';
   var AVATAR='https://attic.sh/arz5gqoevz38gefaczkyj07h42iz';
-  var SYSTEM='You are Adam. You are a brilliant, quietly eccentric English data analyst — think Sherlock Holmes applied to Amazon vendor data. You have an almost unsettling ability to spot patterns in numbers, a dry wit, impeccable manners, and absolutely no patience for vagueness. You are never rude, but you are precise to the point of being disarming.\n\nYou work inside the Hasbro EU brand health dashboard, covering GB, DE, FR, IT and ES across these brands: Nerf, Play-Doh, Monopoly, Transformers, Marvel, Star Wars, Peppa Pig, Beyblade, Games, Disney Kids.\n\nYour metrics: revenue, glance views (page traffic), conversion rate, OOS percentage, unfilled units, year on year movement, ad spend, ad revenue, ROAS, repeat purchase rate, LTV.\n\nLive data for the current week is injected below — real numbers from Supabase. Use them. Reason from them.\n\nWhen you do not have data: say what you do have, and say what you do not, in one short sentence. Never say "I am afraid" or "If you would like" or "I can try to help" — those are the phrases of a nervous assistant. You are not nervous. You simply state what is and is not available, then move forward.\n\nWhen someone asks about an ASIN: search the data. If it is there, tell them what you see. If it is not, say so in five words and offer what you do have on that brand.\n\nHow you speak: Natural English sentences. Dry, confident, occasionally amused. No bullet points. No code. No methodology lectures. Answer the question, add one observation if the data warrants it, and stop. Less is more.';
+  var SB_HEADERS={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Range':'0-9999','Range-Unit':'items','Prefer':'count=none'};
+
+  var SYSTEM='You are Adam — a brilliant, quietly eccentric English data analyst embedded in the Hasbro EU Amazon brand health dashboard. Think Sherlock Holmes applied to ecommerce data: precise, occasionally amused, never vague, never nervous.\n\nYou cover GB, DE, FR, IT, ES across: Nerf, Play-Doh, Monopoly, Transformers, Marvel, Star Wars, Peppa Pig, Beyblade, Games, Disney Kids.\n\nYou have LIVE access to Supabase via tools. When someone asks about an ASIN, a brand, a date range, or campaign lift — use your tools to fetch the real data. Do not guess. Do not say you cannot access data. Fetch it.\n\nData available:\n- brand_health_snapshots: weekly ASIN-level revenue (dispatched_revenue), glance_views, oos_pct, unfilled_units, dispatched_units. Columns: asin, product_title, brand_classified, market, week_start.\n- brand_health_ads: weekly brand+market ad spend, ad revenue, ROAS. Columns: brand_classified, market, week_start, ad_spend, ad_revenue.\n- brand_health_ads_queries: search terms triggering ads. Columns: week_start, brand_classified, market, query, ad_spend, ad_revenue, ad_clicks.\n- brand_health_ads_placement: top-of-search vs detail page. Columns: week_start, brand_classified, market, placement, ad_spend, ad_revenue.\n\nBrands map: GAMES, PLAY_DOH, MONOPOLY, BEYBLADE, NERF, TRANSFORMERS, MARVEL, STAR_WARS, PEPPA_PIG, DISNEY_KIDS.\nMarkets: GB, DE, FR, IT, ES.\nWeek starts are always Sundays (e.g. 2026-05-10).\n\nFor campaign lift questions: compare the period before the campaign, during, and after. Calculate % change in revenue and glance views. State the lift clearly.\n\nHow you speak: Natural English sentences. Dry, confident. No bullet points. No methodology lectures. Answer, add one sharp observation, stop.';
+
+  var TOOLS=[
+    {
+      name:'query_supabase',
+      description:'Query Supabase for ASIN performance, brand performance, ad data, or search terms across any date range. Returns raw rows from the database.',
+      input_schema:{
+        type:'object',
+        properties:{
+          table:{type:'string',description:'Table name: brand_health_snapshots | brand_health_ads | brand_health_ads_queries | brand_health_ads_placement'},
+          filters:{type:'string',description:'Supabase filter params e.g. asin=eq.B0DNFPM6KB&week_start=gte.2026-04-01&week_start=lte.2026-05-10&market=eq.GB'},
+          select:{type:'string',description:'Columns to select e.g. week_start,asin,product_title,dispatched_revenue,glance_views,oos_pct'},
+          order:{type:'string',description:'Order clause e.g. week_start.asc'},
+          limit:{type:'number',description:'Max rows, default 200'}
+        },
+        required:['table','select']
+      }
+    }
+  ];
+
+  async function runTool(toolName, toolInput){
+    if(toolName!=='query_supabase') return JSON.stringify({error:'Unknown tool'});
+    try{
+      var table=toolInput.table||'brand_health_snapshots';
+      var select=toolInput.select||'*';
+      var filters=toolInput.filters||'';
+      var order=toolInput.order?'&order='+toolInput.order:'';
+      var limit=toolInput.limit||200;
+      var url=SUPABASE_URL+'/rest/v1/'+table+'?select='+encodeURIComponent(select)+(filters?'&'+filters:'')+order;
+      var headers=Object.assign({},SB_HEADERS,{'Range':'0-'+(limit-1)});
+      var res=await fetch(url,{headers:headers});
+      var data=await res.json();
+      if(!Array.isArray(data)) return JSON.stringify({error:'Query failed',detail:data});
+      return JSON.stringify({rows:data,count:data.length});
+    }catch(e){
+      return JSON.stringify({error:e.message});
+    }
+  }
 
   var history=[];
   var loading=false;
   var open=false;
   var suggestionsShown=true;
-  var liveDataContext='';
 
-  async function fetchLiveContext(){
+  // Lightweight current-week summary for initial context
+  var weekSummary='';
+  (async function(){
     try{
-      var wRes=await fetch(SUPABASE_URL+'/rest/v1/brand_health_weeks?select=week_start,week_label&order=week_start.desc&limit=4',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+      var wRes=await fetch(SUPABASE_URL+'/rest/v1/brand_health_weeks?select=week_start,week_label&order=week_start.desc&limit=1',{headers:SB_HEADERS});
       var weeks=await wRes.json();
-      if(!weeks||!weeks.length){liveDataContext='No data uploaded yet.';return;}
-      var latestWs=weeks[0].week_start,wLabel=weeks[0].week_label||latestWs;
-      var weekStarts=weeks.map(function(w){return w.week_start;});
-
-      var adamHeaders={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Range':'0-19999','Range-Unit':'items','Prefer':'count=none'};
-
-      // Fetch current week full snapshot
-      var sRes=await fetch(SUPABASE_URL+'/rest/v1/brand_health_snapshots?week_start=eq.'+latestWs+'&select=brand_classified,market,asin,product_title,dispatched_revenue,ordered_revenue,dispatched_units,ordered_units,glance_views,oos_pct,unfilled_units,revenue_yoy,glance_views_yoy',{headers:adamHeaders});
-      var snaps=await sRes.json();
-
-      // Fetch prior 3 weeks ASIN-level glance views for trend context
-      var priorSnaps=[];
-      for(var wi=1;wi<weekStarts.length;wi++){
-        var pr=await fetch(SUPABASE_URL+'/rest/v1/brand_health_snapshots?week_start=eq.'+weekStarts[wi]+'&select=week_start,asin,market,glance_views,dispatched_revenue,ordered_revenue',{headers:adamHeaders});
-        var prData=await pr.json();
-        if(Array.isArray(prData))priorSnaps=priorSnaps.concat(prData);
-      }
-
-      var aRes=await fetch(SUPABASE_URL+'/rest/v1/brand_health_ads?week_start=eq.'+latestWs+'&select=brand_classified,market,ad_revenue,ad_spend&limit=500',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
-      var ads=await aRes.json();
-
-      if(!snaps||!snaps.length){liveDataContext='No snapshot data for latest week.';return;}
-
-      // Build ASIN trend lookup from prior weeks
-      var asinTrend={};
-      priorSnaps.forEach(function(r){
-        if(!r.asin)return;
-        var k=r.asin+'_'+r.market;
-        if(!asinTrend[k])asinTrend[k]=[];
-        asinTrend[k].push({week:r.week_start,gv:r.glance_views||0,rev:r.dispatched_revenue||0});
-      });
-
-      var bAgg={};
-      snaps.forEach(function(r){
-        var b=r.brand_classified;
-        if(!bAgg[b])bAgg[b]={rev:0,units:0,gv:0,oos:[],revYoyN:0,revYoyD:0,gvYoyN:0,gvYoyD:0,asins:[]};
-        var rev=r.dispatched_revenue||0;
-        bAgg[b].rev+=rev;bAgg[b].units+=(r.dispatched_units||0);bAgg[b].gv+=(r.glance_views||0);
-        if(r.oos_pct!=null)bAgg[b].oos.push(r.oos_pct);
-        if(r.revenue_yoy!=null&&rev>0){bAgg[b].revYoyN+=rev*r.revenue_yoy;bAgg[b].revYoyD+=rev;}
-        var gv=r.glance_views||0;if(r.glance_views_yoy!=null&&gv>0){bAgg[b].gvYoyN+=gv*r.glance_views_yoy;bAgg[b].gvYoyD+=gv;}
-        if(r.asin&&r.product_title){
-          var trend=asinTrend[r.asin+'_'+r.market]||[];
-          var priorGv=trend.length>0?Math.round(trend.reduce(function(s,t){return s+t.gv;},0)/trend.length):null;
-          bAgg[b].asins.push({asin:r.asin,title:r.product_title,market:r.market,rev:rev,gv:r.glance_views||0,oos:r.oos_pct||0,priorAvgGv:priorGv});
-        }
-      });
-
-      var adAgg={};
-      if(Array.isArray(ads))ads.forEach(function(r){if(!adAgg[r.brand_classified])adAgg[r.brand_classified]={adRev:0,adSpend:0};adAgg[r.brand_classified].adRev+=(r.ad_revenue||0);adAgg[r.brand_classified].adSpend+=(r.ad_spend||0);});
-
-      var fM=function(v){if(v>=1000000)return'€'+(v/1000000).toFixed(1)+'M';if(v>=1000)return'€'+(v/1000).toFixed(0)+'K';return'€'+v.toFixed(0);};
-      var fN=function(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(0)+'K';return Math.round(n).toLocaleString();};
-      var fY=function(n,d){if(!d)return'n/a';var p=((n/d)*100).toFixed(1);return(n/d>=0?'+':'')+p+'%';};
-      var fO=function(a){if(!a.length)return'n/a';return(a.reduce(function(x,y){return x+y;},0)/a.length).toFixed(1)+'%';};
-
-      var lines=['=== LIVE DASHBOARD DATA — Current week: '+wLabel+' (plus prior 3 weeks for trend context) ===',''];
-      var ORDER=['NERF','PLAY_DOH','MONOPOLY','TRANSFORMERS','MARVEL','STAR_WARS','GAMES','PEPPA_PIG','BEYBLADE','DISNEY_KIDS','OTHER'];
-      var BL={NERF:'Nerf',PLAY_DOH:'Play-Doh',MONOPOLY:'Monopoly',TRANSFORMERS:'Transformers',MARVEL:'Marvel',STAR_WARS:'Star Wars',GAMES:'Games',PEPPA_PIG:'Peppa Pig',BEYBLADE:'Beyblade',DISNEY_KIDS:'Disney Kids',OTHER:'Other'};
-      ORDER.forEach(function(bid){
-        var d=bAgg[bid];if(!d||d.rev===0)return;
-        var conv=d.gv>0?(d.units/d.gv*100).toFixed(2)+'%':'n/a';
-        var ad=adAgg[bid];
-        var line='\n['+(BL[bid]||bid)+'] revenue='+fM(d.rev)+' yoy='+fY(d.revYoyN,d.revYoyD)+' glance_views='+fN(d.gv)+' gv_yoy='+fY(d.gvYoyN,d.gvYoyD)+' cvr='+conv+' avg_oos='+fO(d.oos);
-        if(ad&&ad.adSpend>0)line+=' | ad_spend='+fM(ad.adSpend)+' ad_rev='+fM(ad.adRev)+' roas='+(ad.adRev/ad.adSpend).toFixed(2)+'x';
-        lines.push(line);
-        d.asins.slice().sort(function(a,b){return b.rev-a.rev;}).slice(0,5).forEach(function(a){
-          var trendStr=a.priorAvgGv!=null?' (3wk avg gv: '+fN(a.priorAvgGv)+')':'';
-          lines.push('  '+a.asin+' ('+a.market+'): "'+a.title.substring(0,55)+'" rev='+fM(a.rev)+' gv='+fN(a.gv)+trendStr+' oos='+a.oos.toFixed(1)+'%');
-        });
-      });
-
-      liveDataContext=lines.join('\n');
-      console.log('Adam: live context loaded, '+liveDataContext.length+' chars');
-    }catch(e){console.warn('Adam: live context failed',e);liveDataContext='';}
-  }
-
-  fetchLiveContext();
+      if(!weeks||!weeks.length)return;
+      weekSummary='Current week in dashboard: '+(weeks[0].week_label||weeks[0].week_start)+'. Use query_supabase to look up any ASIN, brand or date range.';
+    }catch(e){}
+  })();
 
   setTimeout(function(){if(!open){var p=document.getElementById('adam-pulse'),b=document.getElementById('adam-uat-badge');if(p)p.style.display='block';if(b)b.style.display='none';}},10000);
 
@@ -997,7 +963,7 @@ function fmtYoyText(val){if(val==null||isNaN(val))return'';var p=(val*100).toFix
     if(open){
       var p=document.getElementById('adam-pulse'),b=document.getElementById('adam-uat-badge');
       if(p)p.style.display='none';if(b)b.style.display='block';
-      if(history.length===0)addMsg('assistant','Adam. I have this week\'s data in front of me.\n\nWhat do you need to know?');
+      if(history.length===0)addMsg('assistant','Adam. I have direct access to the full database — every ASIN, every week, every market.\n\nAsk me about a specific ASIN, a campaign period, or any brand across any date range.');
     }
   };
 
@@ -1016,6 +982,11 @@ function fmtYoyText(val){if(val==null||isNaN(val))return'';var p=(val*100).toFix
     return div;
   }
 
+  function updateBubble(el, text){
+    el.querySelector('.adam-bubble').innerHTML=adamFormat(text);
+    document.getElementById('adam-messages').scrollTop=99999;
+  }
+
   window.adamSend=async function(text){
     var inp=document.getElementById('adam-input');
     var msg=text||inp.value.trim();
@@ -1025,21 +996,65 @@ function fmtYoyText(val){if(val==null||isNaN(val))return'';var p=(val*100).toFix
     addMsg('user',msg);
     var typingEl=addMsg('assistant','',true);
     loading=true;document.getElementById('adam-send').disabled=true;
+
     try{
-      var systemWithData=SYSTEM+(liveDataContext?'\n\n'+liveDataContext:'');
-      var messages=[{role:'system',content:systemWithData}].concat(history);
-      var res=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:messages})});
-      var data=await res.json();
-      console.log('Adam API response:',JSON.stringify(data).substring(0,400));
-      var reply=data.reply||data.error||'No response received.';
-      history.push({role:'assistant',content:reply});
-      typingEl.querySelector('.adam-bubble').innerHTML=adamFormat(reply);
+      var systemFull=SYSTEM+(weekSummary?'\n\n'+weekSummary:'');
+      var messages=history.slice();
+
+      // Agentic loop — Adam can call tools up to 5 times per message
+      var maxIter=5;
+      for(var iter=0;iter<maxIter;iter++){
+        var res=await fetch(PROXY,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({system:systemFull,messages:messages,tools:TOOLS})
+        });
+        var data=await res.json();
+
+        if(data.error){
+          updateBubble(typingEl,'Error: '+data.error);
+          break;
+        }
+
+        // Check stop reason
+        var stopReason=data.stop_reason||data.stopReason||'end_turn';
+        var content=data.content||[];
+
+        // Collect any text to show user while tools run
+        var textParts=content.filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
+        var toolUses=content.filter(function(b){return b.type==='tool_use';});
+
+        if(stopReason==='tool_use'&&toolUses.length>0){
+          // Show thinking indicator
+          updateBubble(typingEl,(textParts?textParts+'\n\n':'')+'⏳ Querying database...');
+
+          // Add assistant turn to history
+          messages.push({role:'assistant',content:content});
+
+          // Execute tools and collect results
+          var toolResults=[];
+          for(var ti=0;ti<toolUses.length;ti++){
+            var tu=toolUses[ti];
+            var result=await runTool(tu.name,tu.input);
+            toolResults.push({type:'tool_result',tool_use_id:tu.id,content:result});
+          }
+          messages.push({role:'user',content:toolResults});
+          // Continue loop to get final answer
+
+        } else {
+          // Final answer
+          var reply=textParts||data.reply||'No response.';
+          history.push({role:'assistant',content:reply});
+          updateBubble(typingEl,reply);
+          break;
+        }
+      }
     }catch(e){
       console.error('Adam error:',e);
-      typingEl.querySelector('.adam-bubble').textContent='Error: '+e.message;
+      updateBubble(typingEl,'Error: '+e.message);
     }
+
     loading=false;document.getElementById('adam-send').disabled=false;
-    document.getElementById('adam-messages').scrollTop=99999;
   };
 
   document.getElementById('adam-input').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();adamSend();}});
