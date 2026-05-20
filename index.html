@@ -526,6 +526,7 @@ async function loadPriorData() {
     priorData[k].gviews  += r.glance_views||0;
   });
   console.log('priorData loaded:', Object.keys(priorData).length, 'brand-market combinations, sample GAMES||GB:', priorData['GAMES||GB']);
+}
 
 function aggregateBrand(brandId){
   var rows=getRows(brandId);
