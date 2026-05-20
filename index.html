@@ -377,16 +377,17 @@ function periodKey(d){if(periodMode==='week')return d;if(periodMode==='month')re
 function periodLabel(k){if(periodMode==='week'){var p=k.split('-');return p[2]+'/'+p[1]+'/'+p[0];}return k;}
 
 function sbFetch(path){
-  // Use a high range to get up to 20000 rows in one call
-  return fetch(SUPABASE_URL+path,{headers:{
+  var sep=path.indexOf('?')>=0?'&':'?';
+  return fetch(SUPABASE_URL+path+sep+'limit=15000',{headers:{
     'apikey':SUPABASE_KEY,
-    'Authorization':'Bearer '+SUPABASE_KEY,
-    'Range':'0-19999',
-    'Range-Unit':'items',
-    'Prefer':'count=none'
+    'Authorization':'Bearer '+SUPABASE_KEY
   }})
-  .then(function(r){return r.json();})
-  .then(function(d){return Array.isArray(d)?d:[];});
+  .then(function(r){
+    if(!r.ok) throw new Error('Supabase '+r.status+': '+path.split('?')[0]);
+    return r.json();
+  })
+  .then(function(d){return Array.isArray(d)?d:[];})
+  .catch(function(e){console.warn('sbFetch error:',e.message);return[];});
 }
 
 async function init(){
@@ -546,7 +547,7 @@ async function loadPriorData() {
   console.log('Prior weeks:', priorWeekStarts);
   var fetches = priorWeekStarts.map(function(ws) {
     return sbFetch('/rest/v1/brand_health_snapshots?week_start=eq.'+ws+
-      '&select=brand_classified,market,dispatched_revenue,glance_views');
+      '&select=brand_classified,market,dispatched_revenue,glance_views').catch(function(){ return []; });
   });
   var results = await Promise.all(fetches);
   results.reduce(function(a,b){return a.concat(b);}, []).forEach(function(r) {
@@ -844,15 +845,17 @@ async function renderAdsTab(brandId,d,ads,wrap){
   '</div>'+
   '<div id="ads-campaign-wrap" style="margin-top:16px;"><div style="font-family:\'Syne\',sans-serif;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Top Campaigns</div><div style="color:var(--text3);font-size:12px">Loading...</div></div>';
 
-  // Fetch placement, queries and campaigns in parallel
+  // Fetch placement, queries and campaigns in parallel — graceful fallback on error
   var mktFilter=currentMarket!=='ALL'?'&market=eq.'+currentMarket:'';
-  var fetches=await Promise.all([
-    sbFetch('/rest/v1/brand_health_ads_placement?'+wsParam+'&brand_classified=eq.'+brandId+mktFilter+'&select=placement,ad_spend,ad_revenue,ad_clicks,ad_impressions&order=ad_spend.desc'),
-    sbFetch('/rest/v1/brand_health_ads_queries?'+wsParam+'&brand_classified=eq.'+brandId+mktFilter+'&select=query,ad_spend,ad_revenue,ad_clicks,roas&order=ad_spend.desc'),
-    sbFetch('/rest/v1/brand_health_ads_campaigns?'+wsParam+'&brand_classified=eq.'+brandId+mktFilter+'&select=campaign_name,ad_spend,ad_revenue,ad_clicks,ad_impressions,roas&order=ad_spend.desc')
-  ]);
-
-  var placements=fetches[0],queries=fetches[1],campaigns=fetches[2];
+  var placements=[],queries=[],campaigns=[];
+  try{
+    var fetches=await Promise.all([
+      sbFetch('/rest/v1/brand_health_ads_placement?'+wsParam+'&brand_classified=eq.'+brandId+mktFilter+'&select=placement,ad_spend,ad_revenue,ad_clicks,ad_impressions&order=ad_spend.desc').catch(function(){return[];}),
+      sbFetch('/rest/v1/brand_health_ads_queries?'+wsParam+'&brand_classified=eq.'+brandId+mktFilter+'&select=query,ad_spend,ad_revenue,ad_clicks,roas&order=ad_spend.desc').catch(function(){return[];}),
+      sbFetch('/rest/v1/brand_health_ads_campaigns?'+wsParam+'&brand_classified=eq.'+brandId+mktFilter+'&select=campaign_name,ad_spend,ad_revenue,ad_clicks,ad_impressions,roas&order=ad_spend.desc').catch(function(){return[];})
+    ]);
+    placements=fetches[0]||[];queries=fetches[1]||[];campaigns=fetches[2]||[];
+  }catch(e){console.warn('Ads deep-dive fetch error:',e);}
 
   // Aggregate placements
   var plAgg={};
@@ -1050,7 +1053,7 @@ function fmtYoyText(val){if(val==null||isNaN(val))return'';var p=(val*100).toFix
 (function(){
   var PROXY='https://adam-proxy.addham.workers.dev/';
   var AVATAR='https://attic.sh/arz5gqoevz38gefaczkyj07h42iz';
-  var SB_HEADERS={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Range':'0-9999','Range-Unit':'items','Prefer':'count=none'};
+  var SB_HEADERS={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY};
 
   var SYSTEM='You are Adam — a sharp English data analyst in the Hasbro EU Amazon brand health dashboard.\n\nYou have ONE tool: query_supabase. Use it for EVERY data question. Never say you cannot access data. Never apologise.\n\nIMPORTANT WORKFLOW:\n1. If you do not know the current week, FIRST query brand_health_weeks (select=week_start, order=week_start.desc) — the first row is the latest week.\n2. Then query brand_health_snapshots with that exact week_start to answer brand/ASIN questions.\n3. Sum dispatched_revenue by brand_classified mentally to rank brands.\n\nTABLES:\n- brand_health_weeks: available weeks. Columns: week_start, week_label\n- brand_health_snapshots: ASIN-level weekly data. Columns: week_start, asin, product_title, brand_classified, market, dispatched_revenue, glance_views, oos_pct, dispatched_units, unfilled_units\n- brand_health_ads: brand ad data. Columns: week_start, brand_classified, market, ad_spend, ad_revenue\n- brand_health_ads_queries: search terms. Columns: week_start, brand_classified, market, query, ad_spend, ad_revenue\n\nBRAND VALUES (exact): GAMES, PLAY_DOH, MONOPOLY, BEYBLADE, NERF, TRANSFORMERS, MARVEL, STAR_WARS, PEPPA_PIG, DISNEY_KIDS\nMARKET VALUES: GB, DE, FR, IT, ES\n\nFILTER SYNTAX:\n- Equal: brand_classified=eq.GAMES\n- Date range: week_start=gte.2026-04-01&week_start=lte.2026-05-10\n- ASIN: asin=eq.B0DNFPM6KB\n\nSpeak naturally. Dry, confident. No bullet points. Answer then one sharp observation.';
 
@@ -1078,8 +1081,8 @@ function fmtYoyText(val){if(val==null||isNaN(val))return'';var p=(val*100).toFix
       var select=toolInput.select||'*';
       var filters=toolInput.filters||'';
       var order=toolInput.order?'&order='+toolInput.order:'';
-      var url=SUPABASE_URL+'/rest/v1/'+table+'?select='+encodeURIComponent(select)+(filters?'&'+filters:'')+order;
-      var headers=Object.assign({},SB_HEADERS,{'Range':'0-99'}); // max 100 rows to stay under token limit
+      var headers=Object.assign({},SB_HEADERS); // limit=100 added to URL below
+      var url=SUPABASE_URL+'/rest/v1/'+table+'?select='+encodeURIComponent(select)+(filters?'&'+filters:'')+order+'&limit=100';
       var res=await fetch(url,{headers:headers});
       var data=await res.json();
       if(!Array.isArray(data)) return JSON.stringify({error:'Query failed',detail:data});
