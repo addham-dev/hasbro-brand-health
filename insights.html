@@ -198,40 +198,45 @@ function buildBrandFilters(){
 }
 
 function renderStats(){
-  const brandTerms=allData.filter(d=>d.category==='BRAND');
-  const top500=allData.filter(d=>d.category==='TOP500');
-  // Hasbro in Top 500 = brand terms with rank <= 500
-  const hasbroInTop500=brandTerms.filter(d=>d.rank&&d.rank<=500);
-  // Highest ranked = lowest rank number across brand terms
+  const weeks=[...new Set(allData.map(d=>d.week_start))].sort().reverse();
+  const latestWeek=weeks[0];
+  const priorWeek=weeks[1]||null;
+  const noLego=d=>!(d.term||'').toLowerCase().includes('lego');
+  const brandTerms=allData.filter(d=>d.category==='BRAND'&&noLego(d)&&d.week_start===latestWeek);
+  const priorBrandTerms=priorWeek?allData.filter(d=>d.category==='BRAND'&&noLego(d)&&d.week_start===priorWeek):[];
+  const totalEst=brandTerms.reduce((s,t)=>s+(t.est_weekly_searches||0),0);
+  const priorEst=priorBrandTerms.reduce((s,t)=>s+(t.est_weekly_searches||0),0);
+  const wow=priorEst>0?((totalEst-priorEst)/priorEst):null;
   const topRanked=brandTerms.filter(d=>d.rank).reduce((best,t)=>(!best||t.rank<best.rank)?t:best,null);
-  console.log('TOP500 total:', top500.length, 'Brand terms rank<=500:', hasbroInTop500.length, 'terms:', hasbroInTop500.map(d=>d.term+' #'+d.rank));
   const topBrand=topRanked?.brand_classified||'ALL';
+  function fmtBig(n){return n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?Math.round(n/1000)+'K':n.toLocaleString();}
+  function fmtWow(v){if(v===null)return'No prior week';const p=(v*100).toFixed(1),col=v>0?'var(--green)':v<0?'var(--red)':'var(--text3)',arr=v>0?'▲':v<0?'▼':'';return`<span style="font-weight:700;color:${col}">${arr}${Math.abs(p)}% WoW</span>`;}
   document.getElementById('stat-grid').innerHTML=`
     <div class="stat-card" style="cursor:pointer" onmouseenter="this.style.borderColor='var(--blue)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="setView('brand',document.getElementById('view-brand'))">
       <div class="stat-label">Hasbro Brand Terms</div>
       <div class="stat-value">${brandTerms.length.toLocaleString()}</div>
       <div class="stat-sub">Across all brands & categories ↗</div>
     </div>
-    <div class="stat-card" style="cursor:pointer" onmouseenter="this.style.borderColor='var(--green)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="setView('top500',document.getElementById('view-top500'))">
-      <div class="stat-label">Hasbro in Top 500</div>
-      <div class="stat-value" style="color:var(--green)">${hasbroInTop500.length}</div>
-      <div class="stat-sub">Click to see platform terms ↗</div>
+    <div class="stat-card" style="cursor:pointer" onmouseenter="this.style.borderColor='var(--green)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="sortKey='est_weekly_searches';sortDir='desc';setView('brand',document.getElementById('view-brand'))">
+      <div class="stat-label">Est. Weekly Searches</div>
+      <div class="stat-value" style="color:var(--green)">${fmtBig(totalEst)}</div>
+      <div class="stat-sub">${fmtWow(wow)} vs last week</div>
     </div>
     <div class="stat-card" style="cursor:pointer" onmouseenter="this.style.borderColor='var(--purple)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="setView('toys',document.getElementById('view-toys'));setTimeout(()=>setBrandByValue('${topBrand}'),50)">
       <div class="stat-label">Highest Ranked Term</div>
       <div class="stat-value" style="font-size:18px;color:var(--text)">${topRanked?.term||'—'}</div>
       <div class="stat-sub">Rank #${topRanked?.rank?.toLocaleString()||'—'} · ${BRAND_LABELS[topRanked?.brand_classified]||''} ↗</div>
     </div>
-    <div class="stat-card" style="cursor:pointer" onmouseenter="this.style.borderColor='var(--amber)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="sortKey='rank';sortDir='asc';setView('brand',document.getElementById('view-brand'))">
-      <div class="stat-label">Est. Top Term Searches</div>
+    <div class="stat-card" style="cursor:pointer" onmouseenter="this.style.borderColor='var(--amber)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="sortKey='est_weekly_searches';sortDir='desc';setView('brand',document.getElementById('view-brand'))">
+      <div class="stat-label">Top Term Searches</div>
       <div class="stat-value" style="color:var(--amber)">${topRanked?.est_weekly_searches?.toLocaleString()||'—'}</div>
-      <div class="stat-sub">Per week (estimated) ↗</div>
+      <div class="stat-sub">${topRanked?.term||'—'} per week ↗</div>
     </div>
   `;
 }
 
 function getFilteredData(){
-  let data=allData;
+  let data=allData.filter(d=>!(d.term||'').toLowerCase().includes('lego'));
   if(currentView==='top500') data=data.filter(d=>d.category==='TOP500');
   else if(currentView==='brand') data=data.filter(d=>d.category==='BRAND');
   else if(currentView==='toys') data=data.filter(d=>d.category==='BRAND'&&(d.top_clicked_category||'').toLowerCase().includes('toy'));
