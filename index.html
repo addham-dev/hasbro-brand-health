@@ -388,25 +388,28 @@ function sbFetch(path){
 
 async function init(){
   try{
+    // Phase 1 — critical path only (parallel, fast)
     var results=await Promise.all([
       sbFetch('/rest/v1/brand_health_weeks?select=*&order=week_start.desc'),
       sbFetch('/rest/v1/brand_health_loyalty?select=*&order=uploaded_at.desc'),
-      sbFetch('/rest/v1/brand_health_ads?select=week_start,brand_classified,market,ad_revenue,ad_spend,ad_impressions,ad_clicks,ad_glance_views&order=week_start.desc&limit=10000')
+      sbFetch('/rest/v1/brand_health_ads?select=week_start,brand_classified,market,ad_revenue,ad_spend,ad_impressions,ad_clicks,ad_glance_views&order=week_start.desc')
     ]);
     var weeksRes=results[0],loyaltyRes=results[1],adsRes=results[2];
-    var coverageRes=[];
-    try{var cr=await sbFetch('/rest/v1/brand_health_ads_coverage?select=*');if(Array.isArray(cr))coverageRes=cr;}catch(e){}
-    try{var sr=await sbFetch('/rest/v1/brand_health_search_terms?select=*&order=week_start.desc,rank.asc&limit=50000');if(Array.isArray(sr))searchTermsData=sr;}catch(e){}
     allWeeks=weeksRes;
     loyaltyData={};
     loyaltyRes.forEach(function(r){if(!loyaltyData[r.brand_classified])loyaltyData[r.brand_classified]=r;});
-    adsCoverageData={};
-    coverageRes.forEach(function(r){if(!adsCoverageData[r.brand_classified])adsCoverageData[r.brand_classified]={};adsCoverageData[r.brand_classified][r.market]={total:r.total_asins,sp:r.sp_asins,sb:r.sb_asins};});
     adsDataAllWeeks={};
     adsRes.forEach(function(r){var k=r.week_start+'||'+r.brand_classified+'||'+(r.market||'ALL');adsDataAllWeeks[k]=r;});
     if(!allWeeks.length){document.getElementById('loading-screen').style.display='none';document.getElementById('no-data-screen').style.display='block';return;}
     buildPeriodSelect();
     await loadPeriod(currentPeriod);
+
+    // Phase 2 — background load (non-blocking, after dashboard is visible)
+    setTimeout(async function(){
+      try{var cr=await sbFetch('/rest/v1/brand_health_ads_coverage?select=*');if(Array.isArray(cr)){adsCoverageData={};cr.forEach(function(r){if(!adsCoverageData[r.brand_classified])adsCoverageData[r.brand_classified]={};adsCoverageData[r.brand_classified][r.market]={total:r.total_asins,sp:r.sp_asins,sb:r.sb_asins};});}}catch(e){}
+      try{var sr=await sbFetch('/rest/v1/brand_health_search_terms?select=*&order=week_start.desc,rank.asc');if(Array.isArray(sr)){searchTermsData=sr;renderBrandCards();}}catch(e){}
+    }, 100);
+
   }catch(err){
     document.getElementById('loading-screen').innerHTML='<div style="color:var(--red);font-size:12px;text-align:center;padding:40px">Error: '+err.message+'</div>';
   }
