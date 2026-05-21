@@ -408,13 +408,21 @@ async function init(){
     loyaltyRes.forEach(function(r){if(!loyaltyData[r.brand_classified])loyaltyData[r.brand_classified]=r;});
     adsDataAllWeeks={};
     adsRes.forEach(function(r){
-      // Store with original key
-      var k=r.week_start+'||'+r.brand_classified+'||'+(r.market||'ALL');
-      adsDataAllWeeks[k]=r;
-      // Also store with Sunday key (+1 day) so it matches VC week starts
-      var d=new Date(r.week_start);d.setDate(d.getDate()+1);
-      var sunKey=d.toISOString().split('T')[0]+'||'+r.brand_classified+'||'+(r.market||'ALL');
-      if(!adsDataAllWeeks[sunKey])adsDataAllWeeks[sunKey]=r;
+      // Normalise to Sunday: if stored as Saturday (day=6), shift +1 day to Sunday
+      var d=new Date(r.week_start);
+      if(d.getDay()===6){d.setDate(d.getDate()+1);}
+      var normWs=d.toISOString().split('T')[0];
+      var k=normWs+'||'+r.brand_classified+'||'+(r.market||'ALL');
+      if(!adsDataAllWeeks[k]){
+        adsDataAllWeeks[k]=Object.assign({},r,{week_start:normWs});
+      } else {
+        // Accumulate if same brand/market/week
+        adsDataAllWeeks[k].ad_revenue=(adsDataAllWeeks[k].ad_revenue||0)+(r.ad_revenue||0);
+        adsDataAllWeeks[k].ad_spend=(adsDataAllWeeks[k].ad_spend||0)+(r.ad_spend||0);
+        adsDataAllWeeks[k].ad_clicks=(adsDataAllWeeks[k].ad_clicks||0)+(r.ad_clicks||0);
+        adsDataAllWeeks[k].ad_impressions=(adsDataAllWeeks[k].ad_impressions||0)+(r.ad_impressions||0);
+        adsDataAllWeeks[k].ad_glance_views=(adsDataAllWeeks[k].ad_glance_views||0)+(r.ad_glance_views||0);
+      }
     });
     if(!allWeeks.length){document.getElementById('loading-screen').style.display='none';document.getElementById('no-data-screen').style.display='block';return;}
     buildPeriodSelect();
@@ -459,18 +467,16 @@ async function loadPeriod(periodVal){
 
   if(periodMode==='week'&&weekStarts.length===1){
     allRows=await sbFetch('/rest/v1/brand_health_snapshots?week_start=eq.'+weekStarts[0]+'&select='+SNAP_COLS);
-    var adsWeeks=Object.keys(adsDataAllWeeks).map(function(k){return k.split('||')[0];}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
-    var vcWeek=weekStarts[0];
-    var priorAdsWeek=adsWeeks.filter(function(w){return w<vcWeek;}).pop();
-    var adsWeekToUse=priorAdsWeek||adsWeeks.find(function(w){return w>=vcWeek;})||vcWeek;
     adsData={};
     Object.keys(adsDataAllWeeks).forEach(function(k){
       var parts=k.split('||'),ws=parts[0],bid=parts[1],mkt=parts[2]||'ALL';
-      if(ws!==adsWeekToUse)return;
+      if(ws!==weekStarts[0])return;
       var v=adsDataAllWeeks[k];
       if(!adsData[bid])adsData[bid]={};
       if(!adsData[bid][mkt])adsData[bid][mkt]={ad_revenue:0,ad_spend:0,ad_glance_views:0};
-      adsData[bid][mkt].ad_revenue+=(v.ad_revenue||0);adsData[bid][mkt].ad_spend+=(v.ad_spend||0);adsData[bid][mkt].ad_glance_views+=(v.ad_glance_views||0);
+      adsData[bid][mkt].ad_revenue+=(v.ad_revenue||0);
+      adsData[bid][mkt].ad_spend+=(v.ad_spend||0);
+      adsData[bid][mkt].ad_glance_views+=(v.ad_glance_views||0);
     });
     await loadPriorData();
 
@@ -497,7 +503,13 @@ async function loadPeriod(periodVal){
   buildDashboard();
 }
 
-function setPeriodMode(mode,btn){periodMode=mode;document.querySelectorAll('.period-tab').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');buildPeriodSelect();loadPeriod(currentPeriod);}
+function setPeriodMode(mode,btn){
+  periodMode=mode;
+  document.querySelectorAll('.period-tab').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  buildPeriodSelect();
+  if(currentPeriod) loadPeriod(currentPeriod);
+}
 function getRows(brandId){var rows=allRows.filter(function(r){return r.brand_classified===brandId;});if(currentMarket!=='ALL')rows=rows.filter(function(r){return r.market===currentMarket;});return rows;}
 
 var currentComparison = 'wow'; // 'wow' | '4w' | 'yoy'
@@ -538,28 +550,27 @@ function getPriorPeriodWeekStarts(currentWeekStarts) {
   return [];
 }
 
-var priorDataLoading = false;
+var _priorToken = 0;
 
 async function loadPriorData() {
-  if (priorDataLoading) return; // prevent concurrent calls
-  priorDataLoading = true;
-  priorData = {}; // always reset first
+  var token = ++_priorToken; // increment token — any previous call will see its token is stale
+  priorData = {};
 
   try {
     var weekStarts = allWeeks.map(function(w){ return w.week_start; })
       .filter(function(ws){ return periodKey(ws) === currentPeriod; });
-    if (!weekStarts.length) { priorDataLoading = false; return; }
+    if (!weekStarts.length || token !== _priorToken) return;
 
     var priorWeekStarts = getPriorPeriodWeekStarts(weekStarts);
-    if (!priorWeekStarts.length) { priorDataLoading = false; return; }
+    if (!priorWeekStarts.length || token !== _priorToken) return;
 
-    console.log('Loading prior weeks:', priorWeekStarts);
     var results = await Promise.all(priorWeekStarts.map(function(ws) {
       return sbFetch('/rest/v1/brand_health_snapshots?week_start=eq.'+ws+
         '&select=brand_classified,market,dispatched_revenue,glance_views');
     }));
 
-    // Reset again before populating — in case another call snuck in
+    // Only apply results if this is still the latest call
+    if (token !== _priorToken) return;
     priorData = {};
     results.forEach(function(rows) {
       (rows||[]).forEach(function(r) {
@@ -569,12 +580,10 @@ async function loadPriorData() {
         priorData[k].gviews  += r.glance_views||0;
       });
     });
-    console.log('priorData loaded:', Object.keys(priorData).length, 'combinations');
   } catch(e) {
     console.warn('loadPriorData error:', e);
-    priorData = {};
+    if (token === _priorToken) priorData = {};
   }
-  priorDataLoading = false;
 }
 
 function aggregateBrand(brandId){
