@@ -407,7 +407,15 @@ async function init(){
     loyaltyData={};
     loyaltyRes.forEach(function(r){if(!loyaltyData[r.brand_classified])loyaltyData[r.brand_classified]=r;});
     adsDataAllWeeks={};
-    adsRes.forEach(function(r){var k=r.week_start+'||'+r.brand_classified+'||'+(r.market||'ALL');adsDataAllWeeks[k]=r;});
+    adsRes.forEach(function(r){
+      // Store with original key
+      var k=r.week_start+'||'+r.brand_classified+'||'+(r.market||'ALL');
+      adsDataAllWeeks[k]=r;
+      // Also store with Sunday key (+1 day) so it matches VC week starts
+      var d=new Date(r.week_start);d.setDate(d.getDate()+1);
+      var sunKey=d.toISOString().split('T')[0]+'||'+r.brand_classified+'||'+(r.market||'ALL');
+      if(!adsDataAllWeeks[sunKey])adsDataAllWeeks[sunKey]=r;
+    });
     if(!allWeeks.length){document.getElementById('loading-screen').style.display='none';document.getElementById('no-data-screen').style.display='block';return;}
     buildPeriodSelect();
     await loadPeriod(currentPeriod);
@@ -440,7 +448,14 @@ async function loadPeriod(periodVal){
   document.getElementById('loading-screen').style.display='flex';
   document.getElementById('main-content').style.display='none';
   var weekStarts=allWeeks.map(function(w){return w.week_start;}).filter(function(ws){return periodKey(ws)===periodVal;});
-  var SNAP_COLS='week_start,asin,product_title,brand_classified,market,dispatched_revenue,dispatched_units,glance_views,oos_pct,unfilled_units';
+  var SNAP_COLS='week_start,asin,product_title,brand_classified,market,dispatched_revenue,dispatched_units,glance_views,oos_pct,unfilled_units,revenue_yoy,glance_views_yoy';
+
+  if(!weekStarts.length){
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('main-content').style.display='grid';
+    buildDashboard();
+    return;
+  }
 
   if(periodMode==='week'&&weekStarts.length===1){
     allRows=await sbFetch('/rest/v1/brand_health_snapshots?week_start=eq.'+weekStarts[0]+'&select='+SNAP_COLS);
