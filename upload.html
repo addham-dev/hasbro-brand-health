@@ -452,9 +452,12 @@ async function handleAdsFiles(fileList) {
 
   for (const file of xlsx_files) {
     const week = await extractWeekFromAdsFile(file);
-    const existing = adsQueue.findIndex(q => q.weekStart === week?.start);
-    if (existing >= 0) adsQueue[existing] = { file, weekStart: week?.start, weekLabel: week?.label };
-    else adsQueue.push({ file, weekStart: week?.start, weekLabel: week?.label });
+    // Key by weekStart + filename to allow multiple files per week
+    const key = (week?.start||'unknown') + '||' + file.name;
+    const existing = adsQueue.findIndex(q => q.key === key);
+    const entry = { key, file, weekStart: week?.start, weekLabel: week?.label };
+    if (existing >= 0) adsQueue[existing] = entry;
+    else adsQueue.push(entry);
   }
 
   renderAdsQueue();
@@ -491,7 +494,12 @@ async function extractWeekFromAdsFile(file) {
               return { y:yyyy, m:months[mon.toLowerCase()]||'01', d:dd.padStart(2,'0') };
             };
             const d1 = parseDate(m[1]); const d2 = parseDate(m[2]);
-            return { start:`${d1.y}-${d1.m}-${d1.d}`, label:`${d1.d}/${d1.m}/${d1.y} – ${d2.d}/${d2.m}/${d2.y}` };
+            // Pacvue weeks start Monday — shift back 1 day to align with VC Sunday week
+            const startDate = new Date(`${d1.y}-${d1.m}-${d1.d}`);
+            startDate.setDate(startDate.getDate() - 1);
+            const sunStart = startDate.toISOString().split('T')[0];
+            const [sy,sm,sd] = sunStart.split('-');
+            return { start:sunStart, label:`${sd}/${sm}/${sy} – ${d2.d}/${d2.m}/${d2.y}` };
           }
         }
       }
@@ -614,22 +622,24 @@ function detectFileType(filename) {
 }
 
 function detectWeekFromFilename(filename) {
-  // VC weekly files always DD-MM-YYYY_DD-MM-YYYY where first date = Sunday week start
+  // Format: DD-MM-YYYY_DD-MM-YYYY
   const m = filename.match(/(\d{2}-\d{2}-\d{4})_(\d{2}-\d{2}-\d{4})/);
   if (m) {
     const [d1,mo1,y1] = m[1].split('-');
     const [d2,mo2,y2] = m[2].split('-');
-    return {
-      start: `${y1}-${mo1}-${d1}`,
-      end:   `${y2}-${mo2}-${d2}`,
-      label: `${d1}/${mo1}/${y1} – ${d2}/${mo2}/${y2}`
-    };
+    return { start:`${y1}-${mo1}-${d1}`, end:`${y2}-${mo2}-${d2}`, label:`${d1}/${mo1}/${y1} – ${d2}/${mo2}/${y2}` };
   }
-  // Fallback: YYYY-MM-DD_YYYY-MM-DD
+  // Format: YYYY-MM-DD_YYYY-MM-DD (underscore separator)
   const m2 = filename.match(/(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})/);
   if (m2) {
     const fmt = d => { const [y,mo,dd] = d.split('-'); return `${dd}/${mo}/${y}`; };
-    return { start: m2[1], end: m2[2], label: `${fmt(m2[1])} – ${fmt(m2[2])}` };
+    return { start:m2[1], end:m2[2], label:`${fmt(m2[1])} – ${fmt(m2[2])}` };
+  }
+  // Format: YYYY-MM-DD-YYYY-MM-DD (hyphen separator between two ISO dates)
+  const m3 = filename.match(/(\d{4}-\d{2}-\d{2})-(\d{4}-\d{2}-\d{2})/);
+  if (m3) {
+    const fmt = d => { const [y,mo,dd] = d.split('-'); return `${dd}/${mo}/${y}`; };
+    return { start:m3[1], end:m3[2], label:`${fmt(m3[1])} – ${fmt(m3[2])}` };
   }
   return null;
 }
