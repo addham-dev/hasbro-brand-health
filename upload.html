@@ -1034,14 +1034,17 @@ function log(msg,type='',areaId='log-area'){
 async function processAndUpload() {
   const ready = weekQueue.filter(w => w.sales && w.traffic && w.inventory);
   if (!ready.length) { alert('No complete weeks to upload. Each week needs Sales, Traffic and Inventory files.'); return; }
+  // Deduplicate ready list by weekStart to prevent double uploads
+  const seen = new Set();
+  const deduped = ready.filter(w => { if(seen.has(w.weekStart)) return false; seen.add(w.weekStart); return true; });
 
   document.getElementById('overlay').classList.add('on');
   document.getElementById('log-area').innerHTML = '';
-  log(`Starting bulk upload — ${ready.length} week(s)...`, 'info');
+  log(`Starting bulk upload — ${deduped.length} week(s)...`, 'info');
 
   let successCount = 0;
-  for (let wi = 0; wi < ready.length; wi++) {
-    const w = ready[wi];
+  for (let wi = 0; wi < deduped.length; wi++) {
+    const w = deduped[wi];
     log(`[${wi+1}/${ready.length}] Processing ${w.weekLabel}...`, 'info');
     try {
       document.getElementById('overlay-sub').textContent = `Reading Sales — ${w.weekLabel}`;
@@ -1117,12 +1120,14 @@ async function processAndUpload() {
         });
         if(!r.ok){const e=await r.text();throw new Error('Upload failed: '+e);}
         uploaded+=Math.min(BATCH,rows.length-i);
-        document.getElementById('overlay-progress').textContent=`Week ${wi+1}/${ready.length} — ${uploaded}/${rows.length} rows`;
+        document.getElementById('overlay-progress').textContent=`Week ${wi+1}/${deduped.length} — ${uploaded}/${rows.length} rows`;
       }
       await sbDelete(`/rest/v1/brand_health_weeks?week_start=eq.${w.weekStart}`);
       await sbPost('/rest/v1/brand_health_weeks', { week_start:w.weekStart, week_label:w.weekLabel }, { prefer:'resolution=merge-duplicates' });
       log(`✅ Week ${w.weekLabel} — ${rows.length} rows uploaded`, 'ok');
       successCount++;
+      // Remove from queue immediately after success
+      weekQueue = weekQueue.filter(q => q.weekStart !== w.weekStart);
     } catch(err) {
       log(`❌ Week ${w.weekLabel} failed: ${err.message}`, 'err');
       console.error(err);
@@ -1130,7 +1135,7 @@ async function processAndUpload() {
   }
 
   document.getElementById('overlay').classList.remove('on');
-  log(`✅ Complete — ${successCount}/${ready.length} weeks uploaded.`, 'ok');
+  log(`✅ Complete — ${successCount}/${deduped.length} weeks uploaded.`, 'ok');
   weekQueue = weekQueue.filter(w => !ready.find(r => r.weekStart === w.weekStart));
   renderDetectedFiles();
   loadHistory();
