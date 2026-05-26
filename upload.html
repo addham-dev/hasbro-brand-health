@@ -1676,8 +1676,8 @@ function aggregateCampaignToAds(campaignRows) {
     agg[k].ad_clicks     += r.ad_clicks;
     agg[k].ad_impressions+= r.ad_impressions;
   });
-  // Apply 1.4x proxy for ad glance views (clicks × 1.4 — toys category standard)
-  Object.values(agg).forEach(r => { r.ad_glance_views = Math.round(r.ad_clicks * 1.4); });
+  // Apply 1.4x proxy for ad glance views (clicks × 2.2 — toys category standard)
+  Object.values(agg).forEach(r => { r.ad_glance_views = Math.round(r.ad_clicks * 2.2); });
   return Object.values(agg);
 }
 
@@ -1762,9 +1762,9 @@ async function processAndUploadAds() {
           week_start: weekStart, brand_classified: r.brand_classified, market: r.market,
           ad_revenue: Math.round(r.ad_revenue*100)/100, ad_spend: Math.round(r.ad_spend*100)/100,
           ad_impressions: Math.round(r.ad_impressions), ad_clicks: Math.round(r.ad_clicks),
-          ad_glance_views: Math.round(r.ad_clicks * 1.4),
+          ad_glance_views: Math.round(r.ad_clicks * 2.2),
           organic_revenue: Math.max(0, Math.round((vc.revenue - r.ad_revenue)*100)/100),
-          organic_glance_views: Math.max(0, Math.round(vc.gviews - (r.ad_clicks * 1.4)))
+          organic_glance_views: Math.max(0, Math.round(vc.gviews - (r.ad_clicks * 2.2)))
         };
       });
       if (!finalRows.length) throw new Error('0 rows built — check file parsed correctly');
