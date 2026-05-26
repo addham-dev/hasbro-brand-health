@@ -497,7 +497,7 @@ async function extractWeekFromAdsFile(file) {
             // Pacvue weeks start Monday — shift back 1 day to align with VC Sunday week
             const startDate = new Date(`${d1.y}-${d1.m}-${d1.d}`);
             startDate.setDate(startDate.getDate() - 1);
-            const sunStart = startDate.toISOString().split('T')[0];
+            const sunStart = String(startDate.getFullYear())+'-'+String(startDate.getMonth()+1).padStart(2,'0')+'-'+String(startDate.getDate()).padStart(2,'0');
             const [sy,sm,sd] = sunStart.split('-');
             return { start:sunStart, label:`${sd}/${sm}/${sy} – ${d2.d}/${d2.m}/${d2.y}` };
           }
@@ -1539,7 +1539,7 @@ async function parsePacvueCampaign(file) {
           const date = new Date(r['Time']);
           const weekStart = new Date(date);
           weekStart.setDate(date.getDate() - date.getDay()); // Sunday (matches VC)
-          const ws = weekStart.toISOString().split('T')[0];
+          const ws = String(weekStart.getFullYear())+'-'+String(weekStart.getMonth()+1).padStart(2,'0')+'-'+String(weekStart.getDate()).padStart(2,'0');
           results.push({
             week_start: ws,
             brand_classified: brand,
@@ -1588,7 +1588,7 @@ async function parsePacvuePlacement(file) {
           const date = new Date(r['Time']);
           const weekStart = new Date(date);
           weekStart.setDate(date.getDate() - date.getDay()); // Sunday (matches VC)
-          const ws = weekStart.toISOString().split('T')[0];
+          const ws = String(weekStart.getFullYear())+'-'+String(weekStart.getMonth()+1).padStart(2,'0')+'-'+String(weekStart.getDate()).padStart(2,'0');
           const spend = parseFloat(String(r['Spend']||0).replace(/[^0-9.\-]/g,''))||0;
           if (spend === 0) return;
           results.push({
@@ -1640,7 +1640,7 @@ async function parsePacvueQuery(file) {
           const date = new Date(r['Time']);
           const weekStart = new Date(date);
           weekStart.setDate(date.getDate() - date.getDay()); // Sunday (matches VC)
-          const ws = weekStart.toISOString().split('T')[0];
+          const ws = String(weekStart.getFullYear())+'-'+String(weekStart.getMonth()+1).padStart(2,'0')+'-'+String(weekStart.getDate()).padStart(2,'0');
           const spend = parseFloat(String(r['Spend']||0).replace(/[^0-9.\-]/g,''))||0;
           if (spend === 0) return;
           results.push({
