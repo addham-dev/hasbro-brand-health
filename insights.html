@@ -323,6 +323,8 @@ function sortBy(key){
   renderTable();
 }
 
+function formatDate(d){if(!d)return'—';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+
 function setSubTab(tab,btn){
   document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
