@@ -106,7 +106,7 @@
 </div>
 
 <main>
-  <div id="search-section" style="display:block">
+  <div id="search-section">
     <div id="search-loading" class="loading">Loading search terms data...</div>
     <div id="search-loading" class="loading">Loading search terms data...</div>
     <div id="search-content" style="display:none">
@@ -327,9 +327,9 @@ function formatDate(d){if(!d)return'—';const p=d.split('-');return p[2]+'/'+p[
 
 function setSubTab(tab,btn){
   document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('search-section').style.display = tab==='search'?'block':'none';
-  document.getElementById('preorder-section').style.display = tab==='preorder'?'block':'none';
+  if(btn) btn.classList.add('active');
+  document.getElementById('search-section').style.display = tab==='search'?'':'none';
+  document.getElementById('preorder-section').style.display = tab==='preorder'?'':'none';
   if(tab==='preorder' && !preorderLoaded) loadPreOrders();
 }
 
@@ -381,19 +381,18 @@ async function loadPreOrders(){
 
       if(totalOrdered < 10) return;
 
-      // Pre-order: recent weeks have ordered revenue AND no dispatch has ever happened yet
-      const noDispatchEver = !firstDispatchDate;
-      // Also pre-order if first dispatch is in the future relative to recent weeks
-      const firstDispatchInFuture = firstDispatchDate && recentWeeks.every(w=>w>firstDispatchDate===false&&firstDispatchDate>w);
-
       let classification, confidence, reason;
-      if(noDispatchEver && totalOrdered>0){
+
+      // PRE-ORDER: ASIN has NEVER dispatched anything in its entire history
+      // AND has ordered revenue in recent weeks — genuinely new, not yet released
+      if(!firstDispatchDate && totalOrdered>0){
         classification='PRE-ORDER'; confidence='High';
-        reason='No dispatch history anywhere — ordered revenue ahead of first shipment';
-      } else if(avgOos>=80 && gap>0){
+        reason='Never dispatched — ordered revenue exists ahead of first shipment date';
+      } else if(firstDispatchDate && avgOos>=80 && gap>0){
+        // OOS: has dispatched before, now fully OOS
         classification='OOS GAP'; confidence='High';
         reason='Previously dispatched, now '+avgOos.toFixed(0)+'% OOS — stock exhausted';
-      } else if(avgOos>=30 && gap>0){
+      } else if(firstDispatchDate && avgOos>=30 && gap>0){
         classification='OOS GAP'; confidence='Medium';
         reason='Partial OOS ('+avgOos.toFixed(0)+'%) contributing to gap';
       } else {
