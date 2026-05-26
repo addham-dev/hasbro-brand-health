@@ -1108,6 +1108,7 @@ async function processAndUpload() {
 
       document.getElementById('overlay-sub').textContent = `Uploading — ${w.weekLabel}`;
       await sbDelete(`/rest/v1/brand_health_snapshots?week_start=eq.${w.weekStart}`);
+      const BATCH = 500; let uploaded = 0;
       for(let i=0;i<rows.length;i+=BATCH){
         const r=await fetch(SUPABASE_URL+'/rest/v1/brand_health_snapshots',{
           method:'POST',
@@ -1115,12 +1116,8 @@ async function processAndUpload() {
           body:JSON.stringify(rows.slice(i,i+BATCH))
         });
         if(!r.ok){const e=await r.text();throw new Error('Upload failed: '+e);}
-      }
-      const BATCH = 500; let uploaded = 0;
-      for (let i = 0; i < rows.length; i += BATCH) {
-        await sbPost('/rest/v1/brand_health_snapshots', rows.slice(i, i+BATCH));
-        uploaded += Math.min(BATCH, rows.length - i);
-        document.getElementById('overlay-progress').textContent = `Week ${wi+1}/${ready.length} — ${uploaded}/${rows.length} rows`;
+        uploaded+=Math.min(BATCH,rows.length-i);
+        document.getElementById('overlay-progress').textContent=`Week ${wi+1}/${ready.length} — ${uploaded}/${rows.length} rows`;
       }
       await sbDelete(`/rest/v1/brand_health_weeks?week_start=eq.${w.weekStart}`);
       await sbPost('/rest/v1/brand_health_weeks', { week_start:w.weekStart, week_label:w.weekLabel }, { prefer:'resolution=merge-duplicates' });
