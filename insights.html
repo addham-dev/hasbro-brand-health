@@ -185,17 +185,13 @@ async function init(){
 }
 
 function sbFetch(path, limit=10000){
-  const isRpc = path.includes('/rpc/');
   const sep=path.indexOf('?')>=0?'&':'?';
-  const url = isRpc ? SUPABASE_URL+path : SUPABASE_URL+path+sep+'limit='+limit;
+  const url = SUPABASE_URL+path+sep+'limit='+limit;
   return fetch(url,{
-    method: isRpc ? 'POST' : 'GET',
     headers:{
       'apikey':SUPABASE_KEY,
-      'Authorization':'Bearer '+SUPABASE_KEY,
-      'Content-Type': isRpc ? 'application/json' : 'text/plain'
-    },
-    body: isRpc ? '{}' : undefined
+      'Authorization':'Bearer '+SUPABASE_KEY
+    }
   }).then(r=>{
     if(!r.ok) throw new Error('Supabase '+r.status);
     return r.json();
@@ -349,7 +345,10 @@ async function loadPreOrders(){
     // Single SQL function call — does all aggregation server-side
     const data = await fetch(SUPABASE_URL+'/rest/v1/rpc/get_preorder_tracker',{
       method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
+      headers:{
+        'apikey':SUPABASE_KEY,
+        'Content-Type':'application/json'
+      },
       body:'{}'
     }).then(r=>r.ok?r.json():[]).catch(()=>[]);
 
