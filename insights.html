@@ -357,18 +357,56 @@ async function loadPreOrders(){
     const cutoff = twelveWeeksAgo.toISOString().split('T')[0];
     const recentWeeks = latestWeeks.slice(0,4).map(w=>w.week_start);
 
-    // Only need last 4 weeks of snapshots for ordered/oos data
-    const [summary, recentSnaps] = await Promise.all([
-      sbFetch('/rest/v1/rpc/get_pre_order_analysis', 50000),
-      sbFetch(`/rest/v1/brand_health_snapshots?select=asin,market,week_start,ordered_revenue,dispatched_revenue,oos_pct&week_start=in.(${recentWeeks.join(',')})`, 30000)
-    ]);
+    // Step 1: Get recent 4 weeks snapshots for ordered/oos data (small targeted query)
+    const recentSnaps = await sbFetch(
+      `/rest/v1/brand_health_snapshots?select=asin,product_title,brand_classified,market,week_start,ordered_revenue,dispatched_revenue,dispatched_units,oos_pct&week_start=in.(${recentWeeks.join(',')})`,
+      30000
+    );
 
-    // Build recent ordered/oos per ASIN from snapshot
+    // Step 2: Find ASINs with ordered revenue in recent weeks
+    const candidateAsins = [...new Set(
+      recentSnaps.filter(r=>(r.ordered_revenue||0)>0).map(r=>r.asin)
+    )];
+
+    if(!candidateAsins.length){
+      loading.style.display='none';
+      content.innerHTML='<div class="empty">✅ No ordered revenue found in last 4 weeks.</div>';
+      content.style.display='block';
+      preorderLoaded=true;
+      return;
+    }
+
+    // Step 3: For candidate ASINs only, check their full dispatch history
+    // Fetch in batches of 50 ASINs to avoid URL length limits
+    let historyRows = [];
+    const batchSize = 50;
+    for(let i=0; i<candidateAsins.length; i+=batchSize){
+      const batch = candidateAsins.slice(i, i+batchSize);
+      const rows = await sbFetch(
+        `/rest/v1/brand_health_snapshots?select=asin,market,dispatched_revenue,dispatched_units,week_start&asin=in.(${batch.join(',')})`,
+        20000
+      );
+      historyRows = historyRows.concat(rows);
+    }
+
+    // Build dispatch history per ASIN/market
+    const dispatchHistory = {};
+    historyRows.forEach(r=>{
+      const k = r.asin+'||'+(r.market||'');
+      if(!dispatchHistory[k]) dispatchHistory[k]={totalDispatched:0,firstWeek:r.week_start,weeksWithDispatch:0};
+      if(r.week_start < dispatchHistory[k].firstWeek) dispatchHistory[k].firstWeek = r.week_start;
+      const hasDispatch = (r.dispatched_revenue||0)>0||(r.dispatched_units||0)>0;
+      if(hasDispatch){
+        dispatchHistory[k].totalDispatched += r.dispatched_revenue||0;
+        dispatchHistory[k].weeksWithDispatch++;
+      }
+    });
+
+    // Build recent map from recentSnaps
     const recentMap = {};
     recentSnaps.forEach(r=>{
-      if(!recentWeeks.includes(r.week_start)) return;
       const k = r.asin+'||'+(r.market||'');
-      if(!recentMap[k]) recentMap[k]={ordered:0,dispatched:0,oosSum:0,oosCount:0};
+      if(!recentMap[k]) recentMap[k]={ordered:0,dispatched:0,oosSum:0,oosCount:0,title:r.product_title,brand:r.brand_classified,market:r.market,asin:r.asin};
       recentMap[k].ordered += r.ordered_revenue||0;
       recentMap[k].dispatched += r.dispatched_revenue||0;
       recentMap[k].oosSum += r.oos_pct||0;
@@ -376,29 +414,22 @@ async function loadPreOrders(){
     });
 
     const results = [];
-    console.log('Summary rows:', summary.length, 'RecentSnaps:', recentSnaps.length, 'RecentWeeks:', recentWeeks, 'Cutoff:', cutoff);
-    // Log first few summary rows for debugging
-    summary.slice(0,3).forEach(a=>console.log('Sample view row:', JSON.stringify(a)));
-    summary.forEach(a=>{
-      const k = a.asin+'||'+(a.market||'');
-      const recent = recentMap[k]||{ordered:0,dispatched:0,oosSum:0,oosCount:1};
-      const recentOrdered = recent.ordered;
-      const totalOrdered = recentOrdered > 0 ? recentOrdered : parseFloat(a.total_ever_ordered)||0;
-      const totalDispatched = recent.dispatched;
-      const gap = Math.max(0,totalOrdered-totalDispatched);
-      const avgOos = recent.oosCount>0 ? recent.oosSum/recent.oosCount : 0;
+    console.log('Candidates:', candidateAsins.length, 'HistoryRows:', historyRows.length);
 
-      if(totalOrdered < 10) return;
+    Object.entries(recentMap).forEach(([k, r])=>{
+      if(r.ordered < 10) return;
 
-      // PRE-ORDER: first seen within 12 weeks AND never dispatched in entire history
-      const isNew = a.first_week_ever >= cutoff;
-      const neverDispatched = (parseFloat(a.total_ever_dispatched)||0) < 1;
-      const hasDispatch = (parseInt(a.weeks_with_dispatch)||0) > 0;
+      const hist = dispatchHistory[k]||{totalDispatched:0,firstWeek:cutoff,weeksWithDispatch:0};
+      const gap = Math.max(0, r.ordered - r.dispatched);
+      const avgOos = r.oosCount>0 ? r.oosSum/r.oosCount : 0;
+      const isNew = hist.firstWeek >= cutoff;
+      const neverDispatched = hist.totalDispatched < 1 && hist.weeksWithDispatch === 0;
+      const hasDispatch = hist.weeksWithDispatch > 0;
 
       let classification, confidence, reason;
-      if(isNew && neverDispatched && totalOrdered > 0){
+      if(isNew && neverDispatched){
         classification='PRE-ORDER'; confidence='High';
-        reason='First seen '+a.first_week_ever+' — never dispatched across all history';
+        reason='First seen '+hist.firstWeek+' — never dispatched, awaiting first shipment';
       } else if(hasDispatch && avgOos>=80 && gap>0){
         classification='OOS GAP'; confidence='High';
         reason='Previously dispatched, now '+avgOos.toFixed(0)+'% OOS';
@@ -410,9 +441,9 @@ async function loadPreOrders(){
       }
 
       results.push({
-        asin:a.asin,title:a.product_title,brand:a.brand_classified,
-        market:a.market,ordered:totalOrdered,dispatched:totalDispatched,
-        gap,oos:avgOos,classification,confidence,reason
+        asin:r.asin, title:r.title, brand:r.brand, market:r.market,
+        ordered:r.ordered, dispatched:r.dispatched,
+        gap, oos:avgOos, classification, confidence, reason
       });
     });
 
