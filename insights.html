@@ -365,7 +365,7 @@ async function loadPreOrders(){
 
     // Step 2: Find ASINs with ordered revenue in recent weeks
     const candidateAsins = [...new Set(
-      recentSnaps.filter(r=>(r.ordered_revenue||0)>0).map(r=>r.asin)
+      recentSnaps.filter(r=>(r.ordered_revenue||0)>=10).map(r=>r.asin)
     )];
 
     if(!candidateAsins.length){
@@ -377,14 +377,14 @@ async function loadPreOrders(){
     }
 
     // Step 3: For candidate ASINs only, check their full dispatch history
-    // Fetch in batches of 50 ASINs to avoid URL length limits
+    // Use batches of 30 ASINs to keep URLs short
     let historyRows = [];
-    const batchSize = 50;
+    const batchSize = 30;
     for(let i=0; i<candidateAsins.length; i+=batchSize){
       const batch = candidateAsins.slice(i, i+batchSize);
       const rows = await sbFetch(
-        `/rest/v1/brand_health_snapshots?select=asin,market,dispatched_revenue,dispatched_units,week_start&asin=in.(${batch.join(',')})`,
-        20000
+        `/rest/v1/brand_health_snapshots?select=asin,market,dispatched_revenue,dispatched_units,week_start&asin=in.(${batch.join(',')})&order=week_start.asc`,
+        10000
       );
       historyRows = historyRows.concat(rows);
     }
