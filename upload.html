@@ -2057,12 +2057,12 @@ async function uploadSearchTerms() {
     const termKey  = headers.find(h => h.includes('Search Term') && !h.includes('Rank'));
     const cat1Key  = headers.find(h => h.includes('Top Clicked Category No. 1'));
     const cat2Key  = headers.find(h => h.includes('Top Clicked Category No. 2'));
-    const asin1Key = headers.find(h => h.includes('Product No. 1: ASIN'));
-    const title1Key= headers.find(h => h.includes('Product No. 1: Product Title'));
-    const cs1Key   = headers.find(h => h.includes('Product No. 1: Click Share'));
-    const cvr1Key  = headers.find(h => h.includes('Product No. 1: Conversion Share'));
-    const asin2Key = headers.find(h => h.includes('Product No. 2: ASIN'));
-    const asin3Key = headers.find(h => h.includes('Product No. 3: ASIN'));
+    const asin1Key = headers.find(h => h.includes('No. 1: ASIN') || h.includes('Product No. 1: ASIN'));
+    const title1Key= headers.find(h => h.includes('No. 1: Product Title') || h.includes('Product No. 1: Product Title'));
+    const cs1Key   = headers.find(h => h.includes('No. 1: Click Share') || h.includes('Product No. 1: Click Share'));
+    const cvr1Key  = headers.find(h => h.includes('No. 1: Conversion Share') || h.includes('Product No. 1: Conversion Share'));
+    const asin2Key = headers.find(h => h.includes('No. 2: ASIN') || h.includes('Product No. 2: ASIN'));
+    const asin3Key = headers.find(h => h.includes('No. 3: ASIN') || h.includes('Product No. 3: ASIN'));
 
     // Filter to Hasbro-relevant terms only + top 500 platform terms
     const rows = [];
@@ -2115,23 +2115,33 @@ async function uploadSearchTerms() {
     });
 
     const allRows = [...top500, ...rows];
-    logS(`✓ ${top500.length} top-500 platform terms + ${rows.length} Hasbro brand terms = ${allRows.length} total`, 'ok');
+
+    // Deduplicate by term+rank keeping first occurrence (Amazon repeats rows for same term with different products)
+    const seen = new Set();
+    const dedupedRows = allRows.filter(r => {
+      const key = r.term+'||'+r.rank+'||'+r.category;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    logS(`✓ ${top500.length} top-500 platform terms + ${rows.length} Hasbro brand terms = ${dedupedRows.length} total (${allRows.length - dedupedRows.length} duplicates removed)`, 'ok');
 
     // Brand breakdown
     const brandCounts = {};
     rows.forEach(r => { brandCounts[r.brand_classified] = (brandCounts[r.brand_classified]||0)+1; });
     Object.entries(brandCounts).sort((a,b)=>b[1]-a[1]).forEach(([b,n]) => logS(`  ${b}: ${n} terms`, 'ok'));
 
-    if (!allRows.length) throw new Error('No rows parsed');
+    if (!dedupedRows.length) throw new Error('No rows parsed');
 
     // Delete existing and upload
     await sbDelete(`/rest/v1/brand_health_search_terms?week_start=eq.${weekStart}`);
     const BATCH = 500;
-    for (let i = 0; i < allRows.length; i += BATCH) {
-      await sbPost('/rest/v1/brand_health_search_terms', allRows.slice(i, i + BATCH));
-      logS(`Uploaded ${Math.min(i+BATCH, allRows.length)}/${allRows.length}...`);
+    for (let i = 0; i < dedupedRows.length; i += BATCH) {
+      await sbPost('/rest/v1/brand_health_search_terms', dedupedRows.slice(i, i + BATCH));
+      logS(`Uploaded ${Math.min(i+BATCH, dedupedRows.length)}/${dedupedRows.length}...`);
     }
-    logS(`✅ Done! ${allRows.length} terms uploaded for week ${weekStart}`, 'ok');
+    logS(`✅ Done! ${dedupedRows.length} terms uploaded for week ${weekStart}`, 'ok');
 
   } catch(err) {
     logS('❌ Error: ' + err.message, 'err');
