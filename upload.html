@@ -581,7 +581,86 @@ function countryToMarket(c) {
   return COUNTRY_MAP[(c||'').toLowerCase().trim()] || null;
 }
 
-// ─── PARSING ─────────────────────────────────────────────────
+// ─── PACVUE CAMPAIGN NAME → BRAND ────────────────────────────
+const PACVUE_BRAND_MAP = {
+  'STAR':'STAR_WARS', 'GAME':'GAMES', 'PLAY':'PLAY_DOH',
+  'NERF':'NERF', 'TRNF':'TRANSFORMERS', 'BEYB':'BEYBLADE',
+  'MLPY':'MONOPOLY', 'MARV':'MARVEL', 'PEPP':'PEPPA_PIG',
+  'SPDY':'DISNEY_KIDS', 'DISNKIDS':'DISNEY_KIDS',
+  'MNPL':'MONOPOLY', 'BLDG':'BEYBLADE'
+};
+const PACVUE_PROFILE_MARKET = {
+  'hasbro uk':'GB','hasbro de':'DE','hasbro fr':'FR','hasbro it':'IT','hasbro es':'ES',
+  'hbro uk':'GB','hbro de':'DE','hbro fr':'FR','hbro it':'IT','hbro es':'ES'
+};
+
+function classifyPacvueCampaign(campaignName) {
+  const parts = campaignName.toUpperCase().split('_');
+  if (parts.length < 3) return null;
+  const code = parts[2];
+  if (code === 'COLL') {
+    // Collector's Corner — check full name for STAR vs MARV
+    if (/STAR/.test(campaignName.toUpperCase())) return 'STAR_WARS';
+    return 'MARVEL';
+  }
+  return PACVUE_BRAND_MAP[code] || null;
+}
+
+function pacvueProfileToMarket(profile) {
+  return PACVUE_PROFILE_MARKET[(profile||'').toLowerCase().trim()] || null;
+}
+
+function isPacvueReport(filename) {
+  return /weekly.*report|placement.*report|campaign.*report|query.*report/i.test(filename);
+}
+
+async function parsePacvueReport(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, {type:'array', cellText:false});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:true});
+
+        // Find header row (has 'Campaign Name' or 'Campaign')
+        let hi = raw.findIndex(r => r.some(c => /^campaign name$/i.test(String(c).trim()) || /^profile name$/i.test(String(c).trim())));
+        if (hi === -1) throw new Error('Could not find header row in Pacvue report');
+
+        const headers = raw[hi].map(h => String(h).trim());
+        const gc = name => headers.findIndex(h => h.toLowerCase().includes(name.toLowerCase()));
+        const campCol    = gc('Campaign Name') >= 0 ? gc('Campaign Name') : gc('Campaign');
+        const profileCol = gc('Profile Name') >= 0 ? gc('Profile Name') : gc('Profile');
+        const spendCol   = gc('Spend');
+        const salesCol   = gc('Sales 14d') >= 0 ? gc('Sales 14d') : gc('Sales');
+        const clickCol   = gc('Click');
+        const impCol     = gc('Impression');
+
+        const agg = {};
+        for (const row of raw.slice(hi + 1)) {
+          if (!row.some(v => v !== '')) continue;
+          const campaign = String(row[campCol] || '').trim();
+          const profile  = String(row[profileCol] || '').trim();
+          const market   = pacvueProfileToMarket(profile);
+          if (!market) continue;
+          const brand = classifyPacvueCampaign(campaign);
+          if (!brand) continue;
+          const k = brand+'||'+market;
+          if (!agg[k]) agg[k] = {brand_classified:brand, market, ad_revenue:0, ad_spend:0, ad_impressions:0, ad_clicks:0};
+          agg[k].ad_revenue    += parseFloat(row[salesCol] || 0) || 0;
+          agg[k].ad_spend      += parseFloat(row[spendCol] || 0) || 0;
+          agg[k].ad_impressions+= parseFloat(row[impCol] || 0) || 0;
+          agg[k].ad_clicks     += parseFloat(row[clickCol] || 0) || 0;
+        }
+        resolve(Object.values(agg));
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+
 function normaliseKey(s){return String(s).trim().replace(/\u2013|\u2014|\u2212/g,'–').replace(/\s+/g,' ');}
 
 function parseVCFile(file) {
@@ -790,7 +869,14 @@ async function processVC() {
 // ─── PROCESS ADS ──────────────────────────────────────────────
 async function processAndUploadAds(file, weekStart) {
   logA(`Reading ${file.name}...`,'info');
-  const parsedRows = await parseExecSummary(file);
+  let parsedRows;
+  if (isPacvueReport(file.name)) {
+    logA('Detected Pacvue report — using campaign name parser...','info');
+    parsedRows = await parsePacvueReport(file);
+  } else {
+    logA('Detected Executive Summary — using brand column parser...','info');
+    parsedRows = await parseExecSummary(file);
+  }
   logA(`✓ ${parsedRows.length} brand-market rows parsed`,'ok');
   if (!parsedRows.length) throw new Error('0 rows parsed — check file format');
 
